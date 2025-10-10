@@ -24,7 +24,7 @@ jobs:
           if [[ "${{ steps.release.outputs.has_schema }}" == "true" ]]; then
             echo "schema.graphql is attached to the ${{ steps.release.outputs.tag }} release, updating..."
           else
-            echo "schema.graphql is not attached to the ${{ steps.release.outputs.tag }} release, exiting..."
+            echo "Skipping schema.graphql check (temporary)."
             exit 1
           fi
 
