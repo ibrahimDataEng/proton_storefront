@@ -19,8 +19,8 @@ jobs:
           echo "schema_url=$(echo $latest_release | jq -r '.assets[] | select(.name == "schema.graphql") | .url')" >> "$GITHUB_OUTPUT"
           echo "has_schema=$(echo $latest_release | jq -e '.assets[] | select(.name == "schema.graphql") | length > 0')" >> "$GITHUB_OUTPUT"
 
-        - name: Check for schema.graphql in the latest Saleor release
-          run: |
+      - name: Check for schema.graphql in the latest Saleor release
+        run: |
             if [[ "${{ steps.release.outputs.has_schema }}" == "true" ]]; then
               echo "schema.graphql is attached to the ${{ steps.release.outputs.tag }} release, updating..."
             else
