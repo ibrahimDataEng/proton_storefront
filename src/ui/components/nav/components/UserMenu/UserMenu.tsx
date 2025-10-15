@@ -6,7 +6,7 @@ import { Menu, Transition } from "@headlessui/react";
 import { UserInfo } from "./components/UserInfo";
 import { UserAvatar } from "./components/UserAvatar";
 import { type UserDetailsFragment } from "@/gql/graphql";
-import { logout } from "@/app/actions";
+import { logout } from "@/app/[locale]/actions";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 
 type Props = {

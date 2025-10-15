@@ -3,7 +3,7 @@ import { ProductListPaginatedDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 import { Pagination } from "@/ui/components/Pagination";
 import { ProductList } from "@/ui/components/ProductList";
-import { ProductsPerPage } from "@/app/config";
+import { ProductsPerPage } from "@/app/[locale]/config";
 
 export const metadata = {
 	title: "Products · Saleor Storefront example",
@@ -26,7 +26,8 @@ export default async function Page(props: {
 			after: cursor,
 			channel: params.channel,
 		},
-		revalidate: 60,
+		//revalidate: 60,
+		revalidate: 1,
 	});
 
 	if (!products) {

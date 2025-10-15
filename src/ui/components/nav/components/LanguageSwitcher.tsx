@@ -1,31 +1,20 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
-export const LanguageSwitcher = () => {
-	const [language, setLanguage] = useState("en");
-
-	useEffect(() => {
-		const storedLang = localStorage.getItem("storeLang");
-		if (storedLang) setLanguage(storedLang);
-	}, []);
-
-	const toggleLanguage = () => {
-		const newLang = language === "en" ? "ar" : "en";
-		setLanguage(newLang);
-		localStorage.setItem("storeLang", newLang);
-		// Add your i18n logic here if needed
-	};
-
-	const langLabel = language === "en" ? "العربية" : "English";
+import { useLocale } from "next-intl";
+import { Link, usePathname } from "@/i18n/navigation";
+export function LanguageSwitcher() {
+	const locale = useLocale();
+	const pathname = usePathname();
 
 	return (
-		<button
-			className="px-2 py-1 rounded border text-xs"
-			onClick={toggleLanguage}
-			aria-label="Switch language"
-		>
-			{langLabel}
-		</button>
+		<div className="flex gap-2">
+			<Link href={pathname} locale="en" className={locale === "en" ? "font-bold underline" : ""}>
+				EN
+			</Link>
+			<span>|</span>
+			<Link href={pathname} locale="ar" className={locale === "ar" ? "font-bold underline" : ""}>
+				AR
+			</Link>
+		</div>
 	);
 }

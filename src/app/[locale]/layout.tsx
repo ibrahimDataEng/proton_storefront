@@ -1,33 +1,45 @@
-import { ReactNode, Suspense } from "react";
+import "./globals.css";
+import { Inter } from "next/font/google";
+import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { notFound } from "next/navigation";
-import { NextIntlClientProvider } from "next-intl";
-import { DraftModeNotification } from "@/ui/components/DraftModeNotification";
+import { setRequestLocale } from "next-intl/server";
+import { routing } from "@/i18n/routing";
 
-type Props = {
-    children: ReactNode;
-    params: { locale: string };
-};
+const inter = Inter({ subsets: ["latin"] });
 
-export default async function LocaleLayout({ children, params }: Props) {
-    const { locale } = params;
+export function generateStaticParams() {
+	return routing.locales.map((locale) => ({ locale }));
+}
 
-    let messages;
-    try {
-        messages = (await import(`../../locales/${locale}.json`)).default;
-    } catch (error) {
-        notFound(); // لو اللغة غير مدعومة
-    }
+export default async function RootLayout({
+	children,
+	params,
+}: {
+	children: React.ReactNode;
+	params: Promise<{ locale: string }>;
+}) {
+	const { locale } = await params;
+	if (!hasLocale(routing.locales, locale)) {
+		notFound();
+	}
 
-    return (
-        <html lang={locale} className="min-h-dvh">
-            <body className="min-h-dvh">
-                <NextIntlClientProvider locale={locale} messages={messages}>
-                    {children}
-                    <Suspense>
-                        <DraftModeNotification />
-                    </Suspense>
-                </NextIntlClientProvider>
-            </body>
-        </html>
-    );
+	setRequestLocale(locale);
+	const isRTL = locale === "ar";
+
+	let messages;
+	try {
+		messages = (await import(`@/messages/${locale}.json`)).default;
+	} catch (error) {
+		messages = {};
+	}
+	console.log("Footer locale:", locale);
+	return (
+		<html lang={locale} dir={isRTL ? "rtl" : "ltr"}>
+			<body className={inter.className}>
+				<NextIntlClientProvider locale={locale} messages={messages}>
+					{children}
+				</NextIntlClientProvider>
+			</body>
+		</html>
+	);
 }

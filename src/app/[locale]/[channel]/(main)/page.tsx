@@ -8,14 +8,16 @@ export const metadata = {
 		"Storefront Next.js Example for building performant e-commerce experiences with Saleor - the composable, headless commerce platform for global brands.",
 };
 
-export default async function Page(props: { params: Promise<{ channel: string }> }) {
+export default async function Page(props: { params: Promise<{ locale: string; channel: string }> }) {
 	const params = await props.params;
+
 	const data = await executeGraphQL(ProductListByCollectionDocument, {
 		variables: {
 			slug: "featured-products",
 			channel: params.channel,
 		},
-		revalidate: 60,
+		//revalidate: 60,
+		revalidate: 1,
 	});
 
 	if (!data.collection?.products) {

@@ -9,16 +9,18 @@ export const metadata = {
 
 export default async function RootLayout(props: {
 	children: ReactNode;
-	params: Promise<{ channel: string }>;
+	params: Promise<{ locale: string; channel: string }>;
 }) {
-	const channel = (await props.params).channel;
-
+	const { locale, channel } = await props.params;
 	return (
 		<>
 			<Header channel={channel} />
 			<div className="flex min-h-[calc(100dvh-64px)] flex-col">
 				<main className="flex-1">{props.children}</main>
-				<Footer channel={channel} />
+				<p>
+					Locale: {locale}, Channel: {channel}
+				</p>
+				<Footer channel={channel} locale={locale} />
 			</div>
 		</>
 	);

@@ -1,26 +1,21 @@
-import { redirect } from "next/navigation";
+"use client";
 import { SearchIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { onSearchSubmit } from "./searchActions";
 
 export const SearchBar = ({ channel }: { channel: string }) => {
-	async function onSubmit(formData: FormData) {
-		"use server";
-		const search = formData.get("search") as string;
-		if (search && search.trim().length > 0) {
-			redirect(`/${encodeURIComponent(channel)}/search?query=${encodeURIComponent(search)}`);
-		}
-	}
-
+	const t = useTranslations("header");
 	return (
 		<form
-			action={onSubmit}
+			action={(formData) => onSearchSubmit(formData, channel)}
 			className="group relative my-2 flex w-full items-center justify-items-center text-sm lg:w-80"
 		>
 			<label className="w-full">
-				<span className="sr-only">search for products</span>
+				<span className="sr-only">{t("searchForProducts")}</span>
 				<input
 					type="text"
 					name="search"
-					placeholder="Search for products..."
+					placeholder={t("searchForProducts")}
 					autoComplete="on"
 					required
 					className="h-10 w-full rounded-md border border-neutral-300 bg-transparent bg-white px-4 py-2 pr-10 text-sm text-black placeholder:text-neutral-500 focus:border-black focus:ring-black"

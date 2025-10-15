@@ -1,12 +1,13 @@
 import Link from "next/link";
 import { NavLink } from "./NavLink";
 import { executeGraphQL } from "@/lib/graphql";
-import { MenuGetBySlugDocument } from "@/gql/graphql";
+import { LanguageCodeEnum, MenuGetBySlugDocument } from "@/gql/graphql";
 
 export const NavLinks = async ({ channel }: { channel: string }) => {
 	const navLinks = await executeGraphQL(MenuGetBySlugDocument, {
-		variables: { slug: "navbar", channel },
-		revalidate: 60 * 60 * 24,
+		variables: { slug: "navbar", channel, language: LanguageCodeEnum.En },
+		//revalidate: 60 * 60 * 24,
+		revalidate: 1,
 	});
 
 	return (

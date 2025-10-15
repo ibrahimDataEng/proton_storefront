@@ -1,4 +1,4 @@
-import { getServerAuthClient } from "@/app/config";
+import { getServerAuthClient } from "@/app/[locale]/config";
 
 export async function LoginForm() {
 	return (

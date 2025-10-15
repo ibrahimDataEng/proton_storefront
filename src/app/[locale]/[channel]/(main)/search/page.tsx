@@ -3,7 +3,7 @@ import { OrderDirection, ProductOrderField, SearchProductsDocument } from "@/gql
 import { executeGraphQL } from "@/lib/graphql";
 import { Pagination } from "@/ui/components/Pagination";
 import { ProductList } from "@/ui/components/ProductList";
-import { ProductsPerPage } from "@/app/config";
+import { ProductsPerPage } from "@/app/[locale]/config";
 
 export const metadata = {
 	title: "Search products · Saleor Storefront example",

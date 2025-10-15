@@ -1,0 +1,29 @@
+{
+	"welcome": "مرحباً",
+	"goodbye": "وداعاً",
+	"error": {
+		"network": "خطأ في الشبكة. الرجاء المحاولة مرة أخرى.",
+		"notFound": "لم يتم العثور على المصدر.",
+		"unauthorized": "غير مصرح لك بتنفيذ هذا الإجراء."
+	},
+	"button": {
+		"submit": "تقديم",
+		"cancel": "إلغاء"
+	},
+	"home": {
+		"header": "مرحباً بك في العرض التجريبي!",
+		"description": "هذا موقع متعدد اللغات باستخدام next-intl.",
+		"aboutLink": "معلومات عنا",
+		"contactLink": "اتصل بنا"
+	},
+	"header": {
+		"searchForProducts": "ابحث عن المنتجات..."
+	},
+	"footer": {
+		"copyright": "حقوق النشر",
+		"companyName": "جرين لاين جروب",
+		"poweredBy": "مشغل بواسطة",
+		"changeCurrency": "تغيير العملة",
+		"loadingError": "فشل تحميل محتوى الفوتر"
+	}
+}

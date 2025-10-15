@@ -11,7 +11,8 @@ export const generateMetadata = async (
 	const params = await props.params;
 	const { category } = await executeGraphQL(ProductListByCategoryDocument, {
 		variables: { slug: params.slug, channel: params.channel },
-		revalidate: 60,
+		//revalidate: 60,
+		revalidate: 1,
 	});
 
 	return {
@@ -24,7 +25,8 @@ export default async function Page(props: { params: Promise<{ slug: string; chan
 	const params = await props.params;
 	const { category } = await executeGraphQL(ProductListByCategoryDocument, {
 		variables: { slug: params.slug, channel: params.channel },
-		revalidate: 60,
+		//revalidate: 60,
+		revalidate: 1,
 	});
 
 	if (!category || !category.products) {

@@ -28,7 +28,8 @@ export async function generateMetadata(
 			slug: decodeURIComponent(params.slug),
 			channel: params.channel,
 		},
-		revalidate: 60,
+		//revalidate: 60,
+		revalidate: 1,
 	});
 
 	if (!product) {
@@ -62,7 +63,8 @@ export async function generateMetadata(
 
 export async function generateStaticParams({ params }: { params: { channel: string } }) {
 	const { products } = await executeGraphQL(ProductListDocument, {
-		revalidate: 60,
+		//revalidate: 60,
+		revalidate: 1,
 		variables: { first: 20, channel: params.channel },
 		withAuth: false,
 	});
@@ -77,15 +79,14 @@ export default async function Page(props: {
 	params: Promise<{ slug: string; channel: string }>;
 	searchParams: Promise<{ variant?: string }>;
 }) {
-	
 	const [searchParams, params] = await Promise.all([props.searchParams, props.params]);
 	const { product } = await executeGraphQL(ProductDetailsDocument, {
 		variables: {
 			slug: decodeURIComponent(params.slug),
 			channel: params.channel,
 		},
-		revalidate: 60,
-		
+		//revalidate: 60,
+		revalidate: 1,
 	});
 
 	if (!product) {
@@ -93,7 +94,6 @@ export default async function Page(props: {
 	}
 
 	const isAvailableFromAPi = product.isAvailable;
-	 
 
 	const firstImage = product.thumbnail;
 	const description = product?.description ? parser.parse(JSON.parse(product?.description)) : null;
@@ -201,16 +201,15 @@ export default async function Page(props: {
 						<p className="mb-8 text-sm " data-testid="ProductElement_Price">
 							{price}
 						</p>
-						  <p className="mb-6 text-sm text-gray-500">
-            {isAvailableFromAPi ? "متاح في المخزون ✅" : "غير متوفر ❌"}
-          </p>
+						<p className="mb-6 text-sm text-gray-500">
+							{isAvailableFromAPi ? "متاح في المخزون ✅" : "غير متوفر ❌"}
+						</p>
 						{variants && (
 							<VariantSelector
 								selectedVariant={selectedVariant}
 								variants={variants}
 								product={product}
 								channel={params.channel}
-								
 							/>
 						)}
 						<AvailabilityMessage isAvailable={isAvailable} />

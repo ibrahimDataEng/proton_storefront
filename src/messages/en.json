@@ -1,0 +1,29 @@
+{
+	"welcome": "Welcome",
+	"goodbye": "Goodbye",
+	"error": {
+		"network": "Network error. Please try again.",
+		"notFound": "Resource not found.",
+		"unauthorized": "You are not authorized to perform this action."
+	},
+	"button": {
+		"submit": "Submit",
+		"cancel": "Cancel"
+	},
+	"home": {
+		"header": "Welcome to the Demo!",
+		"description": "This is a multilingual Next.js site using next-intl.",
+		"aboutLink": "About Us",
+		"contactLink": "Contact"
+	},
+	"header": {
+		"searchForProducts": "Search for products..."
+	},
+	"footer": {
+		"copyright": "Copyright",
+		"companyName": "Green Line Group, Inc.",
+		"poweredBy": "Powered by",
+		"changeCurrency": "Change currency",
+		"loadingError": "Failed to load footer content"
+	}
+}
