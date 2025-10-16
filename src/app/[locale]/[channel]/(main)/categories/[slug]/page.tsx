@@ -1,30 +1,46 @@
 import { notFound } from "next/navigation";
 import { type ResolvingMetadata, type Metadata } from "next";
-import { ProductListByCategoryDocument } from "@/gql/graphql";
+import { LanguageCodeEnum, ProductListByCategoryDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 import { ProductList } from "@/ui/components/ProductList";
 
 export const generateMetadata = async (
-	props: { params: Promise<{ slug: string; channel: string }> },
+	props: { params: Promise<{ slug: string; channel: string; locale: string }> },
 	parent: ResolvingMetadata,
 ): Promise<Metadata> => {
 	const params = await props.params;
+	const locale = params.locale;
+	const language = locale === "ar" ? LanguageCodeEnum.Ar : LanguageCodeEnum.EnUs;
 	const { category } = await executeGraphQL(ProductListByCategoryDocument, {
-		variables: { slug: params.slug, channel: params.channel },
+		variables: { slug: params.slug, channel: params.channel, language: language },
 		//revalidate: 60,
 		revalidate: 1,
 	});
+	if (!category) {
+		return { title: "Category · Saleor Storefront example", description: "" };
+	}
+	const localizedCategory = locale === "ar" && category?.translation ? category.translation : category;
 
 	return {
-		title: `${category?.name || "Categroy"} | ${category?.seoTitle || (await parent).title?.absolute}`,
-		description: category?.seoDescription || category?.description || category?.seoTitle || category?.name,
+		title: `${localizedCategory?.name || "Categroy"} | ${
+			localizedCategory?.seoTitle || (await parent).title?.absolute
+		}`,
+		description:
+			localizedCategory?.seoDescription ||
+			localizedCategory?.description ||
+			localizedCategory?.seoTitle ||
+			localizedCategory?.name,
 	};
 };
 
-export default async function Page(props: { params: Promise<{ slug: string; channel: string }> }) {
+export default async function Page(props: {
+	params: Promise<{ slug: string; channel: string; locale: string }>;
+}) {
 	const params = await props.params;
+	const locale = params.locale;
+	const language = locale === "ar" ? LanguageCodeEnum.Ar : LanguageCodeEnum.EnUs;
 	const { category } = await executeGraphQL(ProductListByCategoryDocument, {
-		variables: { slug: params.slug, channel: params.channel },
+		variables: { slug: params.slug, channel: params.channel, language: language },
 		//revalidate: 60,
 		revalidate: 1,
 	});
@@ -33,7 +49,9 @@ export default async function Page(props: { params: Promise<{ slug: string; chan
 		notFound();
 	}
 
-	const { name, products } = category;
+	const localizedCategory = locale === "ar" && category?.translation ? category.translation : category;
+	const name = localizedCategory?.name || category.name;
+	const products = category.products;
 
 	return (
 		<div className="mx-auto max-w-7xl p-8 pb-16">
