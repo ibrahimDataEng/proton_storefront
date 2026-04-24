@@ -46,7 +46,7 @@ export default async function RootLayout({
 	}
 	return (
 		<html lang={locale} dir={isRTL ? "rtl" : "ltr"} className={`${plexSans.variable} ${plexArabic.variable}`}>
-			<body className="font-sans">
+			<body className="bg-surface-base font-sans text-content-primary">
 				<NextIntlClientProvider locale={locale} messages={messages}>
 					{children}
 				</NextIntlClientProvider>

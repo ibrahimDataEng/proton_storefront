@@ -53,6 +53,12 @@ body {
 	overflow-x: hidden;
 }
 
+/* Arabic font override — forces IBM Plex Sans Arabic for any Arabic-locale subtree */
+:lang(ar),
+:lang(ar) * {
+	font-family: var(--font-plex-arabic), system-ui, sans-serif;
+}
+
 [dir="rtl"] {
 	text-align: right;
 }
