@@ -60,13 +60,13 @@ export async function generateMetadata(
 		},
 		openGraph: product.thumbnail
 			? {
-					images: [
-						{
-							url: product.thumbnail.url,
-							alt: product.name,
-						},
-					],
-				}
+				images: [
+					{
+						url: product.thumbnail.url,
+						alt: product.name,
+					},
+				],
+			}
 			: null,
 	};
 }
@@ -154,9 +154,9 @@ export default async function Page(props: {
 		? formatMoney(selectedVariant.pricing.price.gross.amount, selectedVariant.pricing.price.gross.currency)
 		: isAvailable
 			? formatMoneyRange({
-					start: product?.pricing?.priceRange?.start?.gross,
-					stop: product?.pricing?.priceRange?.stop?.gross,
-				})
+				start: product?.pricing?.priceRange?.start?.gross,
+				stop: product?.pricing?.priceRange?.stop?.gross,
+			})
 			: "";
 
 	const productJsonLd: WithContext<Product> = {
@@ -165,32 +165,32 @@ export default async function Page(props: {
 		image: product.thumbnail?.url,
 		...(selectedVariant
 			? {
-					name: `${localizedProduct.name} - ${selectedVariant.name}`,
-					description:
-						localizedProduct.seoDescription || `${localizedProduct.name} - ${selectedVariant.name}`,
-					offers: {
-						"@type": "Offer",
-						availability: selectedVariant.quantityAvailable
-							? "https://schema.org/InStock"
-							: "https://schema.org/OutOfStock",
-						priceCurrency: selectedVariant.pricing?.price?.gross.currency,
-						price: selectedVariant.pricing?.price?.gross.amount,
-					},
-				}
+				name: `${localizedProduct.name} - ${selectedVariant.name}`,
+				description:
+					localizedProduct.seoDescription || `${localizedProduct.name} - ${selectedVariant.name}`,
+				offers: {
+					"@type": "Offer",
+					availability: selectedVariant.quantityAvailable
+						? "https://schema.org/InStock"
+						: "https://schema.org/OutOfStock",
+					priceCurrency: selectedVariant.pricing?.price?.gross.currency,
+					price: selectedVariant.pricing?.price?.gross.amount,
+				},
+			}
 			: {
-					name: localizedProduct.name ?? product.name ?? "",
+				name: localizedProduct.name ?? product.name ?? "",
 
-					description: localizedProduct.seoDescription || product.seoDescription || "",
-					offers: {
-						"@type": "AggregateOffer",
-						availability: product.variants?.some((variant) => variant.quantityAvailable)
-							? "https://schema.org/InStock"
-							: "https://schema.org/OutOfStock",
-						priceCurrency: product.pricing?.priceRange?.start?.gross.currency,
-						lowPrice: product.pricing?.priceRange?.start?.gross.amount,
-						highPrice: product.pricing?.priceRange?.stop?.gross.amount,
-					},
-				}),
+				description: localizedProduct.seoDescription || product.seoDescription || "",
+				offers: {
+					"@type": "AggregateOffer",
+					availability: product.variants?.some((variant) => variant.quantityAvailable)
+						? "https://schema.org/InStock"
+						: "https://schema.org/OutOfStock",
+					priceCurrency: product.pricing?.priceRange?.start?.gross.currency,
+					lowPrice: product.pricing?.priceRange?.start?.gross.amount,
+					highPrice: product.pricing?.priceRange?.stop?.gross.amount,
+				},
+			}),
 	};
 
 	return (
