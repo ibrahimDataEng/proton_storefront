@@ -32,7 +32,6 @@ export default async function RootLayout({
 	} catch (error) {
 		messages = {};
 	}
-	console.log("Footer locale:", locale);
 	return (
 		<html lang={locale} dir={isRTL ? "rtl" : "ltr"}>
 			<body className={inter.className}>
