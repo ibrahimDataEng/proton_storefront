@@ -1,6 +1,9 @@
-import { LanguageCodeEnum, ProductListByCollectionDocument } from "@/gql/graphql";
-import { executeGraphQL } from "@/lib/graphql";
-import { ProductList } from "@/ui/components/ProductList";
+import { HeroSection } from "@/ui/components/home/HeroSection";
+import { FeaturedProductsSection } from "@/ui/components/home/FeaturedProductsSection";
+import { CategoriesSection } from "@/ui/components/home/CategoriesSection";
+import { BrandStorySection } from "@/ui/components/home/BrandStorySection";
+
+export const revalidate = 60;
 
 export const metadata = {
 	title: "ACME Storefront, powered by Saleor & Next.js",
@@ -9,29 +12,14 @@ export const metadata = {
 };
 
 export default async function Page(props: { params: Promise<{ locale: string; channel: string }> }) {
-	const params = await props.params;
-	const locale = params.locale;
-	const language = locale === "ar" ? LanguageCodeEnum.Ar : LanguageCodeEnum.EnUs;
-	const data = await executeGraphQL(ProductListByCollectionDocument, {
-		variables: {
-			slug: "featured-products",
-			channel: params.channel,
-			language: language,
-		},
-		//revalidate: 60,
-		revalidate: 1,
-	});
-
-	if (!data.collection?.products) {
-		return null;
-	}
-
-	const products = data.collection?.products.edges.map(({ node: product }) => product);
+	const { locale, channel } = await props.params;
 
 	return (
-		<section className="mx-auto max-w-7xl p-8 pb-16">
-			<h2 className="sr-only">Product list</h2>
-			<ProductList products={products} />
-		</section>
+		<main>
+			<HeroSection locale={locale} />
+			<FeaturedProductsSection channel={channel} locale={locale} />
+			<CategoriesSection channel={channel} locale={locale} />
+			<BrandStorySection locale={locale} />
+		</main>
 	);
 }
