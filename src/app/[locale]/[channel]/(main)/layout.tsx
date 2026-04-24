@@ -17,9 +17,6 @@ export default async function RootLayout(props: {
 			<Header channel={channel} locale={locale} />
 			<div className="flex min-h-[calc(100dvh-64px)] flex-col">
 				<main className="flex-1">{props.children}</main>
-				<p>
-					Locale: {locale}, Channel: {channel}
-				</p>
 				<Footer channel={channel} locale={locale} />
 			</div>
 		</>

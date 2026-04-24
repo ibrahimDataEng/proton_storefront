@@ -3,6 +3,7 @@ import { type CheckoutLineFragment } from "@/checkout/graphql";
 import { TextInput } from "@/checkout/components/TextInput";
 
 import { Skeleton } from "@/checkout/components";
+import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 import { SummaryItemMoneyInfo } from "@/checkout/sections/Summary/SummaryItemMoneyInfo";
 import { FormProvider } from "@/checkout/hooks/useForm/FormProvider";
 import { useSummaryItemForm } from "@/checkout/sections/Summary/useSummaryItemForm";
@@ -12,6 +13,7 @@ interface SummaryItemMoneyEditableSectionProps {
 }
 
 export const SummaryItemMoneyEditableSection: React.FC<SummaryItemMoneyEditableSectionProps> = ({ line }) => {
+	const { summary } = useCheckoutMessages();
 	const { form, onLineDelete } = useSummaryItemForm({ line });
 
 	const {
@@ -55,7 +57,7 @@ export const SummaryItemMoneyEditableSection: React.FC<SummaryItemMoneyEditableS
 					onChange={handleChange}
 					onBlur={handleQuantityInputBlur}
 					name="quantity"
-					label="Quantity"
+					label={summary.quantity}
 					className="max-w-[6ch] text-center"
 				/>
 			</FormProvider>

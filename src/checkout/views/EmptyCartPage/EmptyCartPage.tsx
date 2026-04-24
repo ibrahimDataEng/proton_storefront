@@ -2,14 +2,17 @@ import React from "react";
 import { Title } from "@/checkout/components";
 import { LinkAsButton } from "@/checkout/components/LinkAsButton";
 import { ErrorContentWrapper } from "@/checkout/components/ErrorContentWrapper";
+import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 
 export const EmptyCartPage = () => {
+	const { emptyCart } = useCheckoutMessages();
+
 	return (
 		<ErrorContentWrapper>
-			<Title className="mb-0 text-xl">Your cart is empty</Title>
-			<p>Add anything to the cart to continue.</p>
+			<Title className="mb-0 text-xl">{emptyCart.title}</Title>
+			<p>{emptyCart.description}</p>
 			<LinkAsButton href="/" variant="secondary">
-				Go back to store
+				{emptyCart.backToStore}
 			</LinkAsButton>
 		</ErrorContentWrapper>
 	);

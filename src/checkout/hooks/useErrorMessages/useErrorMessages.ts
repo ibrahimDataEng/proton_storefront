@@ -1,26 +1,31 @@
 import { useCallback, useMemo } from "react";
 import { type ErrorCode } from "@/checkout/lib/globalTypes";
-
-export const errorMessages = {
-	invalid: "Invalid value",
-	required: "Required field",
-	unique: "Value must be unique",
-	emailInvalid: "Email must be a valid email",
-	passwordAtLeastCharacters: "Password must be at least 8 characters",
-	passwordTooShort: "Provided password is too short. Minimum length is 8 characters.",
-	passwordTooSimilar: "Provided password is too similar to your previous password.",
-	passwordTooCommon: "Provided password is too common. Use something more fancy.",
-	passwordInvalid: "Provided password is invalid.",
-	quantityGreaterThanLimit: "Chosen quantity is more than limit allowed.",
-	insufficientStock: "Not enough of chosen item in stock.",
-	invalidCredentials: "Invalid credentials provided at login.",
-	missingFields: "Missing fields in address form: ",
-} satisfies Record<ErrorCode, string>;
+import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 
 export type ErrorMessages = Record<ErrorCode, string>;
 
 export const useErrorMessages = <TKey extends string = ErrorCode>(customMessages?: Record<TKey, string>) => {
-	const messagesToUse = customMessages || errorMessages;
+	const { errors } = useCheckoutMessages();
+	const defaultMessages = useMemo(
+		() =>
+			({
+				invalid: errors.invalid,
+				required: errors.required,
+				unique: errors.unique,
+				emailInvalid: errors.emailInvalid,
+				passwordAtLeastCharacters: errors.passwordAtLeastCharacters,
+				passwordTooShort: errors.passwordTooShort,
+				passwordTooSimilar: errors.passwordTooSimilar,
+				passwordTooCommon: errors.passwordTooCommon,
+				passwordInvalid: errors.passwordInvalid,
+				quantityGreaterThanLimit: errors.quantityGreaterThanLimit,
+				insufficientStock: errors.insufficientStock,
+				invalidCredentials: errors.invalidCredentials,
+				missingFields: errors.missingFields,
+			}) satisfies Record<ErrorCode, string>,
+		[errors],
+	);
+	const messagesToUse = customMessages || defaultMessages;
 
 	const getMessageByErrorCode = useCallback(
 		(errorCode: string) => {
@@ -43,7 +48,7 @@ export const useErrorMessages = <TKey extends string = ErrorCode>(customMessages
 				}),
 				{} as Record<TKey, string>,
 			),
-		[getMessageByErrorCode, messagesToUse],
+		[defaultMessages, getMessageByErrorCode, messagesToUse],
 	);
 
 	return {

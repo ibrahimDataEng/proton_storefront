@@ -25,5 +25,8 @@
 		"poweredBy": "مشغل بواسطة",
 		"changeCurrency": "تغيير العملة",
 		"loadingError": "فشل تحميل محتوى الفوتر"
+	},
+	"availability": {
+		"outofstock": "غير متوفر"
 	}
 }

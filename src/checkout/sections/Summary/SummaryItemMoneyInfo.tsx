@@ -2,6 +2,7 @@ import React from "react";
 import clsx from "clsx";
 import { Money } from "@/checkout/components";
 import { type Money as MoneyType } from "@/checkout/graphql";
+import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 import { getFormattedMoney } from "@/checkout/lib/utils/money";
 import { type GrossMoney } from "@/checkout/lib/globalTypes";
 
@@ -16,6 +17,7 @@ export const SummaryItemMoneyInfo: React.FC<SummaryItemMoneyInfoProps> = ({
 	quantity,
 	undiscountedUnitPrice,
 }) => {
+	const { summary, locale } = useCheckoutMessages();
 	const multiplePieces = quantity > 1;
 	const piecePrice = unitPrice.gross;
 	const onSale = undiscountedUnitPrice.amount !== unitPrice.gross.amount;
@@ -25,7 +27,7 @@ export const SummaryItemMoneyInfo: React.FC<SummaryItemMoneyInfoProps> = ({
 			<div className="flex flex-row flex-wrap justify-end gap-x-2">
 				{onSale && (
 					<Money
-						ariaLabel="undiscounted price"
+						ariaLabel={summary.undiscountedPriceAria}
 						money={{
 							currency: undiscountedUnitPrice.currency,
 							amount: undiscountedUnitPrice.amount * quantity,
@@ -34,7 +36,7 @@ export const SummaryItemMoneyInfo: React.FC<SummaryItemMoneyInfoProps> = ({
 					/>
 				)}
 				<Money
-					ariaLabel="total price"
+					ariaLabel={summary.totalPriceAria}
 					money={{
 						currency: piecePrice?.currency,
 						amount: (piecePrice?.amount || 0) * quantity,
@@ -46,8 +48,8 @@ export const SummaryItemMoneyInfo: React.FC<SummaryItemMoneyInfoProps> = ({
 			</div>
 
 			{multiplePieces && (
-				<p aria-label="single piece price" color="secondary" className="text-end text-xs">
-					{getFormattedMoney(piecePrice)} each
+				<p aria-label={summary.singlePiecePriceAria} color="secondary" className="text-end text-xs">
+					{getFormattedMoney(piecePrice, false, locale)} {summary.each}
 				</p>
 			)}
 		</div>

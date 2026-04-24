@@ -7,6 +7,7 @@ import { useAddressAvailability } from "@/checkout/hooks/useAddressAvailability"
 import { Button } from "@/checkout/components/Button";
 import { Title } from "@/checkout/components/Title";
 import { type UseFormReturn } from "@/checkout/hooks/useForm";
+import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 import { type AddressListFormData } from "@/checkout/sections/AddressList/useAddressListForm";
 import { FormProvider } from "@/checkout/hooks/useForm/FormProvider";
 
@@ -25,6 +26,7 @@ export const AddressList: React.FC<AddressListProps> = ({
 	onAddAddressClick,
 	form,
 }) => {
+	const { address } = useCheckoutMessages();
 	const {
 		values: { addressList },
 	} = form;
@@ -35,15 +37,15 @@ export const AddressList: React.FC<AddressListProps> = ({
 		<FormProvider form={form}>
 			<div className="flex flex-col">
 				<Title>{title}</Title>
-				{addressList.length < 1 && <p className="mb-3">You currently have no saved addresses.</p>}
+				{addressList.length < 1 && <p className="mb-3">{address.noSavedAddresses}</p>}
 				<Button
 					variant="secondary"
-					ariaLabel="add address"
+					ariaLabel={address.addAddress}
 					onClick={onAddAddressClick}
-					label="Add address"
+					label={address.addAddress}
 					className="w-full"
 				/>
-				<SelectBoxGroup label="user addresses" className="mt-2">
+				<SelectBoxGroup label={title} className="mt-2">
 					{addressList.map(({ id, ...rest }: AddressFragment) => {
 						const identifier = `${camelCase(title)}-${id}}`;
 

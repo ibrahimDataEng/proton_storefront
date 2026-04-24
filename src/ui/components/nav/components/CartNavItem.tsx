@@ -3,9 +3,9 @@ import clsx from "clsx";
 import * as Checkout from "@/lib/checkout";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 
-export const CartNavItem = async ({ channel }: { channel: string }) => {
+export const CartNavItem = async ({ channel, locale }: { channel: string; locale: string }) => {
 	const checkoutId = await Checkout.getIdFromCookies(channel);
-	const checkout = checkoutId ? await Checkout.find(checkoutId) : null;
+	const checkout = checkoutId ? await Checkout.find(checkoutId, locale) : null;
 
 	const lineCount = checkout ? checkout.lines.reduce((result, line) => result + line.quantity, 0) : 0;
 

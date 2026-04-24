@@ -5,3 +5,13 @@
 body {
 	overflow-x: hidden;
 }
+
+[dir="rtl"] {
+	text-align: right;
+}
+
+[dir="rtl"] input,
+[dir="rtl"] select,
+[dir="rtl"] textarea {
+	text-align: right;
+}

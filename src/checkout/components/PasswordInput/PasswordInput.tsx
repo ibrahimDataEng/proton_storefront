@@ -5,6 +5,7 @@ import clsx from "clsx";
 import { Field, type FieldProps } from "formik";
 import { EyeHiddenIcon, EyeIcon } from "@/checkout/ui-kit/icons";
 import { IconButton } from "@/checkout/components/IconButton";
+import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 
 export interface PasswordInputProps<TName extends string> extends AllHTMLAttributes<HTMLInputElement> {
 	name: TName;
@@ -22,6 +23,7 @@ export const PasswordInputComponent = <TName extends string>({
 	required,
 	...props
 }: PasswordInputProps<TName> & FieldProps) => {
+	const { common } = useCheckoutMessages();
 	const error = touched[field.name] ? (errors[field.name] as string) : undefined;
 	const [passwordVisible, setPasswordVisible] = useState(false);
 
@@ -47,7 +49,7 @@ export const PasswordInputComponent = <TName extends string>({
 							)}
 						/>
 						<IconButton
-							ariaLabel="change password visibility"
+							ariaLabel={common.changePasswordVisibility}
 							onClick={() => setPasswordVisible(!passwordVisible)}
 							icon={passwordVisible ? <EyeIcon /> : <EyeHiddenIcon />}
 							className="absolute right-0 mt-px flex h-10 w-10 items-center justify-center rounded-md  text-center focus:border-neutral-300 focus:outline-none focus:ring focus:ring-neutral-200 focus:ring-opacity-50 active:border-neutral-200 active:outline-none"

@@ -5,6 +5,7 @@ query SearchProducts(
 	$first: Int!
 	$after: String
 	$channel: String!
+	$language: LanguageCodeEnum!
 ) {
 	products(
 		first: $first

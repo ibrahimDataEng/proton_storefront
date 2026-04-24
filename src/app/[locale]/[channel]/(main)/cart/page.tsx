@@ -6,27 +6,32 @@ import { formatMoney, getHrefForVariant } from "@/lib/utils";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 
 export const metadata = {
-	title: "Shopping Cart · Saleor Storefront example",
+	title: "Shopping Cart · Green Line Storefront",
 };
 
-export default async function Page(props: { params: Promise<{ channel: string }> }) {
+export default async function Page(props: { params: Promise<{ channel: string; locale: string }> }) {
 	const params = await props.params;
+	const locale = params.locale;
 	const checkoutId = await Checkout.getIdFromCookies(params.channel);
 
-	const checkout = await Checkout.find(checkoutId);
+	const checkout = await Checkout.find(checkoutId, locale);
 
 	if (!checkout || checkout.lines.length < 1) {
 		return (
 			<section className="mx-auto max-w-7xl p-8">
-				<h1 className="mt-8 text-3xl font-bold text-neutral-900">Your Shopping Cart is empty</h1>
+				<h1 className="mt-8 text-3xl font-bold text-neutral-900">
+					{locale === "ar" ? "عربة التسوق الخاصة بك فارغة" : " Your Shopping Cart is empty"}
+				</h1>
 				<p className="my-12 text-sm text-neutral-500">
-					Looks like you haven’t added any items to the cart yet.
+					{locale === "ar"
+						? " يبدو أنك لم تضف شيئاً بعد!"
+						: " Looks like you haven’t added any items to the cart yet."}
 				</p>
 				<LinkWithChannel
 					href="/products"
 					className="inline-block max-w-full rounded border border-transparent bg-neutral-900 px-6 py-3 text-center font-medium text-neutral-50 hover:bg-neutral-800 aria-disabled:cursor-not-allowed aria-disabled:bg-neutral-500 sm:px-16"
 				>
-					Explore products
+					{locale === "ar" ? " استكشف المنتجات" : " Explore products"}
 				</LinkWithChannel>
 			</section>
 		);
@@ -34,7 +39,9 @@ export default async function Page(props: { params: Promise<{ channel: string }>
 
 	return (
 		<section className="mx-auto max-w-7xl p-8">
-			<h1 className="mt-8 text-3xl font-bold text-neutral-900">Your Shopping Cart</h1>
+			<h1 className="mt-8 text-3xl font-bold text-neutral-900">
+				{locale === "ar" ? " عربة التسوق الخاصة بك" : " Your Shopping Cart"}
+			</h1>
 			<form className="mt-12">
 				<ul
 					data-testid="CartProductList"
@@ -63,9 +70,14 @@ export default async function Page(props: { params: Promise<{ channel: string }>
 												variantId: item.variant.id,
 											})}
 										>
-											<h2 className="font-medium text-neutral-700">{item.variant?.product?.name}</h2>
+											<h2 className="font-medium text-neutral-700">
+												{item.variant?.product?.translation?.name || item.variant?.product.name}
+											</h2>
 										</LinkWithChannel>
-										<p className="mt-1 text-sm text-neutral-500">{item.variant?.product?.category?.name}</p>
+										<p className="mt-1 text-sm text-neutral-500">
+											{item.variant?.product?.category?.translation?.name ||
+												item.variant?.product?.category?.name}
+										</p>
 										{item.variant.name !== item.variant.id && Boolean(item.variant.name) && (
 											<p className="mt-1 text-sm text-neutral-500">Variant: {item.variant.name}</p>
 										)}
@@ -75,7 +87,11 @@ export default async function Page(props: { params: Promise<{ channel: string }>
 									</p>
 								</div>
 								<div className="flex justify-between">
-									<div className="text-sm font-bold">Qty: {item.quantity}</div>
+									<div className="text-sm font-bold">
+										{" "}
+										{locale === "ar" ? "الكمية: " : "Qty: "}
+										{item.quantity}
+									</div>
 									<DeleteLineButton checkoutId={checkoutId} lineId={item.id} />
 								</div>
 							</div>
@@ -87,8 +103,14 @@ export default async function Page(props: { params: Promise<{ channel: string }>
 					<div className="rounded border bg-neutral-50 px-4 py-2">
 						<div className="flex items-center justify-between gap-2 py-2">
 							<div>
-								<p className="font-semibold text-neutral-900">Your Total</p>
-								<p className="mt-1 text-sm text-neutral-500">Shipping will be calculated in the next step</p>
+								<p className="font-semibold text-neutral-900">
+									{locale === "ar" ? "المجموع " : "Your Total"}
+								</p>
+								<p className="mt-1 text-sm text-neutral-500">
+									{locale === "ar"
+										? "سوف يتم حساب الشحن في الخطوة القادمة"
+										: "Shipping will be calculated in the next step"}
+								</p>
 							</div>
 							<div className="font-medium text-neutral-900">
 								{formatMoney(checkout.totalPrice.gross.amount, checkout.totalPrice.gross.currency)}

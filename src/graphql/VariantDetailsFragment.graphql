@@ -1,6 +1,9 @@
 fragment VariantDetails on ProductVariant {
 	id
 	name
+	translation(languageCode: $language) {
+		name
+	}
 	quantityAvailable
 	pricing {
 		price {

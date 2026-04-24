@@ -1,5 +1,6 @@
 import { Button } from "@/checkout/components/Button";
 import { IconButton } from "@/checkout/components/IconButton";
+import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 import { TrashIcon } from "@/checkout/ui-kit/icons";
 
 interface AddressFormActionsProps {
@@ -15,24 +16,26 @@ export const AddressFormActions: React.FC<AddressFormActionsProps> = ({
 	onCancel,
 	loading,
 }) => {
+	const { address, payment } = useCheckoutMessages();
+
 	return (
 		<div className="flex flex-row justify-end gap-2">
 			{onDelete && (
 				<div className="flex">
-					<IconButton ariaLabel="Delete address" onClick={onDelete} icon={<TrashIcon aria-hidden />} />
+					<IconButton ariaLabel={address.deleteAddress} onClick={onDelete} icon={<TrashIcon aria-hidden />} />
 				</div>
 			)}
 
-			<Button ariaLabel="Cancel editing" variant="secondary" onClick={onCancel} label="Cancel" />
+			<Button ariaLabel={address.cancel} variant="secondary" onClick={onCancel} label={address.cancel} />
 			{loading ? (
 				<Button
 					ariaDisabled
-					ariaLabel="Save address"
+					ariaLabel={address.saveAddress}
 					onClick={(e) => e.preventDefault()}
-					label="Processing…"
+					label={payment.processingPayment}
 				/>
 			) : (
-				<Button ariaLabel="Save address" onClick={onSubmit} label="Save address" />
+				<Button ariaLabel={address.saveAddress} onClick={onSubmit} label={address.saveAddress} />
 			)}
 		</div>
 	);

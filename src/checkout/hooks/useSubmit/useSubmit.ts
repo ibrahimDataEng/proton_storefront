@@ -3,6 +3,7 @@ import { useCallback } from "react";
 import { type CombinedError } from "urql";
 import { useAlerts } from "@/checkout/hooks/useAlerts";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
+import { getCheckoutLanguageCode, useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 import {
 	type CheckoutUpdateStateScope,
 	useCheckoutUpdateStateChange,
@@ -74,6 +75,7 @@ export const useSubmit = <
 	);
 	const { showErrors } = useAlerts();
 	const { checkout } = useCheckout();
+	const { locale } = useCheckoutMessages();
 
 	const handleSubmit = useCallback(
 		async (formData: TData = {} as TData, formHelpers?: any) => {
@@ -94,7 +96,7 @@ export const useSubmit = <
 			setCheckoutUpdateState("loading");
 
 			const commonData: CommonVars = {
-				languageCode: "EN_US",
+				languageCode: getCheckoutLanguageCode(locale),
 				channel: checkout.channel.slug,
 				checkoutId: checkout.id,
 			};
@@ -149,6 +151,7 @@ export const useSubmit = <
 			onAbort,
 			onSuccess,
 			showErrors,
+			locale,
 		],
 	);
 

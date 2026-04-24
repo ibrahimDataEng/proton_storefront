@@ -54,15 +54,10 @@ export default async function Page(props: { params: Promise<{ slug: string; loca
 	if (!page) notFound();
 
 	const localizedPage = params.locale === "ar" && page.translation ? page.translation : page;
-	console.log("Generating metadata for page:", {
-		title: localizedPage.title,
-		seoTitle: localizedPage.seoTitle,
-		seoDescription: localizedPage.seoDescription,
-	});
 	const title = localizedPage?.title || "Page";
 	const contentJson = localizedPage?.content ? JSON.parse(localizedPage.content) : null;
 
-	console.log("Page content:", title, localizedPage?.content);
+	//console.log("Page content:", title, localizedPage?.content);
 
 	const contentHtml = contentJson ? parser.parse(contentJson) : null;
 

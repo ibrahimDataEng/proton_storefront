@@ -4,6 +4,7 @@ import { IconButton } from "@/checkout/components/IconButton";
 import { RemoveIcon } from "@/checkout/ui-kit/icons";
 import { useCheckoutRemovePromoCodeMutation } from "@/checkout/graphql";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
+import { getCheckoutLanguageCode, useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 import { isOrderConfirmationPage } from "@/checkout/lib/utils/url";
 
 interface SummaryPromoCodeRowProps extends SummaryMoneyRowProps {
@@ -19,13 +20,14 @@ export const SummaryPromoCodeRow: React.FC<SummaryPromoCodeRowProps> = ({
 	...rest
 }) => {
 	const { checkout } = useCheckout({ pause: isOrderConfirmationPage() });
+	const { locale, summary } = useCheckoutMessages();
 	const [, checkoutRemovePromoCode] = useCheckoutRemovePromoCodeMutation();
 
 	const onDelete = () => {
 		const variables = promoCode ? { promoCode: promoCode } : { promoCodeId: promoCodeId as string };
 
 		void checkoutRemovePromoCode({
-			languageCode: "EN_US",
+			languageCode: getCheckoutLanguageCode(locale),
 			checkoutId: checkout.id,
 			...variables,
 		});
@@ -35,7 +37,11 @@ export const SummaryPromoCodeRow: React.FC<SummaryPromoCodeRowProps> = ({
 		<SummaryMoneyRow {...rest}>
 			{editable && (
 				<div>
-					<IconButton onClick={onDelete} ariaLabel="remove promo code" icon={<RemoveIcon aria-hidden />} />
+					<IconButton
+						onClick={onDelete}
+						ariaLabel={summary.removePromoCode}
+						icon={<RemoveIcon aria-hidden />}
+					/>
 				</div>
 			)}
 		</SummaryMoneyRow>

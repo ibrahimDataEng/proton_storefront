@@ -1,5 +1,5 @@
 import { cookies } from "next/headers";
-import { CheckoutCreateDocument, CheckoutFindDocument } from "@/gql/graphql";
+import { CheckoutCreateDocument, CheckoutFindDocument, LanguageCodeEnum } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 
 export async function getIdFromCookies(channel: string) {
@@ -18,12 +18,14 @@ export async function saveIdToCookie(channel: string, checkoutId: string) {
 	});
 }
 
-export async function find(checkoutId: string) {
+export async function find(checkoutId: string, locale: string) {
 	try {
+		const language = locale === "ar" ? LanguageCodeEnum.Ar : LanguageCodeEnum.EnUs;
 		const { checkout } = checkoutId
 			? await executeGraphQL(CheckoutFindDocument, {
 					variables: {
 						id: checkoutId,
+						language: language,
 					},
 					cache: "no-cache",
 				})
@@ -35,13 +37,24 @@ export async function find(checkoutId: string) {
 	}
 }
 
-export async function findOrCreate({ channel, checkoutId }: { checkoutId?: string; channel: string }) {
+export async function findOrCreate({
+	channel,
+	checkoutId,
+	locale,
+}: {
+	checkoutId?: string;
+	channel: string;
+	locale: string;
+}) {
 	if (!checkoutId) {
-		return (await create({ channel })).checkoutCreate?.checkout;
+		return (await create({ channel, locale })).checkoutCreate?.checkout;
 	}
-	const checkout = await find(checkoutId);
-	return checkout || (await create({ channel })).checkoutCreate?.checkout;
+	const checkout = await find(checkoutId, locale);
+	return checkout || (await create({ channel, locale })).checkoutCreate?.checkout;
 }
 
-export const create = ({ channel }: { channel: string }) =>
-	executeGraphQL(CheckoutCreateDocument, { cache: "no-cache", variables: { channel } });
+export const create = ({ channel, locale }: { channel: string; locale: string }) => {
+	const language = locale === "ar" ? LanguageCodeEnum.Ar : LanguageCodeEnum.EnUs;
+
+	return executeGraphQL(CheckoutCreateDocument, { cache: "no-cache", variables: { channel, language } });
+};

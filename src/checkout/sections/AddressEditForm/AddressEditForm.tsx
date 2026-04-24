@@ -15,6 +15,7 @@ import { useFormSubmit } from "@/checkout/hooks/useFormSubmit";
 import { AddressFormActions } from "@/checkout/components/ManualSaveAddressForm";
 import { useAddressFormSchema } from "@/checkout/components/AddressForm/useAddressFormSchema";
 import { useSubmit } from "@/checkout/hooks/useSubmit/useSubmit";
+import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 
 export interface AddressEditFormProps extends Pick<AddressFormProps, "title" | "availableCountries"> {
 	address: AddressFragment;
@@ -24,12 +25,14 @@ export interface AddressEditFormProps extends Pick<AddressFormProps, "title" | "
 }
 
 export const AddressEditForm: React.FC<AddressEditFormProps> = ({
+	title,
 	onUpdate,
 	onClose,
 	onDelete,
 	address,
 	availableCountries,
 }) => {
+	const { address: addressMessages } = useCheckoutMessages();
 	const [{ fetching: updating }, userAddressUpdate] = useUserAddressUpdateMutation();
 	const [{ fetching: deleting }, userAddressDelete] = useUserAddressDeleteMutation();
 	const { setCountryCode, validationSchema } = useAddressFormSchema();
@@ -76,7 +79,7 @@ export const AddressEditForm: React.FC<AddressEditFormProps> = ({
 
 	return (
 		<FormProvider form={{ ...form, handleChange: onChange }}>
-			<AddressForm title="Edit address" availableCountries={availableCountries}>
+			<AddressForm title={title || addressMessages.editAddress} availableCountries={availableCountries}>
 				<AddressFormActions
 					onSubmit={handleSubmit}
 					loading={updating || deleting}

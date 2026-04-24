@@ -2,17 +2,19 @@ import clsx from "clsx";
 import React, { type FC } from "react";
 import { Button } from "@/checkout/components/Button";
 import { TextInput } from "@/checkout/components/TextInput";
-import { useCheckoutAddPromoCodeMutation } from "@/checkout/graphql";
-import { type Classes } from "@/checkout/lib/globalTypes";
-import { useFormSubmit } from "@/checkout/hooks/useFormSubmit";
 import { FormProvider } from "@/checkout/hooks/useForm/FormProvider";
 import { useForm } from "@/checkout/hooks/useForm";
+import { useFormSubmit } from "@/checkout/hooks/useFormSubmit";
+import { useCheckoutAddPromoCodeMutation } from "@/checkout/graphql";
+import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
+import { type Classes } from "@/checkout/lib/globalTypes";
 
 interface PromoCodeFormData {
 	promoCode: string;
 }
 
 export const PromoCodeAdd: FC<Classes> = ({ className }) => {
+	const { summary } = useCheckoutMessages();
 	const [, checkoutAddPromoCode] = useCheckoutAddPromoCodeMutation();
 
 	const onSubmit = useFormSubmit<PromoCodeFormData, typeof checkoutAddPromoCode>({
@@ -39,13 +41,13 @@ export const PromoCodeAdd: FC<Classes> = ({ className }) => {
 	return (
 		<FormProvider form={form}>
 			<div className={clsx("relative my-4", className)}>
-				<TextInput required={false} name="promoCode" label="Add gift card or discount code" />
+				<TextInput required={false} name="promoCode" label={summary.addDiscountCode} />
 				{showApplyButton && (
 					<Button
 						className="absolute bottom-2.5 right-3"
 						variant="tertiary"
-						ariaLabel="apply"
-						label="Apply"
+						ariaLabel={summary.apply}
+						label={summary.apply}
 						type="submit"
 					/>
 				)}

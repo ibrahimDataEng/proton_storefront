@@ -10,23 +10,33 @@ import { VariantSelector } from "@/ui/components/VariantSelector";
 import { ProductImageWrapper } from "@/ui/atoms/ProductImageWrapper";
 import { executeGraphQL } from "@/lib/graphql";
 import { formatMoney, formatMoneyRange } from "@/lib/utils";
-import { CheckoutAddLineDocument, ProductDetailsDocument, ProductListDocument } from "@/gql/graphql";
+import {
+	CheckoutAddLineDocument,
+	LanguageCodeEnum,
+	ProductDetailsDocument,
+	ProductListDocument,
+} from "@/gql/graphql";
 import * as Checkout from "@/lib/checkout";
 import { AvailabilityMessage } from "@/ui/components/AvailabilityMessage";
 
 export async function generateMetadata(
 	props: {
-		params: Promise<{ slug: string; channel: string }>;
+		params: Promise<{ slug: string; channel: string; locale: string }>;
 		searchParams: Promise<{ variant?: string }>;
 	},
 	parent: ResolvingMetadata,
 ): Promise<Metadata> {
+	const locale = (await props.params).locale;
+	console.log("jjj", locale);
+
+	const language = locale === "ar" ? LanguageCodeEnum.Ar : LanguageCodeEnum.EnUs;
 	const [searchParams, params] = await Promise.all([props.searchParams, props.params]);
 
 	const { product } = await executeGraphQL(ProductDetailsDocument, {
 		variables: {
 			slug: decodeURIComponent(params.slug),
 			channel: params.channel,
+			language: language,
 		},
 		//revalidate: 60,
 		revalidate: 1,
@@ -35,14 +45,14 @@ export async function generateMetadata(
 	if (!product) {
 		notFound();
 	}
-
-	const productName = product.seoTitle || product.name;
+	const localizedProduct = locale === "ar" && product?.translation ? product.translation : product;
+	const productName = localizedProduct.seoTitle || localizedProduct.name;
 	const variantName = product.variants?.find(({ id }) => id === searchParams.variant)?.name;
 	const productNameAndVariant = variantName ? `${productName} - ${variantName}` : productName;
 
 	return {
-		title: `${product.name} | ${product.seoTitle || (await parent).title?.absolute}`,
-		description: product.seoDescription || productNameAndVariant,
+		title: `${localizedProduct.name} | ${localizedProduct.seoTitle || (await parent).title?.absolute}`,
+		description: localizedProduct.seoDescription || productNameAndVariant,
 		alternates: {
 			canonical: process.env.NEXT_PUBLIC_STOREFRONT_URL
 				? process.env.NEXT_PUBLIC_STOREFRONT_URL + `/products/${encodeURIComponent(params.slug)}`
@@ -61,11 +71,13 @@ export async function generateMetadata(
 	};
 }
 
-export async function generateStaticParams({ params }: { params: { channel: string } }) {
+export async function generateStaticParams({ params }: { params: { channel: string; locale: string } }) {
+	const locale = params.locale;
+	const language = locale === "ar" ? LanguageCodeEnum.Ar : LanguageCodeEnum.EnUs;
 	const { products } = await executeGraphQL(ProductListDocument, {
 		//revalidate: 60,
 		revalidate: 1,
-		variables: { first: 20, channel: params.channel },
+		variables: { first: 20, channel: params.channel, language: language },
 		withAuth: false,
 	});
 
@@ -76,14 +88,19 @@ export async function generateStaticParams({ params }: { params: { channel: stri
 const parser = edjsHTML();
 
 export default async function Page(props: {
-	params: Promise<{ slug: string; channel: string }>;
+	params: Promise<{ slug: string; channel: string; locale: string }>;
 	searchParams: Promise<{ variant?: string }>;
 }) {
+	const locale = (await props.params).locale;
+	console.log("jjj", locale);
+
+	const language = locale === "ar" ? LanguageCodeEnum.Ar : LanguageCodeEnum.EnUs;
 	const [searchParams, params] = await Promise.all([props.searchParams, props.params]);
 	const { product } = await executeGraphQL(ProductDetailsDocument, {
 		variables: {
 			slug: decodeURIComponent(params.slug),
 			channel: params.channel,
+			language: language,
 		},
 		//revalidate: 60,
 		revalidate: 1,
@@ -93,10 +110,11 @@ export default async function Page(props: {
 		notFound();
 	}
 
-	const isAvailableFromAPi = product.isAvailable;
-
+	const localizedProduct = locale === "ar" && product?.translation ? product.translation : product;
 	const firstImage = product.thumbnail;
-	const description = product?.description ? parser.parse(JSON.parse(product?.description)) : null;
+	const description = localizedProduct?.description
+		? parser.parse(JSON.parse(localizedProduct?.description))
+		: null;
 
 	const variants = product.variants;
 	const selectedVariantID = searchParams.variant;
@@ -108,6 +126,7 @@ export default async function Page(props: {
 		const checkout = await Checkout.findOrCreate({
 			checkoutId: await Checkout.getIdFromCookies(params.channel),
 			channel: params.channel,
+			locale: locale,
 		});
 		invariant(checkout, "This should never happen");
 
@@ -146,8 +165,9 @@ export default async function Page(props: {
 		image: product.thumbnail?.url,
 		...(selectedVariant
 			? {
-					name: `${product.name} - ${selectedVariant.name}`,
-					description: product.seoDescription || `${product.name} - ${selectedVariant.name}`,
+					name: `${localizedProduct.name} - ${selectedVariant.name}`,
+					description:
+						localizedProduct.seoDescription || `${localizedProduct.name} - ${selectedVariant.name}`,
 					offers: {
 						"@type": "Offer",
 						availability: selectedVariant.quantityAvailable
@@ -158,9 +178,9 @@ export default async function Page(props: {
 					},
 				}
 			: {
-					name: product.name,
+					name: localizedProduct.name ?? product.name ?? "",
 
-					description: product.seoDescription || product.name,
+					description: localizedProduct.seoDescription || product.seoDescription || "",
 					offers: {
 						"@type": "AggregateOffer",
 						availability: product.variants?.some((variant) => variant.quantityAvailable)
@@ -196,13 +216,10 @@ export default async function Page(props: {
 				<div className="flex flex-col pt-6 sm:col-span-1 sm:px-6 sm:pt-0 lg:col-span-3 lg:pt-16">
 					<div>
 						<h1 className="mb-4 flex-auto text-3xl font-medium tracking-tight text-neutral-900">
-							{product?.name}
+							{localizedProduct?.name}
 						</h1>
 						<p className="mb-8 text-sm " data-testid="ProductElement_Price">
 							{price}
-						</p>
-						<p className="mb-6 text-sm text-gray-500">
-							{isAvailableFromAPi ? "متاح في المخزون ✅" : "غير متوفر ❌"}
 						</p>
 						{variants && (
 							<VariantSelector

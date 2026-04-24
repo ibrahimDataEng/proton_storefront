@@ -1,9 +1,9 @@
 import { type CountryCode } from "@/checkout/graphql";
+import { getCheckoutLocaleTag } from "@/checkout/lib/checkoutMessages";
 
 export const getCurrentHref = () => location.href;
 
-const countryNames = new Intl.DisplayNames("EN-US", {
-	type: "region",
-});
 export const getCountryName = (countryCode: CountryCode): string =>
-	countryNames.of(countryCode) || countryCode;
+	new Intl.DisplayNames(getCheckoutLocaleTag(document.documentElement.lang), {
+		type: "region",
+	}).of(countryCode) || countryCode;

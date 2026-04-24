@@ -1,4 +1,5 @@
 import { type Money as MoneyType, getFormattedMoney } from "@/checkout/lib/utils/money";
+import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 
 import { type AriaLabel, type Classes } from "@/checkout/lib/globalTypes";
 
@@ -14,7 +15,8 @@ export const Money = <TMoney extends MoneyType>({
 	negative,
 	...textProps
 }: MoneyProps<TMoney>) => {
-	const formattedMoney = getFormattedMoney(money, negative);
+	const { locale } = useCheckoutMessages();
+	const formattedMoney = getFormattedMoney(money, negative, locale);
 
 	if (!money) {
 		return null;

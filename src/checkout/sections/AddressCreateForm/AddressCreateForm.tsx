@@ -7,6 +7,7 @@ import { useFormSubmit } from "@/checkout/hooks/useFormSubmit";
 import { AddressFormActions } from "@/checkout/components/ManualSaveAddressForm";
 import { useAddressFormSchema } from "@/checkout/components/AddressForm/useAddressFormSchema";
 import { AddressForm, type AddressFormProps } from "@/checkout/components/AddressForm";
+import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 import { type AddressFragment, type CountryCode, useUserAddressCreateMutation } from "@/checkout/graphql";
 import { FormProvider } from "@/checkout/hooks/useForm/FormProvider";
 
@@ -20,6 +21,7 @@ export const AddressCreateForm: React.FC<AddressCreateFormProps> = ({
 	onClose,
 	availableCountries,
 }) => {
+	const { address } = useCheckoutMessages();
 	const [, userAddressCreate] = useUserAddressCreateMutation();
 	const { setCountryCode, validationSchema } = useAddressFormSchema();
 
@@ -53,7 +55,7 @@ export const AddressCreateForm: React.FC<AddressCreateFormProps> = ({
 
 	return (
 		<FormProvider form={{ ...form, handleChange: onChange }}>
-			<AddressForm title="Create address" availableCountries={availableCountries}>
+			<AddressForm title={address.createAddress} availableCountries={availableCountries}>
 				<AddressFormActions onSubmit={handleSubmit} loading={isSubmitting} onCancel={onClose} />
 			</AddressForm>
 		</FormProvider>

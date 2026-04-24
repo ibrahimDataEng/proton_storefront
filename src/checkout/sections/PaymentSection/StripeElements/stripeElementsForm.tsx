@@ -1,26 +1,27 @@
 import { type FormEventHandler, useEffect, useState } from "react";
-import { PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { type StripePaymentElementOptions } from "@stripe/stripe-js";
 import { getUrlForTransactionInitialize } from "../utils";
-import { usePaymentProcessingScreen } from "../PaymentProcessingScreen";
-import {
-	useCheckoutValidationActions,
-	useCheckoutValidationState,
-	anyFormsValidating,
-	areAllFormsValid,
-} from "@/checkout/state/checkoutValidationStateStore";
-import {
-	useCheckoutUpdateState,
-	useCheckoutUpdateStateActions,
-	areAnyRequestsInProgress,
-	hasFinishedApiChangesWithNoError,
-} from "@/checkout/state/updateStateStore";
-import { useEvent } from "@/checkout/hooks/useEvent";
-import { useUser } from "@/checkout/hooks/useUser";
 import { useAlerts } from "@/checkout/hooks/useAlerts";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { useCheckoutComplete } from "@/checkout/hooks/useCheckoutComplete";
+import { useEvent } from "@/checkout/hooks/useEvent";
+import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 import { getQueryParams } from "@/checkout/lib/utils/url";
+import { usePaymentProcessingScreen } from "@/checkout/sections/PaymentSection/PaymentProcessingScreen";
+import {
+	anyFormsValidating,
+	areAllFormsValid,
+	useCheckoutValidationActions,
+	useCheckoutValidationState,
+} from "@/checkout/state/checkoutValidationStateStore";
+import {
+	areAnyRequestsInProgress,
+	hasFinishedApiChangesWithNoError,
+	useCheckoutUpdateState,
+	useCheckoutUpdateStateActions,
+} from "@/checkout/state/updateStateStore";
+import { useUser } from "@/checkout/hooks/useUser";
 
 const paymentElementOptions: StripePaymentElementOptions = {
 	layout: "tabs",
@@ -30,35 +31,30 @@ const paymentElementOptions: StripePaymentElementOptions = {
 };
 
 export function CheckoutForm() {
+	const { payment } = useCheckoutMessages();
 	const [isLoading, setIsLoading] = useState(false);
 	const stripe = useStripe();
 	const elements = useElements();
 	const { checkout } = useCheckout();
-
 	const { authenticated } = useUser();
 	const { showCustomErrors } = useAlerts();
-
 	const checkoutUpdateState = useCheckoutUpdateState();
 	const anyRequestsInProgress = areAnyRequestsInProgress(checkoutUpdateState);
 	const finishedApiChangesWithNoError = hasFinishedApiChangesWithNoError(checkoutUpdateState);
 	const { setSubmitInProgress, setShouldRegisterUser } = useCheckoutUpdateStateActions();
 	const { validateAllForms } = useCheckoutValidationActions();
 	const { validationState } = useCheckoutValidationState();
-
 	const { setIsProcessingPayment } = usePaymentProcessingScreen();
 	const { onCheckoutComplete, completingCheckout } = useCheckoutComplete();
 
-	// handler for when user presses submit
 	const onSubmitInitialize: FormEventHandler<HTMLFormElement> = useEvent(async (e) => {
 		e.preventDefault();
-
 		setIsLoading(true);
 		validateAllForms(authenticated);
 		setShouldRegisterUser(true);
 		setSubmitInProgress(true);
 	});
 
-	// handle when page is opened from previously redirected payment
 	useEffect(() => {
 		const { paymentIntent, paymentIntentClientSecret, processingPayment } = getQueryParams();
 
@@ -71,8 +67,6 @@ export function CheckoutForm() {
 		}
 	}, [completingCheckout, onCheckoutComplete]);
 
-	// when submission is initialized, awaits for all the other requests to finish,
-	// forms to validate, then either does transaction initialize or process
 	useEffect(() => {
 		const validating = anyFormsValidating(validationState);
 		const allFormsValid = areAllFormsValid(validationState);
@@ -81,16 +75,11 @@ export function CheckoutForm() {
 			return;
 		}
 		if (!stripe || !elements) {
-			// Stripe.js hasn't yet loaded.
-			// Make sure to disable form submission until Stripe.js has loaded.
 			return;
 		}
 
-		// submit was finished - we can mark it as complete
 		setSubmitInProgress(false);
 
-		// there was en error either in some other request or form validation
-		// - stop the submission altogether
 		if (!finishedApiChangesWithNoError || !allFormsValid) {
 			setIsLoading(false);
 			return;
@@ -126,15 +115,10 @@ export function CheckoutForm() {
 
 				if (error) {
 					setIsProcessingPayment(false);
-					// This point will only be reached if there is an immediate error when
-					// confirming the payment. Otherwise, your customer will be redirected to
-					// your `return_url`. For some payment methods like iDEAL, your customer will
-					// be redirected to an intermediate site first to authorize the payment, then
-					// redirected to the `return_url`.
 					if (error.type === "card_error" || error.type === "validation_error") {
-						showCustomErrors([{ message: error.message ?? "Something went wrong" }]);
+						showCustomErrors([{ message: error.message ?? payment.paymentProcessingError }]);
 					} else {
-						showCustomErrors([{ message: "An unexpected error occurred." }]);
+						showCustomErrors([{ message: payment.unexpectedError }]);
 					}
 					return;
 				}
@@ -146,16 +130,6 @@ export function CheckoutForm() {
 				setIsLoading(false);
 				setIsProcessingPayment(false);
 			});
-
-		// @todo
-		// there is a previous transaction going on, we want to process instead of initialize
-		// if (currentTransactionId) {
-		// 	void onTransactionProccess({
-		// 		data: adyenCheckoutSubmitParams?.state.data,
-		// 		id: currentTransactionId,
-		// 	});
-		// 	return;
-		// }
 	}, [
 		anyRequestsInProgress,
 		checkout.billingAddress?.city,
@@ -172,6 +146,8 @@ export function CheckoutForm() {
 		elements,
 		finishedApiChangesWithNoError,
 		onCheckoutComplete,
+		payment.paymentProcessingError,
+		payment.unexpectedError,
 		setIsProcessingPayment,
 		setSubmitInProgress,
 		showCustomErrors,
@@ -187,13 +163,15 @@ export function CheckoutForm() {
 				aria-disabled={isLoading || !stripe || !elements}
 				id="submit"
 			>
-				<span className="button-text">{isLoading ? <Loader /> : "Pay now"}</span>
+				<span className="button-text">{isLoading ? <Loader /> : payment.payNow}</span>
 			</button>
 		</form>
 	);
 }
 
 function Loader() {
+	const { payment } = useCheckoutMessages();
+
 	return (
 		<div className="text-center" aria-busy="true" role="status">
 			<div>
@@ -213,7 +191,7 @@ function Loader() {
 						fill="currentFill"
 					/>
 				</svg>
-				<span className="sr-only">Loading...</span>
+				<span className="sr-only">{payment.processingPayment}</span>
 			</div>
 		</div>
 	);

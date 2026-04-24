@@ -149,6 +149,13 @@ fragment CheckoutLineFragment on CheckoutLine {
 				id
 				name
 			}
+			category {
+				slug
+				name
+				translation(languageCode: $languageCode) {
+					name
+				}
+			}
 			media {
 				alt
 				type

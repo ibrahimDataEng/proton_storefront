@@ -2,8 +2,9 @@ import { SignInFormContainer, type SignInFormContainerProps } from "../Contact/S
 import { PasswordInput } from "@/checkout/components/PasswordInput";
 import { Checkbox } from "@/checkout/components/Checkbox";
 import { TextInput } from "@/checkout/components/TextInput";
-import { useGuestUserForm } from "@/checkout/sections/GuestUser/useGuestUserForm";
 import { FormProvider } from "@/checkout/hooks/useForm/FormProvider";
+import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
+import { useGuestUserForm } from "@/checkout/sections/GuestUser/useGuestUserForm";
 
 type GuestUserProps = Pick<SignInFormContainerProps, "onSectionChange"> & {
 	onEmailChange: (email: string) => void;
@@ -15,15 +16,16 @@ export const GuestUser: React.FC<GuestUserProps> = ({
 	onEmailChange,
 	email: initialEmail,
 }) => {
+	const { contact } = useCheckoutMessages();
 	const form = useGuestUserForm({ initialEmail });
 	const { handleChange } = form;
 	const { createAccount } = form.values;
 
 	return (
 		<SignInFormContainer
-			title="Contact details"
-			redirectSubtitle="Already have an account?"
-			redirectButtonLabel="Sign in"
+			title={contact.contactDetails}
+			redirectSubtitle={contact.alreadyHaveAccount}
+			redirectButtonLabel={contact.signIn}
 			onSectionChange={onSectionChange}
 		>
 			<FormProvider form={form}>
@@ -31,7 +33,7 @@ export const GuestUser: React.FC<GuestUserProps> = ({
 					<TextInput
 						required
 						name="email"
-						label="Email"
+						label={contact.email}
 						onChange={(event) => {
 							handleChange(event);
 							onEmailChange(event.currentTarget.value);
@@ -39,12 +41,12 @@ export const GuestUser: React.FC<GuestUserProps> = ({
 					/>
 					<Checkbox
 						name="createAccount"
-						label="I want to create account"
+						label={contact.createAccount}
 						data-testid={"createAccountCheckbox"}
 					/>
 					{createAccount && (
 						<div className="mt-2">
-							<PasswordInput name="password" label="Password (minimum 8 characters)" required />
+							<PasswordInput name="password" label={contact.passwordMinLength} required />
 						</div>
 					)}
 				</div>

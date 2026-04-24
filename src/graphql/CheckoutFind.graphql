@@ -1,7 +1,10 @@
-query CheckoutFind($id: ID!) {
+query CheckoutFind($id: ID!, $language: LanguageCodeEnum!) {
 	checkout(id: $id) {
 		id
 		email
+		channel {
+			slug
+		}
 		lines {
 			id
 			quantity
@@ -15,13 +18,20 @@ query CheckoutFind($id: ID!) {
 				product {
 					id
 					name
+					translation(languageCode: $language) {
+						name
+					}
 					slug
 					thumbnail {
 						url
 						alt
 					}
 					category {
+						slug
 						name
+						translation(languageCode: $language) {
+							name
+						}
 					}
 				}
 				pricing {

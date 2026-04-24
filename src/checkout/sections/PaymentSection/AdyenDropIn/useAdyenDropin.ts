@@ -3,7 +3,6 @@
 import type DropinElement from "@adyen/adyen-web/dist/types/components/Dropin";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { camelCase } from "lodash-es";
-import { apiErrorMessages } from "../errorMessages";
 import {
 	type TransactionInitializeMutationVariables,
 	type TransactionProcessMutationVariables,
@@ -36,11 +35,13 @@ import {
 } from "@/checkout/state/updateStateStore";
 import { useCheckoutComplete } from "@/checkout/hooks/useCheckoutComplete";
 import { useErrorMessages } from "@/checkout/hooks/useErrorMessages";
-import { adyenErrorMessages } from "@/checkout/sections/PaymentSection/AdyenDropIn/errorMessages";
+import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
+import { useAdyenErrorMessages } from "@/checkout/sections/PaymentSection/AdyenDropIn/errorMessages";
 import { type MightNotExist } from "@/checkout/lib/globalTypes";
 import { useUser } from "@/checkout/hooks/useUser";
 import { getUrlForTransactionInitialize } from "@/checkout/sections/PaymentSection/utils";
 import { usePaymentProcessingScreen } from "@/checkout/sections/PaymentSection/PaymentProcessingScreen";
+import { useApiErrorMessages } from "@/checkout/sections/PaymentSection/errorMessages";
 
 export interface AdyenDropinProps {
 	config: ParsedAdyenGateway;
@@ -53,7 +54,10 @@ export const useAdyenDropin = (props: AdyenDropinProps) => {
 	const {
 		checkout: { id: checkoutId, totalPrice },
 	} = useCheckout();
+	const { payment } = useCheckoutMessages();
 	const { authenticated } = useUser();
+	const apiErrorMessages = useApiErrorMessages();
+	const adyenErrorMessages = useAdyenErrorMessages();
 	const { getMessageByErrorCode } = useErrorMessages(adyenErrorMessages);
 	const { errorMessages: commonErrorMessages } = useErrorMessages(apiErrorMessages);
 	const { validateAllForms } = useCheckoutValidationActions();
@@ -110,7 +114,7 @@ export const useAdyenDropin = (props: AdyenDropinProps) => {
 					return;
 				case "Error":
 					adyenCheckoutSubmitParams?.component.setStatus("error");
-					showCustomErrors([{ message: "There was an error processing your payment." }]);
+					showCustomErrors([{ message: payment.paymentProcessingError }]);
 					return;
 				case "Refused":
 					setCurrentTransactionId(undefined);
@@ -124,7 +128,13 @@ export const useAdyenDropin = (props: AdyenDropinProps) => {
 					return;
 			}
 		},
-		[adyenCheckoutSubmitParams?.component, getMessageByErrorCode, onCheckoutComplete, showCustomErrors],
+		[
+			adyenCheckoutSubmitParams?.component,
+			getMessageByErrorCode,
+			onCheckoutComplete,
+			payment.paymentProcessingError,
+			showCustomErrors,
+		],
 	);
 
 	const onTransactionInitialize = useSubmit<

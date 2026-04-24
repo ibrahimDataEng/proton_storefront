@@ -14,10 +14,12 @@ import { useBillingSameAsShippingForm } from "@/checkout/sections/GuestBillingAd
 import { type OptionalAddress } from "@/checkout/components/AddressForm/types";
 import { getByMatchingAddress } from "@/checkout/components/AddressForm/utils";
 import { type AddressFragment } from "@/checkout/graphql";
+import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 
 interface UserBillingAddressSectionProps {}
 
 export const UserBillingAddressSection: React.FC<UserBillingAddressSectionProps> = ({}) => {
+	const { address } = useCheckoutMessages();
 	const {
 		checkout: { isShippingRequired },
 	} = useCheckout();
@@ -63,7 +65,7 @@ export const UserBillingAddressSection: React.FC<UserBillingAddressSectionProps>
 					<FormProvider form={billingSameAsShippingForm}>
 						<Checkbox
 							name="billingSameAsShipping"
-							label="Use shipping address as billing address"
+							label={address.useShippingAsBilling}
 							data-testid={"useShippingAsBillingCheckbox"}
 						/>
 					</FormProvider>
@@ -90,7 +92,7 @@ export const UserBillingAddressSection: React.FC<UserBillingAddressSectionProps>
 
 								{displayAddressEdit && (
 									<AddressEditForm
-										title="Billing address"
+										title={address.billingAddress}
 										onClose={() => setDisplayAddressEdit()}
 										address={form.values.addressList.find(getById(editedAddressId)) as AddressFragment}
 										onUpdate={onAddressUpdateSuccess}
@@ -102,7 +104,7 @@ export const UserBillingAddressSection: React.FC<UserBillingAddressSectionProps>
 									<AddressList
 										onEditChange={setDisplayAddressEdit}
 										onAddAddressClick={() => setDisplayAddressCreate(true)}
-										title="Billing address"
+										title={address.billingAddress}
 										form={form}
 									/>
 								)}

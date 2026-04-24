@@ -5,6 +5,7 @@ import {
 	type AdyenGatewayInitializePayload,
 	type ApplePayCallback,
 } from "@/checkout/sections/PaymentSection/AdyenDropIn/types";
+import { getCheckoutLocaleTag } from "@/checkout/lib/checkoutMessages";
 
 interface CreateAdyenCheckoutConfigProps extends AdyenGatewayInitializePayload {
 	onSubmit: AdyenCheckoutInstanceOnSubmit;
@@ -23,7 +24,7 @@ export const createAdyenCheckoutConfig = ({
 	clientKey,
 	onSubmit,
 	onAdditionalDetails,
-	locale: "en-US",
+	locale: getCheckoutLocaleTag(document.documentElement.lang),
 	analytics: {
 		enabled: true,
 	},

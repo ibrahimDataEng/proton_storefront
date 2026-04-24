@@ -6,8 +6,6 @@ import { SummaryMoneyRow } from "./SummaryMoneyRow";
 import { SummaryPromoCodeRow } from "./SummaryPromoCodeRow";
 import { SummaryItemMoneyEditableSection } from "./SummaryItemMoneyEditableSection";
 import { ChevronDownIcon } from "@/checkout/ui-kit/icons";
-
-import { getFormattedMoney } from "@/checkout/lib/utils/money";
 import { Divider, Money, Title } from "@/checkout/components";
 import {
 	type CheckoutLineFragment,
@@ -15,6 +13,8 @@ import {
 	type Money as MoneyType,
 	type OrderLineFragment,
 } from "@/checkout/graphql";
+import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
+import { getFormattedMoney } from "@/checkout/lib/utils/money";
 import { SummaryItemMoneySection } from "@/checkout/sections/Summary/SummaryItemMoneySection";
 import { type GrossMoney, type GrossMoneyWithTax } from "@/checkout/lib/globalTypes";
 
@@ -39,6 +39,8 @@ export const Summary: FC<SummaryProps> = ({
 	shippingPrice,
 	discount,
 }) => {
+	const { summary, locale } = useCheckoutMessages();
+
 	return (
 		<div
 			className={clsx(
@@ -48,7 +50,7 @@ export const Summary: FC<SummaryProps> = ({
 		>
 			<details open className="group">
 				<summary className="-mb-2 flex cursor-pointer flex-row items-center pt-4">
-					<Title>Summary</Title>
+					<Title>{summary.title}</Title>
 					<ChevronDownIcon className="mb-2 group-open:rotate-180" />
 				</summary>
 				<ul className="py-2" data-testid="SummaryProductList">
@@ -70,13 +72,17 @@ export const Summary: FC<SummaryProps> = ({
 				</>
 			)}
 			<div className="mt-4 flex max-w-full flex-col">
-				<SummaryMoneyRow label="Subtotal" money={subtotalPrice?.gross} ariaLabel="subtotal price" />
+				<SummaryMoneyRow
+					label={summary.subtotal}
+					money={subtotalPrice?.gross}
+					ariaLabel={summary.subtotalPriceAria}
+				/>
 				{voucherCode && (
 					<SummaryPromoCodeRow
 						editable={editable}
 						promoCode={voucherCode}
-						ariaLabel="voucher"
-						label={`Voucher code: ${voucherCode}`}
+						ariaLabel={summary.voucherAria}
+						label={summary.voucherCode.replace("{code}", voucherCode)}
 						money={discount}
 						negative
 					/>
@@ -86,22 +92,26 @@ export const Summary: FC<SummaryProps> = ({
 						key={id}
 						editable={editable}
 						promoCodeId={id}
-						ariaLabel="gift card"
-						label={`Gift Card: •••• •••• ${displayCode}`}
+						ariaLabel={summary.giftCardAria}
+						label={summary.giftCard.replace("{code}", displayCode)}
 						money={currentBalance}
 						negative
 					/>
 				))}
-				<SummaryMoneyRow label="Shipping cost" ariaLabel="shipping cost" money={shippingPrice?.gross} />
+				<SummaryMoneyRow
+					label={summary.shippingCost}
+					ariaLabel={summary.shippingCostAria}
+					money={shippingPrice?.gross}
+				/>
 				<Divider className="my-4" />
 				<div className="flex flex-row items-baseline justify-between pb-4">
 					<div className="flex flex-row items-baseline">
-						<p className="font-bold">Total price</p>
+						<p className="font-bold">{summary.totalPrice}</p>
 						<p color="secondary" className="ml-2">
-							includes {getFormattedMoney(totalPrice?.tax)} tax
+							{summary.includesTax.replace("{tax}", getFormattedMoney(totalPrice?.tax, false, locale))}
 						</p>
 					</div>
-					<Money ariaLabel="total price" money={totalPrice?.gross} data-testid="totalOrderPrice" />
+					<Money ariaLabel={summary.totalPriceAria} money={totalPrice?.gross} data-testid="totalOrderPrice" />
 				</div>
 			</div>
 		</div>

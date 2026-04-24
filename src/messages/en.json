@@ -25,5 +25,8 @@
 		"poweredBy": "Powered by",
 		"changeCurrency": "Change currency",
 		"loadingError": "Failed to load footer content"
+	},
+	"availability": {
+		"outofstock": "Out of stock"
 	}
 }

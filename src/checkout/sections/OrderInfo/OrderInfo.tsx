@@ -3,8 +3,10 @@ import { PaymentSection } from "./PaymentSection";
 import { Section } from "./Section";
 import { Address } from "@/checkout/components/Address";
 import { useOrder } from "@/checkout/hooks/useOrder";
+import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 
 export const OrderInfo = () => {
+	const { orderInfo, address } = useCheckoutMessages();
 	const {
 		order: { deliveryMethod, shippingAddress, billingAddress, userEmail },
 	} = useOrder();
@@ -13,16 +15,16 @@ export const OrderInfo = () => {
 		<section className="mt-8">
 			<PaymentSection />
 			<DeliverySection deliveryMethod={deliveryMethod} />
-			<Section title="Contact details">
+			<Section title={orderInfo.contactDetails}>
 				<p>{userEmail}</p>
 			</Section>
 			{shippingAddress && (
-				<Section title="Shipping address">
+				<Section title={address.shippingAddress}>
 					<Address address={shippingAddress} />
 				</Section>
 			)}
 			{billingAddress && (
-				<Section title="Billing address">
+				<Section title={address.billingAddress}>
 					<Address address={billingAddress} />
 				</Section>
 			)}

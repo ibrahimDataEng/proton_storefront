@@ -1,4 +1,4 @@
-mutation CheckoutCreate($channel: String!) {
+mutation CheckoutCreate($channel: String!, $language: LanguageCodeEnum!) {
 	checkoutCreate(input: { channel: $channel, lines: [] }) {
 		checkout {
 			id
@@ -16,6 +16,9 @@ mutation CheckoutCreate($channel: String!) {
 					product {
 						id
 						name
+						translation(languageCode: $language) {
+							name
+						}
 						slug
 						thumbnail {
 							url
@@ -23,6 +26,9 @@ mutation CheckoutCreate($channel: String!) {
 						}
 						category {
 							name
+							translation(languageCode: $language) {
+								name
+							}
 						}
 					}
 					pricing {

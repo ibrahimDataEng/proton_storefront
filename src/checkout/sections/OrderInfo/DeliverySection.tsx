@@ -1,10 +1,13 @@
 import { Section } from "./Section";
 import { type OrderFragment, type ShippingFragment } from "@/checkout/graphql";
+import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 
 const isShipping = (deliveryMethod: OrderFragment["deliveryMethod"]): deliveryMethod is ShippingFragment =>
 	deliveryMethod?.__typename === "ShippingMethod";
 
 export const DeliverySection = ({ deliveryMethod }: { deliveryMethod: OrderFragment["deliveryMethod"] }) => {
+	const { delivery } = useCheckoutMessages();
+
 	const getDeliveryEstimateText = () => {
 		const { minimumDeliveryDays: min, maximumDeliveryDays: max } = deliveryMethod as ShippingFragment;
 
@@ -12,13 +15,13 @@ export const DeliverySection = ({ deliveryMethod }: { deliveryMethod: OrderFragm
 			return undefined;
 		}
 
-		return `${min}-${max} business days`;
+		return `${min}-${max} ${delivery.businessDays}`;
 	};
 
 	return (
-		<Section title="Delivery method">
+		<Section title={delivery.deliveryMethod}>
 			{!isShipping(deliveryMethod) ? (
-				<p color="secondary">Not applicable</p>
+				<p color="secondary">{delivery.notApplicable}</p>
 			) : (
 				<>
 					<p>{deliveryMethod.name}</p>
