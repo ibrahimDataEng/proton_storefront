@@ -1,3 +1,50 @@
+:root {
+	/* Brand */
+	--color-brand-primary: 45 59 46;
+	--color-brand-accent: 201 183 156;
+	--color-brand-muted: 139 115 85;
+
+	/* Surface */
+	--color-surface-base: 250 247 242;
+	--color-surface-raised: 255 255 255;
+	--color-surface-sunken: 245 241 234;
+
+	/* Text */
+	--color-text-primary: 26 31 26;
+	--color-text-secondary: 92 97 88;
+	--color-text-inverse: 250 247 242;
+
+	/* Border */
+	--color-border-subtle: 229 225 218;
+	--color-border-default: 210 205 196;
+
+	/* Semantic status */
+	--color-success: 58 102 72;
+	--color-warning: 166 124 60;
+	--color-danger: 158 62 62;
+}
+
+[data-theme="dark"] {
+	--color-brand-primary: 74 93 74;
+	--color-brand-accent: 212 196 168;
+	--color-brand-muted: 168 147 119;
+
+	--color-surface-base: 20 22 19;
+	--color-surface-raised: 30 33 29;
+	--color-surface-sunken: 15 17 14;
+
+	--color-text-primary: 245 242 236;
+	--color-text-secondary: 168 170 163;
+	--color-text-inverse: 20 22 19;
+
+	--color-border-subtle: 40 44 38;
+	--color-border-default: 55 60 52;
+
+	--color-success: 122 168 134;
+	--color-warning: 217 176 108;
+	--color-danger: 208 112 112;
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
