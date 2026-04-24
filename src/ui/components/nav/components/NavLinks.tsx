@@ -15,13 +15,10 @@ export function getLanguage(locale: string): LanguageCodeEnum {
 }
 
 export const NavLinks = async ({ channel, locale }: { channel: string; locale: string }) => {
-	console.log(locale);
-
 	const language = getLanguage(locale);
 	const navLinks = await executeGraphQL(MenuGetBySlugDocument, {
 		variables: { slug: "navbar", channel, language: language },
-		//revalidate: 60 * 60 * 24,
-		revalidate: 1,
+		revalidate: 60,
 	});
 
 	return (
