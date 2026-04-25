@@ -1,27 +1,14 @@
 import Link from "next/link";
 import { NavLink } from "./NavLink";
 import { executeGraphQL } from "@/lib/graphql";
-import { LanguageCodeEnum, MenuGetBySlugDocument } from "@/gql/graphql";
-
-export function getLanguage(locale: string): LanguageCodeEnum {
-	switch (locale) {
-		case "en":
-			return LanguageCodeEnum.EnUs;
-		case "ar":
-			return LanguageCodeEnum.Ar;
-		default:
-			return LanguageCodeEnum.EnUs;
-	}
-}
+import { MenuGetBySlugDocument } from "@/gql/graphql";
+import { getSaleorLanguage } from "@/lib/saleor-language";
 
 export const NavLinks = async ({ channel, locale }: { channel: string; locale: string }) => {
-	console.log(locale);
-
-	const language = getLanguage(locale);
+	const language = getSaleorLanguage(locale);
 	const navLinks = await executeGraphQL(MenuGetBySlugDocument, {
-		variables: { slug: "navbar", channel, language: language },
-		//revalidate: 60 * 60 * 24,
-		revalidate: 1,
+		variables: { slug: "navbar", channel, language },
+		revalidate: 60,
 	});
 
 	return (

@@ -48,10 +48,22 @@
 
 - 4 TypeScript errors in: collections/[slug], search, nav/Nav.tsx
 - 7 lint warnings: all in src/checkout/ + Logo.tsx
-- revalidate: 1 still in NavLinks.tsx:25 and Footer.tsx:57
-- console.log in NavLinks.tsx:18 and Footer.tsx:46
 - /categories has no index route (only /categories/[slug])
 - /pages/about may not exist in Saleor backend
+- Other nav child components (CartNavItem badge, SearchBar, MobileMenu,
+  UserMenu) still use neutral-\* hardcoded colors — out of scope for
+  Session 4 (Header redesign), candidate for a later session
+
+## Components redesigned
+
+- Header: HeaderWrapper (client) + Header (server),
+  hide-on-scroll past 80px, reappears on scroll-up,
+  fixed positioning, surface-base/80 backdrop-blur
+- Footer: redesigned with 4-col grid (Brand / Explore / Legal / Social),
+  brand-primary dark bg, social via Lucide icons, tokens applied,
+  CMS menu logic + ChannelSelect + Skeleton preserved
+- Nav: NavLink uses brand-primary (active) / content-secondary (default),
+  console.log + revalidate:1 fixed in NavLinks.tsx
 
 ## Rules (ALWAYS follow)
 
@@ -70,7 +82,7 @@
 
 - Session 2: feature/ui-redesign-session-2 ✓
 - Session 3: feature/ui-redesign-session-3 ✓
-- Session 4: feature/ui-redesign-session-4 (upcoming: Header + Footer)
+- Session 4: feature/ui-redesign-session-4 ✓
 
 ## Button-as-link pattern (important)
 

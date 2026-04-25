@@ -18,6 +18,7 @@ const config: Config = {
 					base: "rgb(var(--color-surface-base) / <alpha-value>)",
 					raised: "rgb(var(--color-surface-raised) / <alpha-value>)",
 					sunken: "rgb(var(--color-surface-sunken) / <alpha-value>)",
+					footer: "rgb(var(--color-surface-footer) / <alpha-value>)",
 				},
 				content: {
 					primary: "rgb(var(--color-text-primary) / <alpha-value>)",
