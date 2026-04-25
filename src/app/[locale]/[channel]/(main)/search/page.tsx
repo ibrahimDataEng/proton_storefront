@@ -1,5 +1,5 @@
 import { notFound, redirect } from "next/navigation";
-import { OrderDirection, ProductOrderField, SearchProductsDocument } from "@/gql/graphql";
+import { LanguageCodeEnum, OrderDirection, ProductOrderField, SearchProductsDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 import { Pagination } from "@/ui/components/Pagination";
 import { ProductList } from "@/ui/components/ProductList";
@@ -12,7 +12,7 @@ export const metadata = {
 
 export default async function Page(props: {
 	searchParams: Promise<Record<"query" | "cursor", string | string[] | undefined>>;
-	params: Promise<{ channel: string }>;
+	params: Promise<{ channel: string; locale: string }>;
 }) {
 	const [searchParams, params] = await Promise.all([props.searchParams, props.params]);
 	const cursor = typeof searchParams.cursor === "string" ? searchParams.cursor : null;
@@ -30,6 +30,8 @@ export default async function Page(props: {
 		redirect(`/search?${new URLSearchParams({ query: firstValidSearchValue }).toString()}`);
 	}
 
+	const language = params.locale === "ar" ? LanguageCodeEnum.Ar : LanguageCodeEnum.EnUs;
+
 	const { products } = await executeGraphQL(SearchProductsDocument, {
 		variables: {
 			first: ProductsPerPage,
@@ -38,6 +40,7 @@ export default async function Page(props: {
 			sortBy: ProductOrderField.Rating,
 			sortDirection: OrderDirection.Asc,
 			channel: params.channel,
+			language,
 		},
 		revalidate: 60,
 	});
