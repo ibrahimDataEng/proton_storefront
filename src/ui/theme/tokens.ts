@@ -8,6 +8,7 @@ export const colors = {
 		base: "#FAF7F2",
 		raised: "#FFFFFF",
 		sunken: "#F5F1EA",
+		footer: "#0D1410",
 	},
 	content: {
 		primary: "#1A1F1A",
@@ -35,6 +36,7 @@ export const colorsDark = {
 		base: "#141613",
 		raised: "#1E211D",
 		sunken: "#0F110E",
+		footer: "#0D1410",
 	},
 	content: {
 		primary: "#F5F2EC",

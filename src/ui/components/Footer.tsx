@@ -10,7 +10,7 @@ import { executeGraphQL } from "@/lib/graphql";
 
 function FooterSkeleton() {
 	return (
-		<footer className="animate-pulse bg-brand-primary">
+		<footer className="animate-pulse bg-surface-footer">
 			<div className="mx-auto max-w-7xl px-4 py-16 lg:px-8 lg:py-20">
 				<div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
 					{[1, 2, 3, 4].map((i) => (
@@ -87,7 +87,7 @@ function getTranslatedText(
 	if (translation && translation[field]) {
 		return translation[field] as string;
 	}
-	return (original?.[field] || original?.name || original?.title || "");
+	return original?.[field] || original?.name || original?.title || "";
 }
 
 const columnTitleClass = "text-content-inverse text-sm font-medium tracking-widest uppercase mb-4";
@@ -118,7 +118,7 @@ async function FooterContent({ channel, locale }: { channel: string; locale: str
 	];
 
 	return (
-		<footer className="bg-brand-primary py-16 text-content-inverse md:py-20">
+		<footer className="bg-surface-footer py-16 text-content-inverse md:py-20">
 			<div className="mx-auto max-w-7xl px-4 lg:px-8">
 				<div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
 					{/* Column 1 — Brand */}

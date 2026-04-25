@@ -8,6 +8,7 @@
 	--color-surface-base: 250 247 242;
 	--color-surface-raised: 255 255 255;
 	--color-surface-sunken: 245 241 234;
+	--color-surface-footer: 13 20 16; /* #0D1410 */
 
 	/* Text */
 	--color-text-primary: 26 31 26;
@@ -32,6 +33,7 @@
 	--color-surface-base: 20 22 19;
 	--color-surface-raised: 30 33 29;
 	--color-surface-sunken: 15 17 14;
+	--color-surface-footer: 13 20 16; /* #0D1410 */
 
 	--color-text-primary: 245 242 236;
 	--color-text-secondary: 168 170 163;
