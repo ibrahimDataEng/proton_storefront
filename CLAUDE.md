@@ -46,13 +46,16 @@
 
 ## Known issues (pre-existing, not introduced by redesign)
 
-- 4 TypeScript errors in: collections/[slug], search, nav/Nav.tsx
-- 7 lint warnings: all in src/checkout/ + Logo.tsx
+- 7 lint warnings: 6 in src/checkout/ + 1 in Logo.tsx
+  (next/image suggestion — Logo is raw <img>)
 - /categories has no index route (only /categories/[slug])
 - /pages/about may not exist in Saleor backend
 - Other nav child components (CartNavItem badge, SearchBar, MobileMenu,
   UserMenu) still use neutral-\* hardcoded colors — out of scope for
   Session 4 (Header redesign), candidate for a later session
+- pages/[slug]/page.tsx still has a stray console.log (line ~37)
+  noticed during Session 5 refactor; not removed since out of
+  scope for the helper extraction
 
 ## Components redesigned
 
@@ -80,16 +83,32 @@
 
 ## Session branches
 
-- Session 2: feature/ui-redesign-session-2 ✓
-- Session 3: feature/ui-redesign-session-3 ✓
-- Session 4: feature/ui-redesign-session-4 ✓
+- Session 2: feature/ui-redesign-session-2 ✓ (merged + deleted)
+- Session 3: feature/ui-redesign-session-3 ✓ (merged + deleted)
+- Session 4: feature/ui-redesign-session-4 ✓ (merged + deleted)
+- Session 5: cleanup + merge ✓ (work landed via session-4 merge)
+
+## Current branch: main
+
+All redesign work is on main. No open feature branches.
+
+## Health status (post-Session 5)
+
+- TS errors: 0 (verified via `pnpm tsc --noEmit`)
+- Lint warnings: 7 (baseline — 6 in src/checkout/, 1 in Logo.tsx)
+- Branches: all merged to main, locals deleted
+- Working tree: clean
 
 ## Button-as-link pattern (important)
 
 Button renders <button> — wrapping in LinkWithChannel creates invalid HTML.
 Use LinkWithChannel with className directly for link-styled buttons.
 
-## getLanguage helper
+## getSaleorLanguage helper
 
-Currently inlined in each component (matches existing pattern in NavLinks + Footer).
-Shared util is a future cleanup task.
+Single source of truth: src/lib/saleor-language.ts
+Imported by Footer, NavLinks, FeaturedProductsSection, CategoriesSection,
+collections/[slug]/page.tsx, search/page.tsx, pages/[slug]/page.tsx.
+Removing the prior export from pages/[slug]/page.tsx also fixed a
+.next/types TS2344 error (Next.js disallows arbitrary named exports
+from page files).
