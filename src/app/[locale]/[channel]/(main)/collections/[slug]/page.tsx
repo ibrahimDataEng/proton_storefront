@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
 import { type ResolvingMetadata, type Metadata } from "next";
-import { LanguageCodeEnum, ProductListByCollectionDocument } from "@/gql/graphql";
+import { ProductListByCollectionDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
+import { getSaleorLanguage } from "@/lib/saleor-language";
 import { ProductList } from "@/ui/components/ProductList";
 
 export const generateMetadata = async (
@@ -9,7 +10,7 @@ export const generateMetadata = async (
 	parent: ResolvingMetadata,
 ): Promise<Metadata> => {
 	const params = await props.params;
-	const language = params.locale === "ar" ? LanguageCodeEnum.Ar : LanguageCodeEnum.EnUs;
+	const language = getSaleorLanguage(params.locale);
 	const { collection } = await executeGraphQL(ProductListByCollectionDocument, {
 		variables: { slug: params.slug, channel: params.channel, language },
 		//revalidate: 60,
@@ -27,7 +28,7 @@ export default async function Page(props: {
 	params: Promise<{ slug: string; channel: string; locale: string }>;
 }) {
 	const params = await props.params;
-	const language = params.locale === "ar" ? LanguageCodeEnum.Ar : LanguageCodeEnum.EnUs;
+	const language = getSaleorLanguage(params.locale);
 	const { collection } = await executeGraphQL(ProductListByCollectionDocument, {
 		variables: { slug: params.slug, channel: params.channel, language },
 		//revalidate: 60,

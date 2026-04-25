@@ -1,6 +1,7 @@
 import { notFound, redirect } from "next/navigation";
-import { LanguageCodeEnum, OrderDirection, ProductOrderField, SearchProductsDocument } from "@/gql/graphql";
+import { OrderDirection, ProductOrderField, SearchProductsDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
+import { getSaleorLanguage } from "@/lib/saleor-language";
 import { Pagination } from "@/ui/components/Pagination";
 import { ProductList } from "@/ui/components/ProductList";
 import { ProductsPerPage } from "@/app/[locale]/config";
@@ -30,7 +31,7 @@ export default async function Page(props: {
 		redirect(`/search?${new URLSearchParams({ query: firstValidSearchValue }).toString()}`);
 	}
 
-	const language = params.locale === "ar" ? LanguageCodeEnum.Ar : LanguageCodeEnum.EnUs;
+	const language = getSaleorLanguage(params.locale);
 
 	const { products } = await executeGraphQL(SearchProductsDocument, {
 		variables: {

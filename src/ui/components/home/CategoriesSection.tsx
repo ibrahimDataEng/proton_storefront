@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
-import { LanguageCodeEnum, MenuGetBySlugDocument } from "@/gql/graphql";
+import { MenuGetBySlugDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
+import { getSaleorLanguage } from "@/lib/saleor-language";
 import { Container } from "@/ui/components/Container";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 
@@ -8,15 +9,11 @@ import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 // Items without a category link are filtered out.
 // TODO: replace with a dedicated categories query when one is available.
 
-function getLanguage(locale: string): LanguageCodeEnum {
-	return locale === "ar" ? LanguageCodeEnum.Ar : LanguageCodeEnum.EnUs;
-}
-
 export async function CategoriesSection({ channel, locale }: { channel: string; locale: string }) {
 	const isAr = locale === "ar";
 
 	const data = await executeGraphQL(MenuGetBySlugDocument, {
-		variables: { slug: "navbar", channel, language: getLanguage(locale) },
+		variables: { slug: "navbar", channel, language: getSaleorLanguage(locale) },
 		revalidate: 60,
 	});
 

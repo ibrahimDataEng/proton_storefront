@@ -1,12 +1,9 @@
-import { LanguageCodeEnum, ProductListByCollectionDocument } from "@/gql/graphql";
+import { ProductListByCollectionDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
+import { getSaleorLanguage } from "@/lib/saleor-language";
 import { Container } from "@/ui/components/Container";
 import { ProductList } from "@/ui/components/ProductList";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
-
-function getLanguage(locale: string): LanguageCodeEnum {
-	return locale === "ar" ? LanguageCodeEnum.Ar : LanguageCodeEnum.EnUs;
-}
 
 export async function FeaturedProductsSection({ channel, locale }: { channel: string; locale: string }) {
 	const isAr = locale === "ar";
@@ -15,7 +12,7 @@ export async function FeaturedProductsSection({ channel, locale }: { channel: st
 		variables: {
 			slug: "featured-products",
 			channel,
-			language: getLanguage(locale),
+			language: getSaleorLanguage(locale),
 		},
 		// Revalidate every 60 seconds — was 1 (effectively SSR)
 		revalidate: 60,

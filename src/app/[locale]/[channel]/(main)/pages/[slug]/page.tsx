@@ -2,30 +2,20 @@ import { notFound } from "next/navigation";
 import { type Metadata } from "next";
 import edjsHTML from "editorjs-html";
 import xss from "xss";
-import { LanguageCodeEnum, PageGetBySlugDocument } from "@/gql/graphql";
+import { PageGetBySlugDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
+import { getSaleorLanguage } from "@/lib/saleor-language";
 
 const parser = edjsHTML();
-
-export function getLanguage(locale: string): LanguageCodeEnum {
-	switch (locale) {
-		case "en":
-			return LanguageCodeEnum.EnUs;
-		case "ar":
-			return LanguageCodeEnum.Ar;
-		default:
-			return LanguageCodeEnum.EnUs;
-	}
-}
 
 export const generateMetadata = async (props: {
 	params: Promise<{ slug: string; locale: string }>;
 }): Promise<Metadata> => {
 	const params = await props.params;
-	const language = getLanguage(params.locale);
+	const language = getSaleorLanguage(params.locale);
 
 	const { page } = await executeGraphQL(PageGetBySlugDocument, {
-		variables: { slug: params.slug, language: language },
+		variables: { slug: params.slug, language },
 		revalidate: 1,
 	});
 
@@ -43,11 +33,11 @@ export const generateMetadata = async (props: {
 
 export default async function Page(props: { params: Promise<{ slug: string; locale: string }> }) {
 	const params = await props.params;
-	const language = getLanguage(params.locale);
+	const language = getSaleorLanguage(params.locale);
 	console.log(params.locale);
 
 	const { page } = await executeGraphQL(PageGetBySlugDocument, {
-		variables: { slug: params.slug, language: language },
+		variables: { slug: params.slug, language },
 		revalidate: 1,
 	});
 

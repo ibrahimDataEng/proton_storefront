@@ -5,8 +5,9 @@ import { Instagram, Twitter, Linkedin } from "lucide-react";
 import { LinkWithChannel } from "../atoms/LinkWithChannel";
 import { ChannelSelect } from "./ChannelSelect";
 import { Logo } from "./Logo";
-import { ChannelsListDocument, LanguageCodeEnum, MenuGetBySlugDocument } from "@/gql/graphql";
+import { ChannelsListDocument, MenuGetBySlugDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
+import { getSaleorLanguage } from "@/lib/saleor-language";
 
 function FooterSkeleton() {
 	return (
@@ -27,17 +28,6 @@ function FooterSkeleton() {
 			</div>
 		</footer>
 	);
-}
-
-export function getSaleorLanguage(locale: string): LanguageCodeEnum {
-	switch (locale) {
-		case "en":
-			return LanguageCodeEnum.EnUs;
-		case "ar":
-			return LanguageCodeEnum.Ar;
-		default:
-			return LanguageCodeEnum.EnUs;
-	}
 }
 
 async function getFooterData(channel: string, locale: string) {
