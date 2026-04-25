@@ -1,11 +1,23 @@
 import "./globals.css";
-import { Inter } from "next/font/google";
+import { IBM_Plex_Sans, IBM_Plex_Sans_Arabic } from "next/font/google";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 
-const inter = Inter({ subsets: ["latin"] });
+const plexSans = IBM_Plex_Sans({
+	subsets: ["latin", "latin-ext"],
+	weight: ["300", "400", "500", "600", "700"],
+	variable: "--font-plex-sans",
+	display: "swap",
+});
+
+const plexArabic = IBM_Plex_Sans_Arabic({
+	subsets: ["arabic"],
+	weight: ["300", "400", "500", "600", "700"],
+	variable: "--font-plex-arabic",
+	display: "swap",
+});
 
 export function generateStaticParams() {
 	return routing.locales.map((locale) => ({ locale }));
@@ -32,10 +44,9 @@ export default async function RootLayout({
 	} catch (error) {
 		messages = {};
 	}
-	console.log("Footer locale:", locale);
 	return (
-		<html lang={locale} dir={isRTL ? "rtl" : "ltr"}>
-			<body className={inter.className}>
+		<html lang={locale} dir={isRTL ? "rtl" : "ltr"} className={`${plexSans.variable} ${plexArabic.variable}`}>
+			<body className="bg-surface-base font-sans text-content-primary">
 				<NextIntlClientProvider locale={locale} messages={messages}>
 					{children}
 				</NextIntlClientProvider>
