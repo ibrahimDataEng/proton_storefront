@@ -16,8 +16,14 @@
 		"aboutLink": "About Us",
 		"contactLink": "Contact"
 	},
-	"header": {
-		"searchForProducts": "Search for products..."
+	"header": {},
+	"Search": {
+		"placeholder": "Search products",
+		"searching": "Searching…",
+		"noResults": "No results found",
+		"seeAll": "See all results for \"{query}\"",
+		"openSearch": "Open search",
+		"closeSearch": "Close search"
 	},
 	"footer": {
 		"copyright": "Copyright",
