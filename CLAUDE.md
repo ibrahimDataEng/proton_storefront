@@ -91,11 +91,11 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
 - /pages/[slug] — CMS page, not yet themed
 - /collections/[slug] — pre-existing, not yet themed
 
-## Health status (post-Session 7)
+## Health status (post-Session 8)
 
 - TS errors: 0 (verified via `pnpm tsc --noEmit`)
 - Lint warnings: 7 (baseline — 6 in src/checkout/, 1 in Logo.tsx)
-- Working tree: clean on feature/ui-redesign-session-7
+- Working tree: clean on feature/ui-redesign-session-8
 
 ## Button-as-link pattern (important)
 
@@ -115,6 +115,9 @@ SearchBar.tsx, SearchOverlay.tsx (session 7).
 - `Search` — placeholder, searching, noResults, seeAll, openSearch, closeSearch
 - `footer` — copyright, companyName, poweredBy, changeCurrency, loadingError
 - `availability` — outofstock
+- `auth` — login, register, logout, email, password, confirmPassword, firstName,
+  lastName, forgotPassword, sendResetLink, resetEmailSent, switchToRegister,
+  switchToLogin, confirmEmailRequired, backToLogin, errors.\*
 - `home`, `error`, `button`, `welcome`, `goodbye` — misc
 
 ## Search URL param
@@ -130,6 +133,7 @@ search URLs must use `query` as the param name.
 - Session 5: cleanup + merge ✓ (work landed via session-4 merge)
 - Session 6: feature/ui-redesign-session-6 ✓ (open, awaiting review)
 - Session 7: feature/ui-redesign-session-7 ✓ (open, awaiting review)
+- Session 8: feature/ui-redesign-session-8 ✓ (open, awaiting review)
 
 ## Rules (ALWAYS follow)
 
@@ -143,3 +147,58 @@ search URLs must use `query` as the param name.
 - No new dependencies without asking
 - Work on feature branches, commit after each component
 - Run pnpm tsc --noEmit and pnpm lint after every step
+
+## Session 7 — completed ✓
+
+- Live Search in header (autocomplete dropdown)
+- Arabic search fixed via backend patch
+  (saleor/graphql/product/filters/product_helpers.py)
+- Branch: feature/ui-redesign-session-7 (merged)
+
+## Session 8 — completed ✓
+
+Auth system: Login, Register, Logout, Token Refresh, Forgot Password.
+
+### Auth architecture
+
+- Cookie names: `saleor_token` (access), `saleor_refresh_token` — httpOnly, SameSite=Lax
+- Lib: `src/lib/auth/` — types.ts, jwt.ts, cookies.ts
+- Route Handlers: `src/app/api/auth/` — login, register, logout, refresh, forgot-password
+  (all make direct fetch() to Saleor GraphQL; never expose raw error codes)
+- AuthContext: `src/ui/context/AuthContext.tsx` — provides user, isLoggedIn,
+  openAuthModal/closeAuthModal, logout(); accepts initialUser from SSR for no flash
+- useAuth(): exported from AuthContext.tsx — throws outside AuthProvider
+
+### Auth UI components (`src/ui/components/auth/`)
+
+- AuthFormField — labeled input, dir=auto for RTL, design tokens, error state
+- AuthFormWrapper — tab switcher (Login/Register), view state machine
+  (login | register | forgot | confirmation)
+- LoginForm — email+password → POST /api/auth/login
+- RegisterForm — optional firstName/lastName + email + password + confirm
+- ForgotPasswordForm — email only → always shows success (no email enumeration)
+- AuthModal — role=dialog, focus trap, Escape/backdrop-click, body scroll lock
+
+### Auth pages
+
+- /login → `src/app/[locale]/[channel]/login/page.tsx` (redirects to / if logged in)
+- /register → `src/app/[locale]/[channel]/register/page.tsx` (same guard)
+
+### Middleware
+
+Token refresh is handled in `src/middleware.ts`:
+runs next-intl first, then silently refreshes expiring tokens (<5 min) via
+/api/auth/refresh before forwarding the response.
+
+### Wiring
+
+- `[channel]/layout.tsx` reads saleor_token cookie, decodes JWT, seeds AuthProvider
+- AuthModal rendered once in layout (always mounted, portal-free)
+- UserMenuContainer simplified to just render UserMenu (no more GraphQL fetch)
+- UserMenu now a client component using useAuth() — shows login button or
+  user name + logout dropdown
+
+## Session 9 — (next)
+
+- Reset password page (/reset-password?token=...)
+- Possibly: orders page, account settings

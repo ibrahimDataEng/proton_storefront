@@ -34,5 +34,31 @@
 	},
 	"availability": {
 		"outofstock": "Out of stock"
+	},
+	"auth": {
+		"login": "Sign In",
+		"register": "Create Account",
+		"logout": "Sign Out",
+		"email": "Email address",
+		"password": "Password",
+		"confirmPassword": "Confirm password",
+		"firstName": "First name",
+		"lastName": "Last name",
+		"forgotPassword": "Forgot password?",
+		"sendResetLink": "Send reset link",
+		"resetEmailSent": "Check your inbox — we sent you a reset link.",
+		"switchToRegister": "Don't have an account? Create one",
+		"switchToLogin": "Already have an account? Sign in",
+		"confirmEmailRequired": "Please check your email to confirm your account.",
+		"backToLogin": "Back to sign in",
+		"errors": {
+			"INVALID_CREDENTIALS": "Incorrect email or password.",
+			"ACCOUNT_NOT_CONFIRMED": "Please confirm your email before signing in.",
+			"INACTIVE": "This account has been deactivated.",
+			"PASSWORD_TOO_SHORT": "Password must be at least 8 characters.",
+			"UNIQUE": "An account with this email already exists.",
+			"PASSWORD_MISMATCH": "Passwords do not match.",
+			"unknown": "Something went wrong. Please try again."
+		}
 	}
 }
