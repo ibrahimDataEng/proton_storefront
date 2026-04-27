@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import { clsx } from "clsx";
 import { useTranslations } from "next-intl";
@@ -10,6 +10,7 @@ import type { CheckoutFindQuery } from "@/gql/graphql";
 import { formatMoney, getHrefForVariant } from "@/lib/utils";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 import { DeleteLineButton } from "@/app/[locale]/[channel]/(main)/cart/DeleteLineButton";
+import { updateLineQuantity } from "@/app/[locale]/[channel]/(main)/cart/actions";
 
 type CheckoutLine = NonNullable<CheckoutFindQuery["checkout"]>["lines"][number];
 
@@ -21,6 +22,10 @@ interface CartLineItemProps {
 export function CartLineItem({ line, checkoutId }: CartLineItemProps) {
 	const t = useTranslations("cart");
 	const [isLeaving, setIsLeaving] = useState(false);
+	const [quantity, setQuantity] = useState(line.quantity);
+	const [isPendingQty, setIsPendingQty] = useState(false);
+	const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+	const committedQtyRef = useRef(line.quantity);
 
 	const { variant } = line;
 	const product = variant.product;
@@ -38,6 +43,24 @@ export function CartLineItem({ line, checkoutId }: CartLineItemProps) {
 		thumbnailAlt: product.thumbnail?.alt ?? "",
 		unitPrice: unitPrice ? { amount: unitPrice.amount, currency: unitPrice.currency } : null,
 		quantity: line.quantity,
+	};
+
+	const handleQtyChange = (delta: number) => {
+		const next = Math.max(1, Math.min(99, quantity + delta));
+		if (next === quantity) return;
+		setQuantity(next);
+		if (debounceRef.current) clearTimeout(debounceRef.current);
+		setIsPendingQty(true);
+		debounceRef.current = setTimeout(() => {
+			void updateLineQuantity({ lineId: line.id, checkoutId, quantity: next }).then((result) => {
+				if (result.ok) {
+					committedQtyRef.current = next;
+				} else {
+					setQuantity(committedQtyRef.current);
+				}
+				setIsPendingQty(false);
+			});
+		}, 500);
 	};
 
 	return (
@@ -89,13 +112,36 @@ export function CartLineItem({ line, checkoutId }: CartLineItemProps) {
 					</div>
 
 					<div className="flex items-center justify-between">
-						{/* TODO: Replace with quantity stepper once CheckoutLinesUpdate.graphql is added
-						    to src/graphql/ and codegen is re-run. Wire to updateLineQuantity server action
-						    with optimistic UI: [ − ] [ n ] [ + ], 400ms debounce before server call. */}
-						<span className="inline-flex items-center gap-1.5 rounded-full bg-surface-sunken px-3 py-1 text-sm text-content-primary">
-							<span className="text-content-secondary">{t("qty")}</span>
-							{line.quantity}
-						</span>
+						{/* Quantity stepper */}
+						<div
+							className={clsx(
+								"inline-flex items-center rounded-full bg-surface-sunken transition-opacity",
+								isPendingQty && "opacity-50",
+							)}
+						>
+							<button
+								type="button"
+								aria-label={t("decrease")}
+								disabled={quantity <= 1 || isPendingQty}
+								className="flex h-8 w-8 items-center justify-center rounded-l-full text-content-primary transition-colors hover:bg-brand-primary/10 disabled:cursor-not-allowed disabled:text-content-secondary"
+								onClick={() => handleQtyChange(-1)}
+							>
+								−
+							</button>
+							<span className="min-w-[2rem] text-center text-sm font-medium text-content-primary">
+								{quantity}
+							</span>
+							<button
+								type="button"
+								aria-label={t("increase")}
+								disabled={quantity >= 99 || isPendingQty}
+								className="flex h-8 w-8 items-center justify-center rounded-r-full text-content-primary transition-colors hover:bg-brand-primary/10 disabled:cursor-not-allowed disabled:text-content-secondary"
+								onClick={() => handleQtyChange(1)}
+							>
+								+
+							</button>
+						</div>
+
 						<div className="flex items-center gap-2">
 							<SaveForLaterButton
 								lineId={line.id}

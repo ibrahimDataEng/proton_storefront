@@ -2,7 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import { executeGraphQL } from "@/lib/graphql";
-import { CheckoutAddLineDocument, CheckoutDeleteLinesDocument } from "@/gql/graphql";
+import {
+	CheckoutAddLineDocument,
+	CheckoutDeleteLinesDocument,
+	CheckoutLinesUpdateDocument,
+} from "@/gql/graphql";
 import * as Checkout from "@/lib/checkout";
 
 type deleteLineFromCheckoutArgs = {
@@ -43,4 +47,25 @@ export async function addLineToCheckout({
 	}
 	revalidatePath("/", "layout");
 	return { ok: true, redirect: false };
+}
+
+export async function updateLineQuantity({
+	lineId,
+	checkoutId,
+	quantity,
+}: {
+	lineId: string;
+	checkoutId: string;
+	quantity: number;
+}): Promise<{ ok: boolean }> {
+	const result = await executeGraphQL(CheckoutLinesUpdateDocument, {
+		variables: { checkoutId, lines: [{ lineId, quantity }] },
+		cache: "no-cache",
+	});
+	const errors = result.checkoutLinesUpdate?.errors ?? [];
+	if (errors.length > 0) {
+		return { ok: false };
+	}
+	revalidatePath("/", "layout");
+	return { ok: true };
 }
