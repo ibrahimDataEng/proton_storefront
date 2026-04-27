@@ -1,6 +1,7 @@
 "use client";
 
-import { useLocale } from "next-intl";
+import { clsx } from "clsx";
+import { useTranslations } from "next-intl";
 
 type Props = {
 	disabled?: boolean;
@@ -8,17 +9,23 @@ type Props = {
 	className?: string;
 };
 
-export const CheckoutLink = ({ disabled, checkoutId, className = "" }: Props) => {
-	const locale = useLocale();
+export const CheckoutLink = ({ disabled, checkoutId, className }: Props) => {
+	const t = useTranslations("cart");
 	return (
 		<a
 			data-testid="CheckoutLink"
 			aria-disabled={disabled}
 			onClick={(e) => disabled && e.preventDefault()}
 			href={`/checkout?checkout=${checkoutId}`}
-			className={`inline-block max-w-full rounded border border-transparent bg-neutral-900 px-6 py-3 text-center font-medium text-neutral-50 hover:bg-neutral-800 aria-disabled:cursor-not-allowed aria-disabled:bg-neutral-500 sm:px-16 ${className}`}
+			className={clsx(
+				"inline-flex w-full items-center justify-center gap-2 rounded-md font-medium transition-colors",
+				"h-12 px-6 text-base",
+				"border border-transparent bg-brand-primary text-content-inverse hover:bg-brand-primary/90",
+				"aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50",
+				className,
+			)}
 		>
-			{locale === "ar" ? " المتابعة إلى الدفع" : " Proceed to Checkout"}
+			{t("proceedToCheckout")}
 		</a>
 	);
 };
