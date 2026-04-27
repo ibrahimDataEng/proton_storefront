@@ -7,6 +7,7 @@ import {
 import { executeGraphQL } from "@/lib/graphql";
 import { getSaleorLanguage } from "@/lib/saleor-language";
 import { ProductElement } from "@/ui/components/ProductElement";
+import { AddToCartButton } from "@/ui/components/cart/AddToCartButton";
 import { Container } from "@/ui/components/Container";
 
 interface CartRecommendationsProps {
@@ -74,11 +75,14 @@ export async function CartRecommendations({
 		<section className="mt-16">
 			<Container>
 				<h2 className="mb-8 text-xl font-semibold text-content-primary">{t("youMightAlsoLike")}</h2>
-				<ul className="grid grid-cols-2 gap-4 sm:grid-cols-4 md:gap-6" role="list">
+				<div className="grid grid-cols-2 gap-4 sm:grid-cols-4 md:gap-6" role="list">
 					{recommendations.map((product, index) => (
-						<ProductElement key={product.id} product={product} loading={index < 4 ? "eager" : "lazy"} />
+						<div key={product.id} className="flex flex-col gap-2">
+							<ProductElement product={product} loading={index < 4 ? "eager" : "lazy"} />
+							<AddToCartButton productSlug={product.slug} label={t("addToCart")} />
+						</div>
 					))}
-				</ul>
+				</div>
 			</Container>
 		</section>
 	);
