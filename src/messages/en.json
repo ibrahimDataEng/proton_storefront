@@ -51,6 +51,13 @@
 		"switchToLogin": "Already have an account? Sign in",
 		"confirmEmailRequired": "Please check your email to confirm your account.",
 		"backToLogin": "Back to sign in",
+		"resetPassword": "Reset Password",
+		"newPassword": "New password",
+		"setPassword": "Set new password",
+		"passwordUpdated": "Password updated — signing you in...",
+		"invalidResetLink": "This reset link is invalid or missing.",
+		"expiredResetLink": "This link has expired.",
+		"requestNewLink": "Request a new reset link",
 		"errors": {
 			"INVALID_CREDENTIALS": "Incorrect email or password.",
 			"ACCOUNT_NOT_CONFIRMED": "Please confirm your email before signing in.",
@@ -58,6 +65,7 @@
 			"PASSWORD_TOO_SHORT": "Password must be at least 8 characters.",
 			"UNIQUE": "An account with this email already exists.",
 			"PASSWORD_MISMATCH": "Passwords do not match.",
+			"TOKEN_INVALID": "This reset link has expired. Please request a new one.",
 			"unknown": "Something went wrong. Please try again."
 		}
 	}
