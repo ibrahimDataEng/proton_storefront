@@ -91,11 +91,11 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
 - /pages/[slug] — CMS page, not yet themed
 - /collections/[slug] — pre-existing, not yet themed
 
-## Health status (post-Session 8)
+## Health status (post-Session 9)
 
 - TS errors: 0 (verified via `pnpm tsc --noEmit`)
 - Lint warnings: 7 (baseline — 6 in src/checkout/, 1 in Logo.tsx)
-- Working tree: clean on feature/ui-redesign-session-8
+- Working tree: clean on feature/ui-redesign-session-9
 
 ## Button-as-link pattern (important)
 
@@ -125,41 +125,7 @@ SearchBar.tsx, SearchOverlay.tsx (session 7).
 The search page uses `?query=` (NOT `?q=`). All new code that constructs
 search URLs must use `query` as the param name.
 
-## Session branches
-
-- Session 2: feature/ui-redesign-session-2 ✓ (merged + deleted)
-- Session 3: feature/ui-redesign-session-3 ✓ (merged + deleted)
-- Session 4: feature/ui-redesign-session-4 ✓ (merged + deleted)
-- Session 5: cleanup + merge ✓ (work landed via session-4 merge)
-- Session 6: feature/ui-redesign-session-6 ✓ (open, awaiting review)
-- Session 7: feature/ui-redesign-session-7 ✓ (open, awaiting review)
-- Session 8: feature/ui-redesign-session-8 ✓ (open, awaiting review)
-
-## Rules (ALWAYS follow)
-
-- DO NOT touch src/checkout/ under any circumstances
-- DO NOT touch src/gql/ or src/graphql/
-- DO NOT hardcode product/category data
-- Use LinkWithChannel (@/ui/atoms/LinkWithChannel) for ALL internal links
-- Use Container for layout, Button for CTAs
-- All new components: Server Components by default
-- Mobile-first, breakpoints: 375 / 768 / 1280
-- No new dependencies without asking
-- Work on feature branches, commit after each component
-- Run pnpm tsc --noEmit and pnpm lint after every step
-
-## Session 7 — completed ✓
-
-- Live Search in header (autocomplete dropdown)
-- Arabic search fixed via backend patch
-  (saleor/graphql/product/filters/product_helpers.py)
-- Branch: feature/ui-redesign-session-7 (merged)
-
-## Session 8 — completed ✓
-
-Auth system: Login, Register, Logout, Token Refresh, Forgot Password.
-
-### Auth architecture
+## Auth system
 
 - Cookie names: `saleor_token` (access), `saleor_refresh_token` — httpOnly, SameSite=Lax
 - Lib: `src/lib/auth/` — types.ts, jwt.ts, cookies.ts
@@ -198,7 +164,21 @@ runs next-intl first, then silently refreshes expiring tokens (<5 min) via
 - UserMenu now a client component using useAuth() — shows login button or
   user name + logout dropdown
 
-## Session 9 — (next)
+## Rules (ALWAYS follow)
 
-- Reset password page (/reset-password?token=...)
-- Possibly: orders page, account settings
+- DO NOT touch src/checkout/ under any circumstances
+- DO NOT touch src/gql/ or src/graphql/
+- DO NOT hardcode product/category data
+- Use LinkWithChannel (@/ui/atoms/LinkWithChannel) for ALL internal links
+- Use Container for layout, Button for CTAs
+- All new components: Server Components by default
+- Mobile-first, breakpoints: 375 / 768 / 1280
+- No new dependencies without asking
+- Work on feature branches, commit after each component
+- Run pnpm tsc --noEmit and pnpm lint after every step
+
+## Issue tracker
+
+beads (bd) — issues live in .beads/issues.jsonl
+Run `bd list` or `bd ready` to see current state.
+No need to duplicate issue details here.
