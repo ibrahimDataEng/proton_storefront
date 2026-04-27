@@ -18,5 +18,5 @@ export const deleteLineFromCheckout = async ({ lineId, checkoutId }: deleteLineF
 		cache: "no-cache",
 	});
 
-	revalidatePath("/cart");
+	revalidatePath("/", "layout");
 };
