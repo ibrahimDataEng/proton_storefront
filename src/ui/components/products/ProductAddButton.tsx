@@ -16,7 +16,8 @@ interface Props {
 
 export function ProductAddButton({ variantId, productSlug, isAvailable }: Props) {
 	const t = useTranslations("products");
-	const params = useParams() ;
+	const params = useParams();
+	const channel = (params.channel as string) ?? "";
 	const [state, setState] = useState<"idle" | "pending" | "added" | "error">("idle");
 
 	if (!isAvailable) {
@@ -46,7 +47,7 @@ export function ProductAddButton({ variantId, productSlug, isAvailable }: Props)
 	const handleClick = async () => {
 		if (state === "pending" || state === "added") return;
 		setState("pending");
-		const result = await addLineToCheckout({ variantId, channel: params.channel });
+		const result = await addLineToCheckout({ variantId, channel });
 		if (!result.ok) {
 			setState("error");
 			setTimeout(() => setState("idle"), 2000);
