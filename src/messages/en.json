@@ -58,6 +58,14 @@
 		"invalidResetLink": "This reset link is invalid or missing.",
 		"expiredResetLink": "This link has expired.",
 		"requestNewLink": "Request a new reset link",
+		"account": "My Account",
+		"accountInfo": "Account Information",
+		"changePassword": "Change Password",
+		"currentPassword": "Current password",
+		"confirmNewPassword": "Confirm new password",
+		"passwordChanged": "Password updated successfully.",
+		"signOut": "Sign Out",
+		"myAccount": "My Account",
 		"errors": {
 			"INVALID_CREDENTIALS": "Incorrect email or password.",
 			"ACCOUNT_NOT_CONFIRMED": "Please confirm your email before signing in.",
@@ -65,7 +73,9 @@
 			"PASSWORD_TOO_SHORT": "Password must be at least 8 characters.",
 			"UNIQUE": "An account with this email already exists.",
 			"PASSWORD_MISMATCH": "Passwords do not match.",
+			"PASSWORD_SAME": "New password must differ from the current one.",
 			"TOKEN_INVALID": "This reset link has expired. Please request a new one.",
+			"INVALID_PASSWORD": "Current password is incorrect.",
 			"unknown": "Something went wrong. Please try again."
 		}
 	}
