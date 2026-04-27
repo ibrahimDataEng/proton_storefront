@@ -1,16 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useCallback } from "react";
-import { XIcon } from "lucide-react";
-import { useTranslations } from "next-intl";
 import { AuthFormWrapper } from "./AuthFormWrapper";
 import { useAuth } from "@/ui/context/AuthContext";
 
 export function AuthModal() {
-	const t = useTranslations("auth");
 	const { isAuthModalOpen, authModalMode, setAuthModalMode, closeAuthModal } = useAuth();
 	const panelRef = useRef<HTMLDivElement>(null);
-	const firstFocusableRef = useRef<HTMLButtonElement>(null);
 
 	// Body scroll lock
 	useEffect(() => {
@@ -22,14 +18,14 @@ export function AuthModal() {
 		};
 	}, [isAuthModalOpen]);
 
-	// Focus panel on open
+	// Focus panel on open so Escape / Tab trap work immediately
 	useEffect(() => {
 		if (isAuthModalOpen) {
-			firstFocusableRef.current?.focus();
+			panelRef.current?.focus();
 		}
 	}, [isAuthModalOpen]);
 
-	// Focus trap
+	// Focus trap + Escape
 	const handleKeyDown = useCallback(
 		(e: React.KeyboardEvent) => {
 			if (e.key === "Escape") {
@@ -78,18 +74,12 @@ export function AuthModal() {
 				onClick={closeAuthModal}
 			/>
 
-			{/* Panel */}
-			<div ref={panelRef} className="relative z-10 w-full max-w-md rounded-2xl bg-surface-base p-6 shadow-xl">
-				<button
-					ref={firstFocusableRef}
-					type="button"
-					onClick={closeAuthModal}
-					className="absolute end-4 top-4 rounded-md p-1 text-content-secondary hover:text-content-primary focus:outline-none focus:ring-2 focus:ring-brand-primary"
-					aria-label={t("backToLogin")}
-				>
-					<XIcon className="h-5 w-5" aria-hidden="true" />
-				</button>
-
+			{/* Panel — tabIndex={-1} lets us programmatically focus it on open */}
+			<div
+				ref={panelRef}
+				tabIndex={-1}
+				className="relative z-10 w-full max-w-md rounded-2xl bg-surface-base p-6 shadow-xl focus:outline-none"
+			>
 				<AuthFormWrapper mode={authModalMode} onModeChange={setAuthModalMode} />
 			</div>
 		</div>

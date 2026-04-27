@@ -11,7 +11,7 @@ export const Logo = ({ className }: { className?: string }) => {
 	if (pathname === "/") {
 		return (
 			<h1
-				className={`flex items-center font-bold text-content-primary ${className ?? ""}`}
+				className={`flex shrink-0 items-center font-bold text-content-primary ${className ?? ""}`}
 				aria-label="homepage"
 			>
 				{companyName}
@@ -19,7 +19,7 @@ export const Logo = ({ className }: { className?: string }) => {
 		);
 	}
 	return (
-		<div className="flex items-center font-bold text-content-primary">
+		<div className="flex shrink-0 items-center font-bold text-content-primary">
 			<LinkWithChannel aria-label="homepage" href="/">
 				<img
 					src="/logo.png"
