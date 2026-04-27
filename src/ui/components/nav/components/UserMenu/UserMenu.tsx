@@ -3,9 +3,10 @@
 import { Fragment } from "react";
 import clsx from "clsx";
 import { Menu, Transition } from "@headlessui/react";
-import { UserIcon, LogOutIcon } from "lucide-react";
+import { UserIcon, LogOutIcon, LayoutDashboardIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useAuth } from "@/ui/context/AuthContext";
+import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 
 export function UserMenu() {
 	const t = useTranslations("auth");
@@ -50,6 +51,20 @@ export function UserMenu() {
 					</div>
 
 					<div className="py-1">
+						<Menu.Item>
+							{({ active }) => (
+								<LinkWithChannel
+									href="/account"
+									className={clsx(
+										"flex w-full items-center gap-2 px-4 py-2 text-start text-sm text-content-secondary transition-colors",
+										active && "bg-surface-sunken text-content-primary",
+									)}
+								>
+									<LayoutDashboardIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
+									{t("myAccount")}
+								</LinkWithChannel>
+							)}
+						</Menu.Item>
 						<Menu.Item>
 							{({ active }) => (
 								<button
