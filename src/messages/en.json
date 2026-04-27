@@ -59,7 +59,13 @@
 		"promoApply": "Apply",
 		"proceedToCheckout": "Proceed to Checkout",
 		"youMightAlsoLike": "You Might Also Like",
-		"taxIncluded": "VAT included"
+		"taxIncluded": "VAT included",
+		"alreadySaved": "Already saved",
+		"addToCart": "Add to cart",
+		"added": "Added!",
+		"quantityUpdate": "Update quantity",
+		"increase": "Increase quantity",
+		"decrease": "Decrease quantity"
 	},
 	"availability": {
 		"outofstock": "Out of stock"

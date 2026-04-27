@@ -59,7 +59,13 @@
 		"promoApply": "تطبيق",
 		"proceedToCheckout": "متابعة للدفع",
 		"youMightAlsoLike": "قد يعجبك أيضاً",
-		"taxIncluded": "شامل ضريبة القيمة المضافة"
+		"taxIncluded": "شامل ضريبة القيمة المضافة",
+		"alreadySaved": "موجود في المحفوظات",
+		"addToCart": "أضف إلى السلة",
+		"added": "تمت الإضافة!",
+		"quantityUpdate": "تحديث الكمية",
+		"increase": "زيادة الكمية",
+		"decrease": "تقليل الكمية"
 	},
 	"availability": {
 		"outofstock": "غير متوفر"
