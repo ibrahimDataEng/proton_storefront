@@ -102,7 +102,7 @@ export function SavedForLater() {
 				{items.map((item) => (
 					<div
 						key={item.id}
-						className="flex flex-col gap-3 rounded-xl border border-line-subtle bg-surface-raised p-4 shadow-soft"
+						className="flex animate-fade-in flex-col gap-3 rounded-xl border border-line-subtle bg-surface-raised p-4 shadow-soft"
 					>
 						<div className="aspect-square overflow-hidden rounded-lg bg-surface-sunken">
 							{item.thumbnailUrl ? (

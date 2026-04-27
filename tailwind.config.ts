@@ -53,6 +53,15 @@ const config: Config = {
 			transitionDuration: {
 				DEFAULT: "180ms",
 			},
+			keyframes: {
+				fadeIn: {
+					"0%": { opacity: "0" },
+					"100%": { opacity: "1" },
+				},
+			},
+			animation: {
+				"fade-in": "fadeIn 200ms ease-in",
+			},
 		},
 	},
 	plugins: [TypographyPlugin, FormPlugin, ContainerQueriesPlugin],
