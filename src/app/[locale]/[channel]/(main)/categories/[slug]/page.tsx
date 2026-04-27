@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { type ResolvingMetadata, type Metadata } from "next";
 import { LanguageCodeEnum, ProductListByCategoryDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
+import { Container } from "@/ui/components/Container";
 import { ProductList } from "@/ui/components/ProductList";
 
 export const generateMetadata = async (
@@ -54,9 +55,9 @@ export default async function Page(props: {
 	const products = category.products;
 
 	return (
-		<div className="mx-auto max-w-7xl p-8 pb-16">
-			<h1 className="pb-8 text-xl font-semibold">{name}</h1>
+		<Container className="pb-16 pt-8">
+			<h1 className="pb-8 text-xl font-semibold text-content-primary">{name}</h1>
 			<ProductList products={products.edges.map((e) => e.node)} />
-		</div>
+		</Container>
 	);
 }
