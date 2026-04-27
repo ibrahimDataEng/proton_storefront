@@ -67,6 +67,30 @@
 		"increase": "Increase quantity",
 		"decrease": "Decrease quantity"
 	},
+	"products": {
+		"title": "All Products",
+		"count": "{count} products",
+		"addToCart": "Add to Cart",
+		"selectVariant": "Select Option",
+		"outOfStock": "Out of Stock",
+		"filters": "Filters",
+		"sortBy": "Sort by",
+		"newest": "Newest",
+		"priceLowHigh": "Price: Low to High",
+		"priceHighLow": "Price: High to Low",
+		"bestSelling": "Best Selling",
+		"biggestDiscount": "Biggest Discount",
+		"allCategories": "All Categories",
+		"priceRange": "Price Range",
+		"minPrice": "Min",
+		"maxPrice": "Max",
+		"apply": "Apply",
+		"inStockOnly": "In stock only",
+		"clearFilters": "Clear all",
+		"noResults": "No products match your filters.",
+		"clearAndReset": "Clear filters",
+		"added": "Added!"
+	},
 	"availability": {
 		"outofstock": "Out of stock"
 	},
