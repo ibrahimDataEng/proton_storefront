@@ -20,7 +20,7 @@ export const DeleteLineButton = ({ lineId, checkoutId }: Props) => {
 			title={isPending ? t("removing") : t("remove")}
 			aria-label={isPending ? t("removing") : t("remove")}
 			aria-disabled={isPending}
-			className="text-content-secondary transition-colors hover:text-status-danger disabled:cursor-not-allowed"
+			className="flex h-8 w-8 items-center justify-center text-content-secondary transition-colors hover:text-status-danger disabled:cursor-not-allowed"
 			onClick={() => {
 				if (isPending) return;
 				startTransition(() => deleteLineFromCheckout({ lineId, checkoutId }));

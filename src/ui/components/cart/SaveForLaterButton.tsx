@@ -68,7 +68,7 @@ export function SaveForLaterButton({
 				title={label}
 				aria-label={label}
 				disabled={isPending}
-				className="text-content-secondary transition-colors hover:text-brand-primary disabled:cursor-not-allowed"
+				className="flex h-8 w-8 items-center justify-center text-content-secondary transition-colors hover:text-brand-primary disabled:cursor-not-allowed"
 				onClick={() => void handleClick()}
 			>
 				<Bookmark size={18} aria-hidden="true" />
