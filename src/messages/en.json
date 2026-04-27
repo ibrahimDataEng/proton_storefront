@@ -32,6 +32,11 @@
 		"changeCurrency": "Change currency",
 		"loadingError": "Failed to load footer content"
 	},
+	"categories": {
+		"allCategories": "All Categories",
+		"noProducts": "No products available in this category yet.",
+		"backToHome": "Back to home"
+	},
 	"availability": {
 		"outofstock": "Out of stock"
 	},

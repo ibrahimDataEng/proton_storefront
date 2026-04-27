@@ -32,6 +32,11 @@
 		"changeCurrency": "تغيير العملة",
 		"loadingError": "فشل تحميل محتوى الفوتر"
 	},
+	"categories": {
+		"allCategories": "جميع الفئات",
+		"noProducts": "لا توجد منتجات متاحة في هذه الفئة حالياً.",
+		"backToHome": "العودة للرئيسية"
+	},
 	"availability": {
 		"outofstock": "غير متوفر"
 	},
