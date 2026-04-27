@@ -23,7 +23,7 @@ export default async function Page(props: { params: Promise<{ channel: string; l
 
 	if (!checkout || checkout.lines.length < 1) {
 		return (
-			<main className="min-h-[calc(100vh-4rem)] py-20">
+			<main className="min-h-[calc(100vh-4rem)] py-10">
 				<Container>
 					<div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
 						<ShoppingBag size={64} className="text-content-secondary" aria-hidden="true" />
@@ -36,6 +36,17 @@ export default async function Page(props: { params: Promise<{ channel: string; l
 							{t("exploreProducts")}
 						</LinkWithChannel>
 					</div>
+
+					<SavedForLater />
+
+					<Suspense fallback={<CartRecommendationsSkeleton />}>
+						<CartRecommendations
+							channel={channel}
+							locale={locale}
+							categorySlugs={[]}
+							excludeProductIds={[]}
+						/>
+					</Suspense>
 				</Container>
 			</main>
 		);
@@ -76,10 +87,8 @@ export default async function Page(props: { params: Promise<{ channel: string; l
 					</div>
 				</div>
 
-				{/* Saved for later */}
 				<SavedForLater />
 
-				{/* Recommendations */}
 				<Suspense fallback={<CartRecommendationsSkeleton />}>
 					<CartRecommendations
 						channel={channel}
