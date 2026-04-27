@@ -6,6 +6,7 @@ import { Bookmark, BookmarkX } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 import { formatMoney } from "@/lib/utils";
+import { addLineToCheckout } from "@/app/[locale]/[channel]/(main)/cart/actions";
 
 export type SavedItem = {
 	id: string;
@@ -25,7 +26,15 @@ const CHANGE_EVENT = "savedForLaterChanged";
 function readStorage(): SavedItem[] {
 	try {
 		const stored = localStorage.getItem(STORAGE_KEY);
-		return stored ? (JSON.parse(stored) as SavedItem[]) : [];
+		if (!stored) return [];
+		const parsed = JSON.parse(stored) as SavedItem[];
+		// Deduplicate by variantId, keep first occurrence
+		const seen = new Set<string>();
+		return parsed.filter((item) => {
+			if (seen.has(item.variantId)) return false;
+			seen.add(item.variantId);
+			return true;
+		});
 	} catch {
 		return [];
 	}
@@ -89,7 +98,69 @@ export function SaveForLaterButton({ item, label }: SaveForLaterButtonProps) {
 	);
 }
 
-export function SavedForLater() {
+interface MoveToCartButtonProps {
+	item: SavedItem;
+	channel: string;
+	onSuccess: () => void;
+	label: string;
+}
+
+function MoveToCartButton({ item, channel, onSuccess, label }: MoveToCartButtonProps) {
+	const [state, setState] = useState<"idle" | "pending" | "error" | "redirect">("idle");
+
+	if (state === "redirect") {
+		return (
+			<LinkWithChannel
+				href={`/products/${item.productSlug}`}
+				className="flex-1 rounded-md bg-brand-primary px-3 py-2 text-center text-sm font-medium text-content-inverse transition-colors hover:bg-brand-primary/90"
+			>
+				{label}
+			</LinkWithChannel>
+		);
+	}
+
+	const handleClick = async () => {
+		if (state === "pending") return;
+		setState("pending");
+		try {
+			const result = await addLineToCheckout({ variantId: item.variantId, channel });
+			if (result.redirect) {
+				setState("redirect");
+				return;
+			}
+			if (!result.ok) {
+				setState("error");
+				setTimeout(() => setState("idle"), 2000);
+				return;
+			}
+			onSuccess();
+		} catch {
+			setState("error");
+			setTimeout(() => setState("idle"), 2000);
+		}
+	};
+
+	return (
+		<button
+			type="button"
+			disabled={state === "pending"}
+			className="flex-1 rounded-md bg-brand-primary px-3 py-2 text-center text-sm font-medium text-content-inverse transition-colors hover:bg-brand-primary/90 disabled:opacity-60"
+			onClick={() => void handleClick()}
+		>
+			{state === "pending" ? (
+				<span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+			) : (
+				label
+			)}
+		</button>
+	);
+}
+
+interface SavedForLaterProps {
+	channel?: string;
+}
+
+export function SavedForLater({ channel }: SavedForLaterProps) {
 	const t = useTranslations("cart");
 	const { items, removeItem } = useSavedItems();
 
@@ -129,12 +200,21 @@ export function SavedForLater() {
 						</div>
 
 						<div className="flex gap-2">
-							<LinkWithChannel
-								href={`/products/${item.productSlug}`}
-								className="flex-1 rounded-md bg-brand-primary px-3 py-2 text-center text-sm font-medium text-content-inverse transition-colors hover:bg-brand-primary/90"
-							>
-								{t("moveToCart")}
-							</LinkWithChannel>
+							{channel ? (
+								<MoveToCartButton
+									item={item}
+									channel={channel}
+									onSuccess={() => removeItem(item.id)}
+									label={t("moveToCart")}
+								/>
+							) : (
+								<LinkWithChannel
+									href={`/products/${item.productSlug}`}
+									className="flex-1 rounded-md bg-brand-primary px-3 py-2 text-center text-sm font-medium text-content-inverse transition-colors hover:bg-brand-primary/90"
+								>
+									{t("moveToCart")}
+								</LinkWithChannel>
+							)}
 							<button
 								type="button"
 								aria-label={t("remove")}

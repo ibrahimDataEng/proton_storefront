@@ -89,6 +89,9 @@ export function CartLineItem({ line, checkoutId }: CartLineItemProps) {
 					</div>
 
 					<div className="flex items-center justify-between">
+						{/* TODO: Replace with quantity stepper once CheckoutLinesUpdate.graphql is added
+						    to src/graphql/ and codegen is re-run. Wire to updateLineQuantity server action
+						    with optimistic UI: [ − ] [ n ] [ + ], 400ms debounce before server call. */}
 						<span className="inline-flex items-center gap-1.5 rounded-full bg-surface-sunken px-3 py-1 text-sm text-content-primary">
 							<span className="text-content-secondary">{t("qty")}</span>
 							{line.quantity}
@@ -99,6 +102,7 @@ export function CartLineItem({ line, checkoutId }: CartLineItemProps) {
 								checkoutId={checkoutId}
 								item={savedItem}
 								label={t("saveForLater")}
+								alreadySavedLabel={t("alreadySaved")}
 								onLeave={() => setIsLeaving(true)}
 							/>
 							<DeleteLineButton checkoutId={checkoutId} lineId={line.id} />

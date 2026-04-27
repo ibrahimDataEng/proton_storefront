@@ -13,14 +13,36 @@ interface SaveForLaterButtonProps {
 	checkoutId: string;
 	item: SavedItem;
 	label: string;
+	alreadySavedLabel?: string;
 	onLeave: () => void;
 }
 
-export function SaveForLaterButton({ lineId, checkoutId, item, label, onLeave }: SaveForLaterButtonProps) {
+export function SaveForLaterButton({
+	lineId,
+	checkoutId,
+	item,
+	label,
+	alreadySavedLabel,
+	onLeave,
+}: SaveForLaterButtonProps) {
 	const [isPending, setIsPending] = useState(false);
+	const [alreadySaved, setAlreadySaved] = useState(false);
 
 	const handleClick = async () => {
 		if (isPending) return;
+
+		// Duplicate check — same variantId already saved
+		try {
+			const current = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]") as SavedItem[];
+			if (current.some((i) => i.variantId === item.variantId)) {
+				setAlreadySaved(true);
+				setTimeout(() => setAlreadySaved(false), 2000);
+				return;
+			}
+		} catch {
+			// localStorage unavailable — proceed normally
+		}
+
 		setIsPending(true);
 		onLeave(); // trigger exit animation on the parent line card
 
@@ -40,15 +62,22 @@ export function SaveForLaterButton({ lineId, checkoutId, item, label, onLeave }:
 	};
 
 	return (
-		<button
-			type="button"
-			title={label}
-			aria-label={label}
-			disabled={isPending}
-			className="text-content-secondary transition-colors hover:text-brand-primary disabled:cursor-not-allowed"
-			onClick={() => void handleClick()}
-		>
-			<Bookmark size={18} aria-hidden="true" />
-		</button>
+		<div className="relative">
+			<button
+				type="button"
+				title={label}
+				aria-label={label}
+				disabled={isPending}
+				className="text-content-secondary transition-colors hover:text-brand-primary disabled:cursor-not-allowed"
+				onClick={() => void handleClick()}
+			>
+				<Bookmark size={18} aria-hidden="true" />
+			</button>
+			{alreadySaved && alreadySavedLabel && (
+				<span className="pointer-events-none absolute bottom-full left-1/2 mb-1 -translate-x-1/2 whitespace-nowrap rounded bg-surface-raised px-2 py-1 text-xs text-content-secondary shadow-raised">
+					{alreadySavedLabel}
+				</span>
+			)}
+		</div>
 	);
 }
