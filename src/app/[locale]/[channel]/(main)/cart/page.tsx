@@ -37,7 +37,7 @@ export default async function Page(props: { params: Promise<{ channel: string; l
 						</LinkWithChannel>
 					</div>
 
-					<SavedForLater />
+					<SavedForLater channel={channel} />
 
 					<Suspense fallback={<CartRecommendationsSkeleton />}>
 						<CartRecommendations
@@ -87,7 +87,7 @@ export default async function Page(props: { params: Promise<{ channel: string; l
 					</div>
 				</div>
 
-				<SavedForLater />
+				<SavedForLater channel={channel} />
 
 				<Suspense fallback={<CartRecommendationsSkeleton />}>
 					<CartRecommendations
