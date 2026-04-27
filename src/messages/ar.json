@@ -37,6 +37,30 @@
 		"noProducts": "لا توجد منتجات متاحة في هذه الفئة حالياً.",
 		"backToHome": "العودة للرئيسية"
 	},
+	"cart": {
+		"title": "سلة التسوق",
+		"emptyTitle": "سلتك فارغة",
+		"emptySubtitle": "يبدو أنك لم تضف أي منتج بعد.",
+		"exploreProducts": "تصفح المنتجات",
+		"qty": "الكمية",
+		"remove": "حذف",
+		"removing": "جاري الحذف...",
+		"saveForLater": "حفظ لوقت لاحق",
+		"savedForLater": "محفوظ لوقت لاحق",
+		"moveToCart": "نقل إلى السلة",
+		"subtotal": "المجموع الفرعي",
+		"shipping": "الشحن",
+		"shippingFree": "مجاني",
+		"shippingCalculated": "يُحسب عند الدفع",
+		"grandTotal": "المجموع الكلي",
+		"freeShippingProgress": "أضف {amount} أكثر للحصول على شحن مجاني",
+		"freeShippingUnlocked": "لقد حصلت على شحن مجاني!",
+		"promoCode": "رمز الخصم",
+		"promoApply": "تطبيق",
+		"proceedToCheckout": "متابعة للدفع",
+		"youMightAlsoLike": "قد يعجبك أيضاً",
+		"taxIncluded": "شامل ضريبة القيمة المضافة"
+	},
 	"availability": {
 		"outofstock": "غير متوفر"
 	},

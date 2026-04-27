@@ -37,6 +37,30 @@
 		"noProducts": "No products available in this category yet.",
 		"backToHome": "Back to home"
 	},
+	"cart": {
+		"title": "Your Cart",
+		"emptyTitle": "Your cart is empty",
+		"emptySubtitle": "Looks like you haven't added anything yet.",
+		"exploreProducts": "Explore Products",
+		"qty": "Qty",
+		"remove": "Remove",
+		"removing": "Removing...",
+		"saveForLater": "Save for later",
+		"savedForLater": "Saved for Later",
+		"moveToCart": "Move to cart",
+		"subtotal": "Subtotal",
+		"shipping": "Shipping",
+		"shippingFree": "Free",
+		"shippingCalculated": "Calculated at checkout",
+		"grandTotal": "Grand Total",
+		"freeShippingProgress": "Add {amount} more for free shipping",
+		"freeShippingUnlocked": "You've unlocked free shipping!",
+		"promoCode": "Promo code",
+		"promoApply": "Apply",
+		"proceedToCheckout": "Proceed to Checkout",
+		"youMightAlsoLike": "You Might Also Like",
+		"taxIncluded": "VAT included"
+	},
 	"availability": {
 		"outofstock": "Out of stock"
 	},
