@@ -57,5 +57,6 @@ export default async function middleware(request: NextRequest): Promise<NextResp
 }
 
 export const config = {
-	matcher: ["/((?!api|_next/static|_next/image|favicon.ico).*)"],
+	// Exclude paths with file extensions — next-intl would otherwise 307-redirect /logo.png to /<locale>/logo.png
+	matcher: ["/((?!api|_next/static|_next/image|_next/|favicon.ico|.*\\..*).*)"],
 };
