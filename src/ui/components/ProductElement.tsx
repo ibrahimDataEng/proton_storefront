@@ -1,99 +1,134 @@
-import { getTranslations } from "next-intl/server";
+"use client";
+
+import { useState, useRef } from "react";
+import { useTranslations } from "next-intl";
+import { motion } from "framer-motion";
 import { clsx } from "clsx";
 import { LinkWithChannel } from "../atoms/LinkWithChannel";
 import { ProductImageWrapper } from "@/ui/atoms/ProductImageWrapper";
 import { ProductAddButton } from "@/ui/components/products/ProductAddButton";
 import type { ProductListItemFragment } from "@/gql/graphql";
-import { formatMoneyRange } from "@/lib/utils";
+import { formatMoney, formatMoneyRange } from "@/lib/utils";
 
-export async function ProductElement({
+export function ProductElement({
 	product,
 	loading,
 	priority,
 }: { product: ProductListItemFragment } & { loading: "eager" | "lazy"; priority?: boolean }) {
-	const t = await getTranslations("products");
-
+	const t = useTranslations("products");
 	const variants = product.variants ?? [];
-	const singleVariant = variants.length === 1 ? variants[0] : undefined;
-	const showPills = variants.length > 1;
-	const extraCount = variants.length > 4 ? variants.length - 3 : 0;
-	const displayPills = extraCount > 0 ? variants.slice(0, 3) : variants.slice(0, 4);
 	const isAvailable = product.isAvailable ?? true;
 
+	const [selectedVariantId, setSelectedVariantId] = useState<string | undefined>(variants[0]?.id);
+
+	const pillsRef = useRef<HTMLDivElement>(null);
+
+	const selectedVariant = variants.find((v) => v.id === selectedVariantId);
+
+	// Compute display price and optional struck-through original price
+	let displayPrice: string | null = null;
+	let originalPrice: string | null = null;
+
+	if (selectedVariant?.pricing?.price?.gross) {
+		const p = selectedVariant.pricing.price.gross;
+		displayPrice = formatMoney(p.amount, p.currency);
+		const u = selectedVariant.pricing.priceUndiscounted?.gross;
+		if (u && u.amount > p.amount) {
+			originalPrice = formatMoney(u.amount, u.currency);
+		}
+	} else {
+		displayPrice =
+			formatMoneyRange({
+				start: product.pricing?.priceRange?.start?.gross,
+				stop: product.pricing?.priceRange?.stop?.gross,
+			}) || null;
+	}
+
+	const showVariantPills = variants.length > 1;
+
+	const handlePillsScroll = () => {
+		pillsRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+		// Focus the first pill for accessibility
+		const firstPill = pillsRef.current?.querySelector("button");
+		firstPill?.focus();
+	};
+
 	return (
-		<li data-testid="ProductElement">
-			<div className="group flex flex-col gap-3">
+		<motion.li
+			data-testid="ProductElement"
+			initial={{ opacity: 0, y: 20 }}
+			whileInView={{ opacity: 1, y: 0 }}
+			viewport={{ once: true, margin: "-50px" }}
+			transition={{ duration: 0.3, ease: "easeOut" }}
+			className="overflow-hidden rounded-2xl border border-line-subtle bg-surface-base shadow-sm transition-shadow duration-200 hover:shadow-md"
+		>
+			<div className="flex flex-col gap-3 p-3">
+				{/* Image + name — linked to product page */}
 				<LinkWithChannel href={`/products/${product.slug}`} key={product.id}>
-					<div>
-						<div className="relative overflow-hidden rounded-lg">
-							{!isAvailable && (
-								<div className="absolute right-2 top-2 z-10 rounded-md bg-surface-raised px-2 py-0.5 text-xs text-status-danger shadow-soft">
-									{t("outOfStock")}
-								</div>
-							)}
-							{product?.thumbnail?.url && (
-								<ProductImageWrapper
-									loading={loading}
-									src={product.thumbnail.url}
-									alt={product.thumbnail.alt ?? ""}
-									width={512}
-									height={512}
-									sizes={"512px"}
-									priority={priority}
-								/>
-							)}
-						</div>
-						<div className="mt-2 flex justify-between">
-							<div>
-								<h3 className="mt-1 text-sm font-semibold text-content-primary">
-									{product.translation?.name || product.name}
-								</h3>
-								<p className="mt-1 text-sm text-content-secondary" data-testid="ProductElement_Category">
-									{product.category?.translation?.name || product.category?.name}
-								</p>
+					<div className="relative overflow-hidden rounded-xl">
+						{!isAvailable && (
+							<div className="absolute right-2 top-2 z-10 rounded-md bg-surface-raised px-2 py-0.5 text-xs text-status-danger shadow-soft">
+								{t("outOfStock")}
 							</div>
-							<p
-								className="mt-1 text-sm font-medium text-content-primary"
-								data-testid="ProductElement_PriceRange"
-							>
-								{formatMoneyRange({
-									start: product?.pricing?.priceRange?.start?.gross,
-									stop: product?.pricing?.priceRange?.stop?.gross,
-								})}
-							</p>
-						</div>
+						)}
+						{product?.thumbnail?.url && (
+							<ProductImageWrapper
+								loading={loading}
+								src={product.thumbnail.url}
+								alt={product.thumbnail.alt ?? ""}
+								width={512}
+								height={512}
+								sizes="(min-width: 1280px) 25vw, (min-width: 768px) 33vw, 50vw"
+								priority={priority}
+							/>
+						)}
 					</div>
+					<h3 className="mt-3 line-clamp-2 text-sm font-semibold text-content-primary">
+						{product.translation?.name || product.name}
+					</h3>
 				</LinkWithChannel>
 
-				{showPills && (
-					<div className="flex flex-wrap gap-1">
-						{displayPills.map((v, i) => (
-							<span
+				{/* Variant pills — interactive, all shown */}
+				{showVariantPills && (
+					<div ref={pillsRef} className="flex flex-wrap gap-1.5">
+						{variants.map((v) => (
+							<motion.button
 								key={v.id}
+								whileTap={{ scale: 0.95 }}
+								type="button"
+								onClick={() => setSelectedVariantId(v.id)}
 								className={clsx(
-									"rounded-full px-2 py-0.5 text-xs",
-									i === 0
-										? "bg-brand-primary text-content-inverse"
-										: "bg-surface-sunken text-content-secondary",
+									"rounded-full px-3 py-1 text-xs transition-colors",
+									v.id === selectedVariantId
+										? "bg-brand-primary font-medium text-content-inverse"
+										: "bg-surface-sunken text-content-secondary hover:bg-surface-raised",
 								)}
 							>
 								{v.name}
-							</span>
+							</motion.button>
 						))}
-						{extraCount > 0 && (
-							<span className="rounded-full bg-surface-sunken px-2 py-0.5 text-xs text-content-secondary">
-								+{extraCount} more
-							</span>
-						)}
 					</div>
 				)}
 
+				{/* Price */}
+				<div className="flex flex-col">
+					{originalPrice && (
+						<span className="text-xs text-content-secondary line-through">{originalPrice}</span>
+					)}
+					<p className="text-base font-semibold text-content-primary" data-testid="ProductElement_PriceRange">
+						{displayPrice}
+					</p>
+				</div>
+
+				{/* Add to cart */}
 				<ProductAddButton
-					variantId={singleVariant?.id}
+					selectedVariantId={selectedVariantId}
 					productSlug={product.slug}
 					isAvailable={isAvailable}
+					hasMultipleVariants={showVariantPills}
+					onSelectClick={handlePillsScroll}
 				/>
 			</div>
-		</li>
+		</motion.li>
 	);
 }
