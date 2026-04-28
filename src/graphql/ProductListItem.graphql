@@ -38,6 +38,12 @@ fragment ProductListItem on Product {
 					currency
 				}
 			}
+			priceUndiscounted {
+				gross {
+					amount
+					currency
+				}
+			}
 		}
 	}
 	category {
