@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { motion } from "framer-motion";
 
 export default function Error({ error, reset }: { error: Error; reset: () => void }) {
 	useEffect(() => {
@@ -8,21 +9,89 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
 	}, [error]);
 
 	return (
-		<div className="bg-white">
-			<div className="mx-auto max-w-7xl px-6 py-12">
-				<h1 className="text-2xl font-bold leading-10 tracking-tight text-neutral-800">
-					Something went wrong
-				</h1>
-				<p className="mt-6 max-w-2xl text-base leading-7 text-neutral-600">
-					<code>{error.message}</code>
-				</p>
-				<button
-					className="mt-8 h-10 rounded-md bg-red-500 px-6 font-semibold text-white"
-					onClick={() => reset()}
-				>
-					Try again
-				</button>
-			</div>
+		<div className="flex min-h-[60vh] flex-col items-center justify-center px-6 py-16 text-center">
+			<motion.svg
+				xmlns="http://www.w3.org/2000/svg"
+				viewBox="0 0 120 120"
+				className="mb-8 h-28 w-28 text-status-warning"
+				aria-hidden="true"
+				initial={{ opacity: 0, rotate: -10 }}
+				animate={{ opacity: 1, rotate: 0 }}
+				transition={{ duration: 0.5, ease: "easeOut" }}
+			>
+				{/* Triangle warning */}
+				<motion.path
+					d="M60 15 L105 95 L15 95 Z"
+					fill="currentColor"
+					opacity="0.12"
+					initial={{ scale: 0.5 }}
+					animate={{ scale: 1 }}
+					transition={{ duration: 0.4, delay: 0.1 }}
+				/>
+				<motion.path
+					d="M60 20 L101 92 L19 92 Z"
+					fill="none"
+					stroke="currentColor"
+					strokeWidth="3"
+					strokeLinejoin="round"
+					opacity="0.6"
+					initial={{ pathLength: 0 }}
+					animate={{ pathLength: 1 }}
+					transition={{ duration: 0.6, delay: 0.2 }}
+				/>
+				{/* Exclamation stem */}
+				<motion.rect
+					x="57"
+					y="48"
+					width="6"
+					height="24"
+					rx="3"
+					fill="currentColor"
+					opacity="0.7"
+					initial={{ scaleY: 0 }}
+					animate={{ scaleY: 1 }}
+					style={{ transformOrigin: "60px 48px" }}
+					transition={{ delay: 0.6, duration: 0.3 }}
+				/>
+				{/* Exclamation dot */}
+				<motion.circle
+					cx="60"
+					cy="80"
+					r="3.5"
+					fill="currentColor"
+					opacity="0.7"
+					initial={{ scale: 0 }}
+					animate={{ scale: 1 }}
+					transition={{ delay: 0.8, duration: 0.25, type: "spring" }}
+				/>
+			</motion.svg>
+
+			<motion.div
+				initial={{ opacity: 0, y: 10 }}
+				animate={{ opacity: 1, y: 0 }}
+				transition={{ delay: 0.35, duration: 0.4 }}
+				className="flex max-w-md flex-col items-center gap-3"
+			>
+				<h1 className="text-2xl font-semibold text-content-primary">Something went wrong</h1>
+				<p className="text-content-secondary">An unexpected error occurred. Please try again.</p>
+				{error.message && (
+					<code className="mt-2 rounded-md bg-surface-sunken px-3 py-2 text-xs text-content-secondary">
+						{error.message}
+					</code>
+				)}
+			</motion.div>
+
+			<motion.button
+				initial={{ opacity: 0 }}
+				animate={{ opacity: 1 }}
+				transition={{ delay: 0.55, duration: 0.3 }}
+				whileTap={{ scale: 0.97 }}
+				type="button"
+				onClick={reset}
+				className="mt-8 inline-flex h-11 items-center justify-center rounded-lg bg-brand-primary px-6 text-sm font-medium text-content-inverse transition-colors hover:bg-brand-primary/90"
+			>
+				Try again
+			</motion.button>
 		</div>
 	);
 }

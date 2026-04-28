@@ -1,9 +1,11 @@
 import { notFound, redirect } from "next/navigation";
+import { Search } from "lucide-react";
 import { OrderDirection, ProductOrderField, SearchProductsDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 import { getSaleorLanguage } from "@/lib/saleor-language";
 import { Pagination } from "@/ui/components/Pagination";
 import { ProductList } from "@/ui/components/ProductList";
+import { EmptyState } from "@/ui/components/EmptyState";
 import { ProductsPerPage } from "@/app/[locale]/config";
 
 export const metadata = {
@@ -70,7 +72,11 @@ export default async function Page(props: {
 					/>
 				</div>
 			) : (
-				<h1 className="mx-auto pb-8 text-center text-xl font-semibold">Nothing found :(</h1>
+				<EmptyState
+					icon={<Search size={56} aria-hidden="true" />}
+					title={`No results for "${searchValue}"`}
+					subtitle="Try different keywords or check the spelling."
+				/>
 			)}
 		</section>
 	);

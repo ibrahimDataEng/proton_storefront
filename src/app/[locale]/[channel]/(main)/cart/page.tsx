@@ -8,6 +8,7 @@ import { CartLineItem } from "@/ui/components/cart/CartLineItem";
 import { OrderSummary } from "@/ui/components/cart/OrderSummary";
 import { CartRecommendations, CartRecommendationsSkeleton } from "@/ui/components/cart/CartRecommendations";
 import { SavedForLater } from "@/ui/components/cart/SavedForLater";
+import { EmptyState } from "@/ui/components/EmptyState";
 
 export const metadata = {
 	title: "Shopping Cart · Green Line Storefront",
@@ -25,17 +26,19 @@ export default async function Page(props: { params: Promise<{ channel: string; l
 		return (
 			<main className="min-h-[calc(100vh-4rem)] py-10">
 				<Container>
-					<div className="flex flex-col items-center justify-center gap-4 py-16 text-center">
-						<ShoppingBag size={64} className="text-content-secondary" aria-hidden="true" />
-						<h1 className="text-2xl font-semibold text-content-primary">{t("emptyTitle")}</h1>
-						<p className="max-w-sm text-content-secondary">{t("emptySubtitle")}</p>
-						<LinkWithChannel
-							href="/"
-							className="mt-2 inline-flex h-12 items-center justify-center rounded-md bg-brand-primary px-6 text-base font-medium text-content-inverse transition-colors hover:bg-brand-primary/90"
-						>
-							{t("exploreProducts")}
-						</LinkWithChannel>
-					</div>
+					<EmptyState
+						icon={<ShoppingBag size={64} aria-hidden="true" />}
+						title={t("emptyTitle")}
+						subtitle={t("emptySubtitle")}
+						action={
+							<LinkWithChannel
+								href="/"
+								className="mt-2 inline-flex h-12 items-center justify-center rounded-md bg-brand-primary px-6 text-base font-medium text-content-inverse transition-colors hover:bg-brand-primary/90"
+							>
+								{t("exploreProducts")}
+							</LinkWithChannel>
+						}
+					/>
 
 					<SavedForLater channel={channel} />
 
