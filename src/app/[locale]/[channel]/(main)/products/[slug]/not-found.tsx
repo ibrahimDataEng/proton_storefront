@@ -1,9 +1,12 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { motion } from "framer-motion";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 
 export default function NotFound() {
+	const t = useTranslations("notFound");
+
 	return (
 		<div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-8 py-16 text-center">
 			{/* Animated broken-box SVG illustration */}
@@ -24,7 +27,7 @@ export default function NotFound() {
 					height="50"
 					rx="4"
 					fill="currentColor"
-					opacity="0.15"
+					opacity={0.15}
 					initial={{ pathLength: 0 }}
 					animate={{ pathLength: 1 }}
 					transition={{ duration: 0.6, delay: 0.2 }}
@@ -33,7 +36,7 @@ export default function NotFound() {
 				<motion.path
 					d="M20 55 L60 40 L60 55 Z"
 					fill="currentColor"
-					opacity="0.25"
+					opacity={0.25}
 					initial={{ opacity: 0 }}
 					animate={{ opacity: 0.25 }}
 					transition={{ delay: 0.4, duration: 0.3 }}
@@ -42,8 +45,9 @@ export default function NotFound() {
 				<motion.path
 					d="M100 55 L60 40 L60 55 Z"
 					fill="currentColor"
-					opacity="0.4"
-					initial={{ rotate: 0, originX: "60px", originY: "55px" }}
+					opacity={0.4}
+					style={{ transformBox: "fill-box", transformOrigin: "center" }}
+					initial={{ rotate: 0 }}
 					animate={{ rotate: -35 }}
 					transition={{ delay: 0.6, duration: 0.5, ease: "easeOut" }}
 				/>
@@ -55,20 +59,20 @@ export default function NotFound() {
 					fontSize="28"
 					fontWeight="bold"
 					fill="currentColor"
-					opacity="0.6"
+					opacity={0.6}
 					initial={{ opacity: 0, y: 100 }}
 					animate={{ opacity: 0.6, y: 90 }}
 					transition={{ delay: 0.7, duration: 0.4 }}
 				>
 					?
 				</motion.text>
-				{/* Stars/sparkles */}
+				{/* Sparkles */}
 				<motion.circle
 					cx="25"
 					cy="35"
 					r="3"
 					fill="currentColor"
-					opacity="0.5"
+					opacity={0.5}
 					initial={{ opacity: 0 }}
 					animate={{ opacity: [0, 0.5, 0] }}
 					transition={{ delay: 0.8, duration: 1.5, repeat: Infinity, repeatDelay: 1 }}
@@ -78,7 +82,7 @@ export default function NotFound() {
 					cy="30"
 					r="2"
 					fill="currentColor"
-					opacity="0.4"
+					opacity={0.4}
 					initial={{ opacity: 0 }}
 					animate={{ opacity: [0, 0.4, 0] }}
 					transition={{ delay: 1.2, duration: 1.5, repeat: Infinity, repeatDelay: 1.2 }}
@@ -88,7 +92,7 @@ export default function NotFound() {
 					cy="70"
 					r="2"
 					fill="currentColor"
-					opacity="0.3"
+					opacity={0.3}
 					initial={{ opacity: 0 }}
 					animate={{ opacity: [0, 0.3, 0] }}
 					transition={{ delay: 1.6, duration: 1.5, repeat: Infinity, repeatDelay: 0.8 }}
@@ -102,8 +106,8 @@ export default function NotFound() {
 				className="flex flex-col items-center gap-3"
 			>
 				<span className="text-6xl font-bold text-brand-muted opacity-30">404</span>
-				<h1 className="text-2xl font-semibold text-content-primary">Product not found</h1>
-				<p className="text-content-secondary">This product may have been removed or the link is incorrect.</p>
+				<h1 className="text-2xl font-semibold text-content-primary">{t("title")}</h1>
+				<p className="text-content-secondary">{t("subtitle")}</p>
 			</motion.div>
 
 			<motion.div
@@ -116,13 +120,13 @@ export default function NotFound() {
 					href="/products"
 					className="inline-flex items-center justify-center rounded-lg bg-brand-primary px-5 py-2.5 text-sm font-medium text-content-inverse transition-colors hover:bg-brand-primary/90"
 				>
-					Browse products
+					{t("browse")}
 				</LinkWithChannel>
 				<LinkWithChannel
 					href="/"
 					className="inline-flex items-center justify-center rounded-lg border border-line-default px-5 py-2.5 text-sm font-medium text-content-secondary transition-colors hover:border-brand-primary hover:text-brand-primary"
 				>
-					Go home
+					{t("goHome")}
 				</LinkWithChannel>
 			</motion.div>
 		</div>
