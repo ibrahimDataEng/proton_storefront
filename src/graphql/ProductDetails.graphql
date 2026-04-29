@@ -17,9 +17,32 @@ query ProductDetails($slug: String!, $channel: String!, $language: LanguageCodeE
 			url
 			alt
 		}
+		media {
+			url
+			alt
+			type
+		}
 		category {
 			id
 			name
+			slug
+			translation(languageCode: $language) {
+				name
+			}
+		}
+		attributes {
+			attribute {
+				name
+				translation(languageCode: $language) {
+					name
+				}
+			}
+			values {
+				name
+				translation(languageCode: $language) {
+					name
+				}
+			}
 		}
 		variants {
 			...VariantDetails
