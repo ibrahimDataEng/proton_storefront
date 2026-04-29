@@ -108,6 +108,11 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
 - EmptyState (Session 16): reusable — icon (floating loop), title + subtitle
   (fade+slide), optional action (delayed fade); used by cart, search,
   categories
+- not-found pages (Session 17): root (bilingual CSS-only), locale (bilingual
+  CSS-only + Link), (main) (compass SVG + framer motion + i18n), products/[slug]
+  (broken-box SVG migrated to i18n)
+- error pages (Session 17): global-error (HTML/body, X-in-circle CSS anim,
+  bilingual), (main)/error (warning triangle + framer motion + i18n + digest)
 
 ## Pages completed
 
@@ -125,12 +130,13 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   saved for later, quantity stepper, order summary (session 14)
 - /products — filters + variant display + 4-col grid (sessions 15/16)
 
-## Health status (post-Session 16)
+## Health status (post-Session 17)
 
 - TS errors: 0 (verified via `pnpm tsc --noEmit`)
 - Lint warnings: 7 (baseline — 6 in src/checkout/, 1 in Logo.tsx)
-- Working tree: clean on feature/ui-redesign-session-16
+- Working tree: clean on feature/ui-redesign-session-17
 - framer-motion@12.38.0 added as dependency (session 16)
+- .eslintrc.json override updated: global-error.tsx now in no-default-export exclusion list
 
 ## Button-as-link pattern (important)
 
@@ -167,7 +173,9 @@ SearchBar.tsx, SearchOverlay.tsx (session 7).
   setPassword, passwordUpdated, invalidResetLink, expiredResetLink,
   requestNewLink, account, accountInfo, changePassword, currentPassword,
   confirmNewPassword, passwordChanged, signOut, myAccount, errors.\*
+- `notFound` — title, subtitle, goHome, browse, checkUrl (session 17)
 - `home`, `error`, `button`, `welcome`, `goodbye` — misc
+  (`error` extended in session 17: +title, +description, +tryAgain, +goHome, +code)
 
 ## Search URL param
 

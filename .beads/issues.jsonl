@@ -16,3 +16,4 @@
 {"id":"front_store-rec-cart","title":"Add to cart on recommendations — needs defaultVariant.id in ProductListItem fragment","status":"open","type":"bug","priority":3}
 {"id":"front_store-variants-be","title":"Configure product variants in Saleor backend (250g, 500g, 1kg)","status":"open","type":"task","priority":1}
 {"id":"front_store-pdp","title":"Product detail page (/products/[slug]) redesign","status":"open","type":"feature","priority":2}
+{"id":"front_store-s17","title":"Complete 404/error page coverage — 6 files, bilingual, animated","status":"closed","type":"bug","priority":1,"closedReason":"Completed in session 17"}
