@@ -58,7 +58,7 @@ function OrderCard({ order, locale }: { order: OrderDetailsFragment; locale: str
 				<div className="flex items-start justify-between gap-2">
 					<div>
 						<span className="font-mono text-xs text-content-secondary">#{order.number}</span>
-						<p className="text-xs text-content-secondary">{formatDate(order.created , locale)}</p>
+						<p className="text-xs text-content-secondary">{formatDate(order.created, locale)}</p>
 					</div>
 					<div className="flex flex-col items-end gap-1">
 						{order.status && (
@@ -81,6 +81,7 @@ function OrderCard({ order, locale }: { order: OrderDetailsFragment; locale: str
 					<div className="flex items-center gap-1">
 						{thumbnails.map((thumb, i) =>
 							thumb ? (
+								// eslint-disable-next-line @next/next/no-img-element
 								<img
 									key={i}
 									src={thumb.url}
@@ -129,6 +130,7 @@ function OrderCard({ order, locale }: { order: OrderDetailsFragment; locale: str
 								return (
 									<li key={i} className="flex items-start gap-3">
 										{product?.thumbnail && (
+											// eslint-disable-next-line @next/next/no-img-element
 											<img
 												src={product.thumbnail.url}
 												alt={product.thumbnail.alt ?? product.name}
