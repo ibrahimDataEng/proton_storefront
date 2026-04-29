@@ -2,6 +2,9 @@
 // NO next-intl, NO framer-motion, NO CSS custom properties.
 // Hardcoded colors: brand-primary #2D3B2E | surface-base #FAF7F2
 //                  content-primary #1A1F1A | content-secondary #5C6158
+// Uses next/link to satisfy @next/next/no-html-link-for-pages lint rule.
+
+import Link from "next/link";
 
 export default function NotFound() {
 	return (
@@ -66,7 +69,7 @@ export default function NotFound() {
 					Sorry, we couldn&apos;t find this page
 				</p>
 
-				<a
+				<Link
 					href="/"
 					style={{
 						display: "inline-flex",
@@ -83,7 +86,7 @@ export default function NotFound() {
 					}}
 				>
 					العودة للرئيسية | Go Home
-				</a>
+				</Link>
 			</div>
 		</>
 	);
