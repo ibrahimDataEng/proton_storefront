@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { executeGraphQL } from "@/lib/graphql";
 import {
 	CheckoutAddLineDocument,
+	CheckoutAddLineWithQuantityDocument,
 	CheckoutDeleteLinesDocument,
 	CheckoutLinesUpdateDocument,
 } from "@/gql/graphql";
@@ -39,6 +40,31 @@ export async function addLineToCheckout({
 	}
 	const result = await executeGraphQL(CheckoutAddLineDocument, {
 		variables: { id: checkoutId, productVariantId: variantId },
+		cache: "no-cache",
+	});
+	const errors = result.checkoutLinesAdd?.errors ?? [];
+	if (errors.length > 0) {
+		return { ok: false, redirect: false };
+	}
+	revalidatePath("/", "layout");
+	return { ok: true, redirect: false };
+}
+
+export async function addLineWithQuantity({
+	variantId,
+	channel,
+	quantity,
+}: {
+	variantId: string;
+	channel: string;
+	quantity: number;
+}): Promise<{ ok: boolean; redirect: boolean }> {
+	const checkoutId = await Checkout.getIdFromCookies(channel);
+	if (!checkoutId) {
+		return { ok: false, redirect: true };
+	}
+	const result = await executeGraphQL(CheckoutAddLineWithQuantityDocument, {
+		variables: { id: checkoutId, productVariantId: variantId, quantity },
 		cache: "no-cache",
 	});
 	const errors = result.checkoutLinesAdd?.errors ?? [];
