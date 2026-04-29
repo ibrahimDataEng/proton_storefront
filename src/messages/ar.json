@@ -101,7 +101,15 @@
 		"clearFilters": "مسح الكل",
 		"noResults": "لا توجد منتجات تطابق الفلاتر المحددة.",
 		"clearAndReset": "مسح الفلاتر",
-		"added": "تمت الإضافة!"
+		"added": "تمت الإضافة!",
+		"selectSize": "اختر الحجم",
+		"relatedProducts": "قد يعجبك أيضاً",
+		"addError": "فشل الإضافة. حاول مرة أخرى.",
+		"readMore": "اقرأ المزيد",
+		"readLess": "عرض أقل",
+		"specifications": "المواصفات",
+		"onlyLeft": "{count} فقط متبقي",
+		"quantity": "الكمية"
 	},
 	"availability": {
 		"outofstock": "غير متوفر"

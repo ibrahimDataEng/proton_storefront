@@ -101,7 +101,15 @@
 		"clearFilters": "Clear all",
 		"noResults": "No products match your filters.",
 		"clearAndReset": "Clear filters",
-		"added": "Added!"
+		"added": "Added!",
+		"selectSize": "Choose size",
+		"relatedProducts": "You may also like",
+		"addError": "Failed to add. Try again.",
+		"readMore": "Read more",
+		"readLess": "Read less",
+		"specifications": "Specifications",
+		"onlyLeft": "Only {count} left",
+		"quantity": "Quantity"
 	},
 	"availability": {
 		"outofstock": "Out of stock"
