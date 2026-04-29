@@ -86,7 +86,7 @@
 	},
 	"overrides": [
 		{
-			"files": ["src/app/**/{page,layout,error,loading,not-found}.tsx", "*.ts"],
+			"files": ["src/app/**/{page,layout,error,global-error,loading,not-found}.tsx", "*.ts"],
 			"rules": {
 				"import/no-default-export": "off"
 			}

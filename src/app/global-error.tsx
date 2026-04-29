@@ -8,6 +8,7 @@
 //                  content-secondary #5C6158 | line-default #D2CDC4
 
 import { useEffect } from "react";
+import Link from "next/link";
 
 export default function GlobalError({ error, reset }: { error: Error; reset: () => void }) {
 	useEffect(() => {
@@ -91,7 +92,10 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
 						/>
 					</svg>
 
-					<div className="ge-content" style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}>
+					<div
+						className="ge-content"
+						style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}
+					>
 						<h1 style={{ fontSize: "1.375rem", fontWeight: 600, color: "#1A1F1A", margin: 0 }}>
 							حدث خطأ غير متوقع | Unexpected Error
 						</h1>
@@ -145,7 +149,7 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
 						>
 							المحاولة مرة أخرى | Try Again
 						</button>
-						<a
+						<Link
 							href="/"
 							className="ge-link"
 							style={{
@@ -162,7 +166,7 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
 							}}
 						>
 							العودة للرئيسية | Go Home
-						</a>
+						</Link>
 					</div>
 				</div>
 			</body>
