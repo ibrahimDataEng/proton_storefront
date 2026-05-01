@@ -135,7 +135,17 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
 - /login — fallback standalone page (session 8)
 - /register — fallback standalone page (session 8)
 - /reset-password — set password from email token (session 10)
-- /account — dashboard + account info + change password (session 12)
+- /account — full SPA dashboard (session 19):
+  - AccountDashboard: client SPA, 4 sections (overview/orders/addresses/settings)
+  - AccountSidebar: desktop sidebar + mobile horizontal tab bar, sign-out via useAuth
+  - OverviewSection: 4 stat cards (total orders, last order, default address, member since), staggered framer entrance
+  - OrdersSection: paginated (5+5), accordion line items, status badge color-coding, product thumbnails
+  - AddressSection: CRUD grid (2-col), inline AnimatePresence slide form, inline delete confirm, set-default actions
+  - SettingsSection: edit name (updateAccount action) + reuse ChangePasswordForm
+  - account/actions.ts: updateAccount, createAddress, updateAddress, deleteAddress, setDefaultAddress
+  - New GraphQL mutations: AccountUpdate, AccountAddressCreate, AccountAddressUpdate, AccountAddressDelete, AccountSetDefaultAddress
+  - UserDetailsFragment extended: dateJoined + addresses array
+  - OrderDetailsFragment extended: status (OrderStatus)
 - /cart — full redesign, two-column layout, recommendations,
   saved for later, quantity stepper, order summary (session 14)
 - /products — filters + variant display + 4-col grid (sessions 15/16)
@@ -147,16 +157,18 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
     collapsible description
   - RelatedProducts: async server component, same-category, 4-col grid, Suspense skeleton
 
-## Health status (post-Session 18)
+## Health status (post-Session 19)
 
 - TS errors: 0 (verified via `pnpm tsc --noEmit`)
 - Lint warnings: 7 (baseline — 6 in src/checkout/, 1 in Logo.tsx)
-- Working tree: clean on feature/ui-redesign-session-17 (session 18 commits on same branch)
+- Working tree: clean on feature/ui-redesign-session-17 (sessions 18+19 on same branch)
 - framer-motion@12.38.0 added as dependency (session 16)
 - .eslintrc.json override updated: global-error.tsx now in no-default-export exclusion list
 - console.log("jjj", locale) removed from products/[slug]/page.tsx (session 18)
 - CheckoutAddLineWithQuantity mutation added: src/graphql/mutations/CheckoutAddLineWithQuantity.graphql
 - addLineWithQuantity server action added to cart/actions.ts (session 18)
+- Account server actions: src/app/[locale]/[channel]/(main)/account/actions.ts (session 19)
+- 5 new GraphQL mutations in src/graphql/mutations/Account\*.graphql (session 19)
 
 ## Button-as-link pattern (important)
 
@@ -195,6 +207,13 @@ SearchBar.tsx, SearchOverlay.tsx (session 7).
   setPassword, passwordUpdated, invalidResetLink, expiredResetLink,
   requestNewLink, account, accountInfo, changePassword, currentPassword,
   confirmNewPassword, passwordChanged, signOut, myAccount, errors.\*
+- `account` — overview, orders, addresses, settings, noOrders, noOrdersSubtitle,
+  shopNow, viewDetails, loadMore, addAddress, editAddress, deleteAddress,
+  confirmDelete, setDefaultShipping, setDefaultBilling, defaultShipping,
+  defaultBilling, personalInfo, security, saveChanges, saved, memberSince,
+  totalOrders, lastOrder, defaultAddress, noAddress, addressSaved, addressDeleted,
+  cancel, confirm, firstName, lastName, streetAddress1, streetAddress2, city,
+  postalCode, phone, qty (session 19)
 - `notFound` — title, subtitle, goHome, browse, checkUrl (session 17)
 - `home`, `error`, `button`, `welcome`, `goodbye` — misc
   (`error` extended in session 17: +title, +description, +tryAgain, +goHome, +code)
