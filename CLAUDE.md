@@ -59,10 +59,9 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
 - 7 lint warnings: 6 in src/checkout/ + 1 in Logo.tsx
   (next/image suggestion — Logo is raw <img>)
 - /pages/about may not exist in Saleor backend
-- pages/[slug]/page.tsx still has a stray console.log (line ~37)
-  noticed during Session 5 refactor; not removed since out of scope (products/[slug] console.logs FIXED in session 18)
 - Promo code UI exists (OrderSummary) but mutation not wired —
   checkoutAddPromoCode not in src/graphql/ (field shows disabled state)
+- Order detail page not built (accordion in account/OrdersSection covers basic needs)
 - Quantity stepper: CheckoutLinesUpdate added in session 14 via codegen
 - "Add to cart" on recommendations navigates to product page —
   defaultVariant.id is not in ProductListItem fragment
@@ -135,6 +134,7 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
 - /login — fallback standalone page (session 8)
 - /register — fallback standalone page (session 8)
 - /reset-password — set password from email token (session 10)
+- /[any-bad-url] — 404/error coverage complete: root (bilingual CSS-only), locale, (main) framer motion, products/[slug] (session 17)
 - /account — full SPA dashboard (session 19):
   - AccountDashboard: client SPA, 4 sections (overview/orders/addresses/settings)
   - AccountSidebar: desktop sidebar + mobile horizontal tab bar, sign-out via useAuth
@@ -161,7 +161,7 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
 
 - TS errors: 0 (verified via `pnpm tsc --noEmit`)
 - Lint warnings: 7 (baseline — 6 in src/checkout/, 1 in Logo.tsx)
-- Working tree: clean on feature/ui-redesign-session-17 (sessions 18+19 on same branch)
+- Working tree: clean on feature/ui-redesign-session-19
 - framer-motion@12.38.0 added as dependency (session 16)
 - .eslintrc.json override updated: global-error.tsx now in no-default-export exclusion list
 - console.log("jjj", locale) removed from products/[slug]/page.tsx (session 18)
@@ -261,6 +261,8 @@ runs next-intl first, then silently refreshes expiring tokens (<5 min) via
 - UserMenuContainer simplified to just render UserMenu (no more GraphQL fetch)
 - UserMenu now a client component using useAuth() — shows login button or
   user name + logout dropdown
+- account/actions.ts — updateAccount, createAddress/Update/Delete,
+  setDefaultAddress: all read saleor_token cookie → Authorization: Bearer header
 
 ## New dependencies
 
