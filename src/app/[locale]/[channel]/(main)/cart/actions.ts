@@ -7,6 +7,8 @@ import {
 	CheckoutAddLineWithQuantityDocument,
 	CheckoutDeleteLinesDocument,
 	CheckoutLinesUpdateDocument,
+	CheckoutAddPromoCodeDocument,
+	CheckoutRemovePromoCodeDocument,
 } from "@/gql/graphql";
 import * as Checkout from "@/lib/checkout";
 
@@ -89,6 +91,55 @@ export async function updateLineQuantity({
 		cache: "no-cache",
 	});
 	const errors = result.checkoutLinesUpdate?.errors ?? [];
+	if (errors.length > 0) {
+		return { ok: false };
+	}
+	revalidatePath("/", "layout");
+	return { ok: true };
+}
+
+const PROMO_ERROR_MAP: Record<string, string> = {
+	INVALID: "promoInvalid",
+	NOT_APPLICABLE: "promoNotApplicable",
+	VOUCHER_NOT_APPLICABLE: "promoNotApplicable",
+};
+
+export async function applyPromoCode(
+	checkoutId: string,
+	promoCode: string,
+): Promise<{
+	ok: boolean;
+	error?: string;
+	discount?: { amount: number; currency: string } | null;
+	discountName?: string | null;
+	voucherCode?: string | null;
+}> {
+	const result = await executeGraphQL(CheckoutAddPromoCodeDocument, {
+		variables: { checkoutId, promoCode },
+		cache: "no-cache",
+	});
+	const errors = result.checkoutAddPromoCode?.errors ?? [];
+	if (errors.length > 0) {
+		const code = errors[0]?.code ?? "unknown";
+		const errorKey = PROMO_ERROR_MAP[code] ?? "unknown";
+		return { ok: false, error: errorKey };
+	}
+	revalidatePath("/", "layout");
+	const checkout = result.checkoutAddPromoCode?.checkout;
+	return {
+		ok: true,
+		discount: checkout?.discount ?? null,
+		discountName: checkout?.discountName ?? null,
+		voucherCode: checkout?.voucherCode ?? null,
+	};
+}
+
+export async function removePromoCode(checkoutId: string, promoCode: string): Promise<{ ok: boolean }> {
+	const result = await executeGraphQL(CheckoutRemovePromoCodeDocument, {
+		variables: { checkoutId, promoCode },
+		cache: "no-cache",
+	});
+	const errors = result.checkoutRemovePromoCode?.errors ?? [];
 	if (errors.length > 0) {
 		return { ok: false };
 	}
