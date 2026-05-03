@@ -86,6 +86,8 @@ export default async function Page(props: { params: Promise<{ channel: string; l
 							lines={checkout.lines}
 							totalPrice={checkout.totalPrice.gross}
 							checkoutId={checkoutId}
+							appliedVoucherCode={checkout.voucherCode}
+							discount={checkout.discount}
 						/>
 					</div>
 				</div>

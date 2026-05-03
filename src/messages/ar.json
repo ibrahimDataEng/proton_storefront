@@ -77,7 +77,12 @@
 		"added": "تمت الإضافة!",
 		"quantityUpdate": "تحديث الكمية",
 		"increase": "زيادة الكمية",
-		"decrease": "تقليل الكمية"
+		"decrease": "تقليل الكمية",
+		"promoApplied": "تم تطبيق رمز الخصم!",
+		"promoInvalid": "رمز الخصم غير صالح أو منتهي الصلاحية.",
+		"promoNotApplicable": "لا يمكن تطبيق هذا الرمز على سلتك.",
+		"promoRemove": "إزالة",
+		"discount": "الخصم"
 	},
 	"products": {
 		"title": "جميع المنتجات",

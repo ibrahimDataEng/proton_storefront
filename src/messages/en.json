@@ -77,7 +77,12 @@
 		"added": "Added!",
 		"quantityUpdate": "Update quantity",
 		"increase": "Increase quantity",
-		"decrease": "Decrease quantity"
+		"decrease": "Decrease quantity",
+		"promoApplied": "Promo code applied!",
+		"promoInvalid": "Invalid or expired promo code.",
+		"promoNotApplicable": "This code cannot be applied to your cart.",
+		"promoRemove": "Remove",
+		"discount": "Discount"
 	},
 	"products": {
 		"title": "All Products",
