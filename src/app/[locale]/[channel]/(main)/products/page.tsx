@@ -50,6 +50,7 @@ export default async function Page(props: {
 		maxPrice?: string;
 		inStock?: string;
 		category?: string;
+		country?: string;
 	}>;
 }) {
 	const [searchParams, params] = await Promise.all([props.searchParams, props.params]);
@@ -91,6 +92,10 @@ export default async function Page(props: {
 			filter.categories = [cat.id];
 		}
 	}
+	const country = typeof searchParams.country === "string" ? searchParams.country : undefined;
+	if (country) {
+		filter.attributes = [{ slug: "origin-of-country", values: [country] }];
+	}
 	const hasFilter = Object.keys(filter).length > 0;
 
 	const { products } = await executeGraphQL(ProductListPaginatedDocument, {
@@ -128,6 +133,7 @@ export default async function Page(props: {
 		...(searchParams.maxPrice ? { maxPrice: searchParams.maxPrice } : {}),
 		...(searchParams.inStock ? { inStock: searchParams.inStock } : {}),
 		...(searchParams.category ? { category: searchParams.category } : {}),
+		...(country ? { country } : {}),
 	});
 
 	const t = await getTranslations("products");
@@ -135,7 +141,11 @@ export default async function Page(props: {
 	return (
 		<section className="mx-auto max-w-7xl p-8 pb-16">
 			<h1 className="mb-6 text-2xl font-semibold text-content-primary">{t("title")}</h1>
-			<FilterBar totalCount={products.totalCount ?? productNodes.length} categories={categories} />
+			<FilterBar
+				totalCount={products.totalCount ?? productNodes.length}
+				categories={categories}
+				activeCountry={country}
+			/>
 			{productNodes.length === 0 ? (
 				<div className="flex flex-col items-center gap-4 py-16 text-center">
 					<p className="text-content-secondary">{t("noResults")}</p>

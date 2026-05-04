@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
 import { clsx } from "clsx";
 import { useClickOutside } from "@/ui/hooks/useClickOutside";
+import { COUNTRIES } from "@/ui/components/home/CountrySection";
 
 export interface FilterCategory {
 	id: string;
@@ -16,6 +17,7 @@ export interface FilterCategory {
 interface FilterBarProps {
 	totalCount: number;
 	categories: FilterCategory[];
+	activeCountry?: string;
 }
 
 type OpenDropdown = "sort" | "category" | "price" | null;
@@ -27,7 +29,7 @@ const PRICE_PRESETS = [
 	{ label: "200+", min: "200", max: "" },
 ];
 
-export function FilterBar({ totalCount, categories }: FilterBarProps) {
+export function FilterBar({ totalCount, categories, activeCountry }: FilterBarProps) {
 	const t = useTranslations("products");
 	const router = useRouter();
 	const searchParams = useSearchParams();
@@ -48,6 +50,7 @@ export function FilterBar({ totalCount, categories }: FilterBarProps) {
 	const currentInStock = searchParams.get("inStock") === "true";
 
 	const hasActiveFilters =
+		!!activeCountry ||
 		!!currentCategory ||
 		!!currentMinPrice ||
 		!!currentMaxPrice ||
@@ -103,6 +106,29 @@ export function FilterBar({ totalCount, categories }: FilterBarProps) {
 
 	return (
 		<div className="mb-6">
+			{/* ── Country pill (both desktop + mobile visible strip) ── */}
+			{activeCountry &&
+				(() => {
+					const country = COUNTRIES.find((c) => c.slug === activeCountry);
+					if (!country) return null;
+					return (
+						<div className="mb-3 flex flex-wrap gap-2">
+							<span className="flex items-center gap-1.5 rounded-full border border-brand-primary/30 bg-surface-raised px-3 py-1 text-sm text-content-primary">
+								<span aria-hidden="true">{country.emoji}</span>
+								{t("filteredByCountry")}: {country.nameEn}
+								<button
+									type="button"
+									onClick={() => updateParam("country", null)}
+									className="ml-1 flex h-4 w-4 items-center justify-center rounded-full text-content-secondary transition-colors hover:bg-red-100 hover:text-red-600"
+									aria-label={t("clearCountry")}
+								>
+									<X size={10} aria-hidden="true" />
+								</button>
+							</span>
+						</div>
+					);
+				})()}
+
 			{/* ── Desktop bar ─────────────────────────────────────────── */}
 			<div ref={containerRef} className="hidden items-center justify-between gap-4 sm:flex">
 				<p className="shrink-0 text-sm text-content-secondary">{t("count", { count: totalCount })}</p>
@@ -312,6 +338,29 @@ export function FilterBar({ totalCount, categories }: FilterBarProps) {
 								<X size={20} className="text-content-secondary" aria-hidden="true" />
 							</button>
 						</div>
+
+						{/* Active country */}
+						{activeCountry &&
+							(() => {
+								const country = COUNTRIES.find((c) => c.slug === activeCountry);
+								if (!country) return null;
+								return (
+									<div className="mb-5">
+										<p className="mb-2 text-sm font-medium text-content-primary">{t("filteredByCountry")}</p>
+										<button
+											type="button"
+											onClick={() => updateParam("country", null)}
+											className="flex w-full items-center justify-between rounded-lg border border-brand-primary/30 bg-surface-raised px-3 py-2 text-sm text-content-primary"
+										>
+											<span className="flex items-center gap-2">
+												<span aria-hidden="true">{country.emoji}</span>
+												{country.nameEn}
+											</span>
+											<X size={14} className="text-content-secondary" aria-hidden="true" />
+										</button>
+									</div>
+								);
+							})()}
 
 						{/* Sort */}
 						<div className="mb-5">
