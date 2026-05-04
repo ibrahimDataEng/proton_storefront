@@ -26,7 +26,8 @@
 		"header": "مرحباً بك في العرض التجريبي!",
 		"description": "هذا موقع متعدد اللغات باستخدام next-intl.",
 		"aboutLink": "معلومات عنا",
-		"contactLink": "اتصل بنا"
+		"contactLink": "اتصل بنا",
+		"shopByCountry": "تسوق حسب بلد المنشأ"
 	},
 	"header": {},
 	"Search": {
@@ -114,7 +115,9 @@
 		"readLess": "عرض أقل",
 		"specifications": "المواصفات",
 		"onlyLeft": "{count} فقط متبقي",
-		"quantity": "الكمية"
+		"quantity": "الكمية",
+		"filteredByCountry": "البلد",
+		"clearCountry": "مسح"
 	},
 	"availability": {
 		"outofstock": "غير متوفر"

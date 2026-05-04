@@ -26,7 +26,8 @@
 		"header": "Welcome to the Demo!",
 		"description": "This is a multilingual Next.js site using next-intl.",
 		"aboutLink": "About Us",
-		"contactLink": "Contact"
+		"contactLink": "Contact",
+		"shopByCountry": "Shop by Country of Origin"
 	},
 	"header": {},
 	"Search": {
@@ -114,7 +115,9 @@
 		"readLess": "Read less",
 		"specifications": "Specifications",
 		"onlyLeft": "Only {count} left",
-		"quantity": "Quantity"
+		"quantity": "Quantity",
+		"filteredByCountry": "Country",
+		"clearCountry": "Clear"
 	},
 	"availability": {
 		"outofstock": "Out of stock"
