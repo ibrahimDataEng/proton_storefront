@@ -1,19 +1,20 @@
+import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Container } from "@/ui/components/Container";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 
 export const COUNTRIES = [
-	{ slug: "syria", nameEn: "Syria", nameAr: "سوريا", emoji: "🇸🇾" },
-	{ slug: "egypt", nameEn: "Egypt", nameAr: "مصر", emoji: "🇪🇬" },
-	{ slug: "india", nameEn: "India", nameAr: "الهند", emoji: "🇮🇳" },
-	{ slug: "united-states", nameEn: "United States", nameAr: "الولايات المتحدة", emoji: "🇺🇸" },
-	{ slug: "turkey", nameEn: "Turkey", nameAr: "تركيا", emoji: "🇹🇷" },
-	{ slug: "china", nameEn: "China", nameAr: "الصين", emoji: "🇨🇳" },
-	{ slug: "yemen", nameEn: "Yemen", nameAr: "اليمن", emoji: "🇾🇪" },
-	{ slug: "south-africa", nameEn: "South Africa", nameAr: "جنوب أفريقيا", emoji: "🇿🇦" },
-	{ slug: "pakistan", nameEn: "Pakistan", nameAr: "باكستان", emoji: "🇵🇰" },
-	{ slug: "chile", nameEn: "Chile", nameAr: "تشيلي", emoji: "🇨🇱" },
-	{ slug: "nicaragua", nameEn: "Nicaragua", nameAr: "نيكاراغوا", emoji: "🇳🇮" },
+	{ slug: "syria", nameEn: "Syria", nameAr: "سوريا", code: "sy", emoji: "🇸🇾" },
+	{ slug: "egypt", nameEn: "Egypt", nameAr: "مصر", code: "eg", emoji: "🇪🇬" },
+	{ slug: "india", nameEn: "India", nameAr: "الهند", code: "in", emoji: "🇮🇳" },
+	{ slug: "united-states", nameEn: "United States", nameAr: "الولايات المتحدة", code: "us", emoji: "🇺🇸" },
+	{ slug: "turkey", nameEn: "Turkey", nameAr: "تركيا", code: "tr", emoji: "🇹🇷" },
+	{ slug: "china", nameEn: "China", nameAr: "الصين", code: "cn", emoji: "🇨🇳" },
+	{ slug: "yemen", nameEn: "Yemen", nameAr: "اليمن", code: "ye", emoji: "🇾🇪" },
+	{ slug: "south-africa", nameEn: "South Africa", nameAr: "جنوب أفريقيا", code: "za", emoji: "🇿🇦" },
+	{ slug: "pakistan", nameEn: "Pakistan", nameAr: "باكستان", code: "pk", emoji: "🇵🇰" },
+	{ slug: "chile", nameEn: "Chile", nameAr: "تشيلي", code: "cl", emoji: "🇨🇱" },
+	{ slug: "nicaragua", nameEn: "Nicaragua", nameAr: "نيكاراغوا", code: "ni", emoji: "🇳🇮" },
 ] as const;
 
 export async function CountrySection({ channel: _channel, locale }: { channel: string; locale: string }) {
@@ -38,16 +39,17 @@ export async function CountrySection({ channel: _channel, locale }: { channel: s
 						<LinkWithChannel
 							key={country.slug}
 							href={`/products?country=${country.slug}`}
-							className="flex min-w-[100px] shrink-0 flex-col items-center gap-2 rounded-2xl bg-surface-raised p-4 text-center shadow-soft transition-all duration-200 hover:scale-105 hover:shadow-raised md:min-w-0"
+							className="flex min-w-[100px] shrink-0 flex-col items-center gap-1 rounded-2xl border border-line-subtle bg-surface-raised p-4 text-center transition-all duration-200 hover:scale-105 hover:shadow-raised md:min-w-0"
 						>
-							<span
-								className="text-5xl leading-none"
-								role="img"
-								aria-label={isAr ? country.nameAr : country.nameEn}
-							>
-								{country.emoji}
-							</span>
-							<span className="text-sm font-medium text-content-primary">
+							<Image
+								src={`https://flagcdn.com/w160/${country.code}.png`}
+								width={80}
+								height={54}
+								alt={isAr ? country.nameAr : country.nameEn}
+								className="rounded-lg object-cover shadow-sm"
+								style={{ width: "80px", height: "54px" }}
+							/>
+							<span className="mt-2 text-sm font-medium text-content-primary">
 								{isAr ? country.nameAr : country.nameEn}
 							</span>
 						</LinkWithChannel>
