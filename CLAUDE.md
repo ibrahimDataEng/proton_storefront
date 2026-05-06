@@ -59,13 +59,14 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
 - 7 lint warnings: 6 in src/checkout/ + 1 in Logo.tsx
   (next/image suggestion — Logo is raw <img>)
 - /pages/about may not exist in Saleor backend
-- Promo code UI exists (OrderSummary) but mutation not wired —
-  checkoutAddPromoCode not in src/graphql/ (field shows disabled state)
 - Order detail page not built (accordion in account/OrdersSection covers basic needs)
 - Quantity stepper: CheckoutLinesUpdate added in session 14 via codegen
 - "Add to cart" on recommendations navigates to product page —
   defaultVariant.id is not in ProductListItem fragment
 - Variants data: UI ready but variants not yet configured in Saleor backend
+- CountrySection requires "Origin of Country" attribute (slug: origin-of-country)
+  assigned to products in Saleor Dashboard for ?country= filter to return results
+- BrandStorySection background from Unsplash CDN — replace with own photo when available
 
 ## Components redesigned
 
@@ -122,6 +123,16 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
     add-to-cart (idle/pending/success/error + shake), attributes table, collapsible description
   - RelatedProducts — async server component, Suspense skeleton, same-category,
     filters current slug, 4-col grid desktop / 2-col mobile
+- PromoCodeField (Session 20): fully wired — checkoutAddPromoCode + Remove mutations,
+  AnimatePresence applied/input states, 4s error auto-clear timer, discount amount display
+- CountrySection (Session 21): "use client" drag-to-scroll carousel, 11 countries,
+  flagcdn.com flag images (80×54, code field), edge gradient fades, links to
+  /products?country={slug}; exports COUNTRIES array (used by FilterBar pill)
+- BrandStorySection (Session 21): Unsplash nuts background (next/image fill + priority),
+  black/60 overlay, all text → text-white/text-white/80, white outline CTA button,
+  relative/z-10 content structure
+- FilterBar (Session 21): activeCountry prop + dismissible country pill above filter row
+  (desktop + mobile sheet); hasActiveFilters includes activeCountry; clear-all works
 
 ## Pages completed
 
@@ -148,7 +159,8 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   - OrderDetailsFragment extended: status (OrderStatus)
 - /cart — full redesign, two-column layout, recommendations,
   saved for later, quantity stepper, order summary (session 14)
-- /products — filters + variant display + 4-col grid (sessions 15/16)
+- /products — filters + variant display + 4-col grid (sessions 15/16);
+  country attribute filter via ?country= URL param (session 21)
 - /products/[slug] — full PDP redesign (session 18):
   - ProductGallery: multi-image, thumbnail row, lightbox (framer fade + scale)
   - ProductVariantSelector: client-side pills, OOS greyed+strikethrough, low-stock warning
@@ -157,11 +169,11 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
     collapsible description
   - RelatedProducts: async server component, same-category, 4-col grid, Suspense skeleton
 
-## Health status (post-Session 19)
+## Health status (post-Session 21)
 
 - TS errors: 0 (verified via `pnpm tsc --noEmit`)
 - Lint warnings: 7 (baseline — 6 in src/checkout/, 1 in Logo.tsx)
-- Working tree: clean on feature/ui-redesign-session-19
+- Working tree: clean on feature/ui-redesign-session-21
 - framer-motion@12.38.0 added as dependency (session 16)
 - .eslintrc.json override updated: global-error.tsx now in no-default-export exclusion list
 - console.log("jjj", locale) removed from products/[slug]/page.tsx (session 18)
@@ -169,6 +181,10 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
 - addLineWithQuantity server action added to cart/actions.ts (session 18)
 - Account server actions: src/app/[locale]/[channel]/(main)/account/actions.ts (session 19)
 - 5 new GraphQL mutations in src/graphql/mutations/Account\*.graphql (session 19)
+- CheckoutAddPromoCode + CheckoutRemovePromoCode mutations added (session 20)
+- applyPromoCode + removePromoCode server actions added to cart/actions.ts (session 20)
+- CountrySection + BrandStorySection added to homepage (session 21)
+- country filter (origin-of-country attribute) wired to /products (session 21)
 
 ## Button-as-link pattern (important)
 
@@ -194,13 +210,15 @@ SearchBar.tsx, SearchOverlay.tsx (session 7).
   shippingFree, shippingCalculated, grandTotal, freeShippingProgress,
   freeShippingUnlocked, promoCode, promoApply, proceedToCheckout,
   youMightAlsoLike, taxIncluded, alreadySaved, addToCart, added,
-  quantityUpdate, increase, decrease
+  quantityUpdate, increase, decrease,
+  promoApplied, promoInvalid, promoNotApplicable, promoRemove, discount (session 20)
 - `products` — title, count, addToCart, selectVariant, outOfStock, filters,
   sortBy, newest, priceLowHigh, priceHighLow, bestSelling, biggestDiscount,
   allCategories, priceRange, minPrice, maxPrice, apply, inStockOnly,
   clearFilters, noResults, clearAndReset, added,
   selectSize, relatedProducts, addError, readMore, readLess,
-  specifications, onlyLeft, quantity (session 18)
+  specifications, onlyLeft, quantity (session 18),
+  filteredByCountry, clearCountry (session 21)
 - `auth` — login, register, logout, email, password, confirmPassword, firstName,
   lastName, forgotPassword, sendResetLink, resetEmailSent, switchToRegister,
   switchToLogin, confirmEmailRequired, backToLogin, resetPassword, newPassword,
@@ -215,7 +233,9 @@ SearchBar.tsx, SearchOverlay.tsx (session 7).
   cancel, confirm, firstName, lastName, streetAddress1, streetAddress2, city,
   postalCode, phone, qty (session 19)
 - `notFound` — title, subtitle, goHome, browse, checkUrl (session 17)
-- `home`, `error`, `button`, `welcome`, `goodbye` — misc
+- `home` — header, description, aboutLink, contactLink,
+  shopByCountry (session 21)
+- `error`, `button`, `welcome`, `goodbye` — misc
   (`error` extended in session 17: +title, +description, +tryAgain, +goHome, +code)
 
 ## Search URL param
@@ -269,6 +289,11 @@ runs next-intl first, then silently refreshes expiring tokens (<5 min) via
 - framer-motion@12.38.0 — card entrance, pill tap, add-to-cart AnimatePresence
   swap, shake on error, empty-state floating icon, not-found/error SVG
   animations (added session 16)
+
+## External services
+
+- flagcdn.com — country flag images in CountrySection (no API key, free, https:\*\* wildcard covers it)
+- images.unsplash.com — BrandStorySection nuts background (replace with own photo when ready)
 
 ## Rules (ALWAYS follow)
 
