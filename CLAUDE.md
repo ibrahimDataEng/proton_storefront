@@ -133,6 +133,12 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   relative/z-10 content structure
 - FilterBar (Session 21): activeCountry prop + dismissible country pill above filter row
   (desktop + mobile sheet); hasActiveFilters includes activeCountry; clear-all works
+- ContactPageClient (Session 22): src/ui/components/contact/ContactPageClient.tsx —
+  "use client"; two-column layout (info cards + form); 4 info cards (email/phone/address/hours)
+  with spring lift + brand-primary accent bar on hover; form (name/email/subject/message)
+  with inline validation; submit AnimatePresence: idle→sending→sent (green) auto-reset 5s;
+  useInView scroll-triggered stagger; full RTL (dir="auto", mirrored accent bar);
+  rendered via pages/[slug]/page.tsx when slug === "contact-us" (NOT a standalone route)
 
 ## Pages completed
 

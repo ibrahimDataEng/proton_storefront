@@ -2,10 +2,12 @@ import { notFound } from "next/navigation";
 import { type Metadata } from "next";
 import edjsHTML from "editorjs-html";
 import xss from "xss";
+import { getTranslations } from "next-intl/server";
 import { PageGetBySlugDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 import { getSaleorLanguage } from "@/lib/saleor-language";
 import { Container } from "@/ui/components/Container";
+import { ContactPageClient } from "@/ui/components/contact/ContactPageClient";
 
 const parser = edjsHTML();
 
@@ -13,6 +15,15 @@ export const generateMetadata = async (props: {
 	params: Promise<{ slug: string; locale: string }>;
 }): Promise<Metadata> => {
 	const params = await props.params;
+
+	if (params.slug === "contact-us") {
+		const t = await getTranslations({ locale: params.locale, namespace: "contact" });
+		return {
+			title: `${t("title")} · Green Line Group`,
+			description: t("subtitle"),
+		};
+	}
+
 	const language = getSaleorLanguage(params.locale);
 
 	const { page } = await executeGraphQL(PageGetBySlugDocument, {
@@ -34,6 +45,11 @@ export const generateMetadata = async (props: {
 
 export default async function Page(props: { params: Promise<{ slug: string; locale: string }> }) {
 	const params = await props.params;
+
+	if (params.slug === "contact-us") {
+		return <ContactPageClient />;
+	}
+
 	const language = getSaleorLanguage(params.locale);
 
 	const { page } = await executeGraphQL(PageGetBySlugDocument, {
