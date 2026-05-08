@@ -175,21 +175,27 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
     collapsible description
   - RelatedProducts: async server component, same-category, 4-col grid, Suspense skeleton
 - /pages/wholesale — full Wholesale page (session 22):
-  - WholesalePageClient: src/ui/components/wholesale/WholesalePageClient.tsx ("use client")
-  - Hero: brand-primary bg, animated count-up stats (4 counters, framer useInView)
-  - Targets: 2×2 card grid, spring-lift hover, green accent bar (start-aligned for RTL)
-  - Benefits: zigzag 3-row layout, BenefitRow sub-component, alternates slide-left/right
+  - WholesalePageClient: src/ui/components/wholesale/WholesalePageClient.tsx ("use client") — 9 sections
+  - Hero: brand-primary bg + radial gradient, word-by-word headline stagger, animated count-up stats
+    (4 counters with cubic ease-out), two CTAs: WhatsApp + LinkWithChannel Browse Products
+  - Supply: 8 product cards (🥜🌰🫘🌰🍇🌿☕🧆), horizontal scroll on mobile / 4-col grid desktop,
+    "Bulk Available" badge, emoji placeholders (TODO: replace with real product images)
+  - Targets: 2×2 grid, spring-lift hover, start-aligned accent bar
+  - Benefits: zigzag 3-row layout, BenefitRow sub-component, alternates slide-left/right;
+    gradient placeholder blocks (TODO: replace with real photos)
   - Steps: horizontal timeline (desktop) / vertical stepper (mobile), sequential stagger
+  - Certificates: 3-slot dashed-border placeholder section (TODO: ISO, Halal, etc.)
+  - Testimonials: 3-slot skeleton placeholder section (TODO: real client reviews)
   - FAQ: 5-item accordion, AnimatePresence height transition, + rotates to ×
-  - CTA: brand-primary bg, WhatsApp button (#25D366), pulse glow hover, wa.me link
-  - i18n: "wholesale" namespace in en.json + ar.json; all text via useTranslations
-  - RTL: useLocale() → isRtl, zigzag alternation flips for ar locale
-  - Routed via pages/[slug]/page.tsx: slug === "wholesale" → WholesalePageClient
+  - CTA: brand-primary bg, WhatsApp (#25D366) pulse-glow button, locale-aware wa.me message
+  - i18n: "wholesale" namespace in en.json + ar.json; all text via useTranslations, zero hardcoded strings
+  - RTL: word-stagger works in both directions, zigzag CSS-grid reversal works naturally
 
 ## Health status (post-Session 22)
 
 - TS errors: 0 (verified via `pnpm tsc --noEmit`)
 - Lint warnings: 7 (baseline — 6 in src/checkout/, 1 in Logo.tsx)
+- Brand-primary updated: #2D3B2E → #2D6A4F (richer, more vibrant green); dark mode #4A5D4A → #4D8C6B
 - Working tree: clean on feature/ui-redesign-session-22
 - framer-motion@12.38.0 added as dependency (session 16)
 - .eslintrc.json override updated: global-error.tsx now in no-default-export exclusion list
@@ -202,7 +208,9 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
 - applyPromoCode + removePromoCode server actions added to cart/actions.ts (session 20)
 - CountrySection + BrandStorySection added to homepage (session 21)
 - country filter (origin-of-country attribute) wired to /products (session 21)
-- WholesalePageClient added; benefit image placeholders (brand-primary/10 color blocks) — replace with own photos when available (session 22)
+- WholesalePageClient rebuilt (session 22 XL): 9 sections, brand-primary #2D6A4F, word-stagger hero,
+  supply cards, 3 placeholder sections (benefits photos, certificates, testimonials)
+- brand-primary color: #2D3B2E → #2D6A4F in globals.css + tokens.ts (session 22)
 
 ## Button-as-link pattern (important)
 
