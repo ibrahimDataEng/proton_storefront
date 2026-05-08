@@ -15,7 +15,7 @@
 - Components: src/ui/components/ (NOT src/components/ — that doesn't exist)
 - Atoms: src/ui/atoms/
 - Theme tokens: src/ui/theme/tokens.ts
-- GraphQL source: src/graphql/ (19 .graphql files)
+- GraphQL source: src/graphql/ (20 .graphql files)
 - Generated types: src/gql/
 
 ## Hooks (Session 7)
@@ -78,6 +78,12 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   CMS menu logic + ChannelSelect + Skeleton preserved
 - Nav: NavLink uses brand-primary (active) / content-secondary (default),
   console.log + revalidate:1 fixed in NavLinks.tsx
+- NavLinks (Session 23): replaced CMS-driven items with 4 fixed items:
+  Home → /, Shop → MegaMenu + /products, Wholesale → /pages/wholesale,
+  Contact → /pages/contact-us; fetches CategoriesWithChildren (not navbar menu);
+  accepts mobile prop — passes to ShopNavItem for accordion vs hover mode
+- HeaderWrapper (Session 23): top now reads var(--topbar-height, 0px) instead
+  of fixed top-0; TopBar sets that variable client-side
 - SearchBar (Session 7): live autocomplete dropdown with 300ms debounce,
   request-id race-condition guard, full token theming, ARIA combobox attrs,
   keyboard nav (ArrowDown/Up/Enter/Escape/Tab), spinner, skeleton rows,
@@ -133,6 +139,18 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   relative/z-10 content structure
 - FilterBar (Session 21): activeCountry prop + dismissible country pill above filter row
   (desktop + mobile sheet); hasActiveFilters includes activeCountry; clear-all works
+- TopBar (Session 23): src/ui/components/nav/TopBar.tsx — "use client"; fixed top-0
+  z-[51]; visible on /, /products, /pages/wholesale only (isTopBarPath util);
+  sets --topbar-height CSS variable (0px or 36px) used by HeaderWrapper + layout;
+  left: 🚚 free-shipping static text; right: rotating ticker (4 messages, 4s
+  interval, AnimatePresence fade); full i18n via "topbar" namespace
+- ShopNavItem / MegaMenu (Session 23): src/ui/components/nav/ShopNavItem.tsx —
+  "use client"; dual-mode: desktop (hover panel, fixed full-width, left category
+  column + right subcategory grid 3-4 cols, scaleY animation) / mobile (accordion
+  in existing MobileMenu, AnimatePresence height transition); RTL-aware chevrons +
+  arrow directions; useClickOutside for desktop close-on-outside-click;
+  categories fetched via CategoriesWithChildren GraphQL query (level=0, 8 root
+  cats, 10 children each); passes through NavLinks server component
 - ContactPageClient (Session 22): src/ui/components/contact/ContactPageClient.tsx —
   "use client"; two-column layout (info cards + form); 4 info cards (email/phone/address/hours)
   with spring lift + brand-primary accent bar on hover; form (name/email/subject/message)
@@ -191,12 +209,12 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   - i18n: "wholesale" namespace in en.json + ar.json; all text via useTranslations, zero hardcoded strings
   - RTL: word-stagger works in both directions, zigzag CSS-grid reversal works naturally
 
-## Health status (post-Session 22)
+## Health status (post-Session 23)
 
 - TS errors: 0 (verified via `pnpm tsc --noEmit`)
 - Lint warnings: 7 (baseline — 6 in src/checkout/, 1 in Logo.tsx)
 - Brand-primary updated: #2D3B2E → #2D6A4F (richer, more vibrant green); dark mode #4A5D4A → #4D8C6B
-- Working tree: clean on feature/ui-redesign-session-22
+- Working tree: clean on feature/ui-redesign-session-23
 - framer-motion@12.38.0 added as dependency (session 16)
 - .eslintrc.json override updated: global-error.tsx now in no-default-export exclusion list
 - console.log("jjj", locale) removed from products/[slug]/page.tsx (session 18)
@@ -211,6 +229,12 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
 - WholesalePageClient rebuilt (session 22 XL): 9 sections, brand-primary #2D6A4F, word-stagger hero,
   supply cards, 3 placeholder sections (benefits photos, certificates, testimonials)
 - brand-primary color: #2D3B2E → #2D6A4F in globals.css + tokens.ts (session 22)
+- TopBar added above HeaderWrapper in (main)/layout.tsx (session 23); CSS var
+  --topbar-height drives layout offset; no hard-coded padding
+- CategoriesWithChildren.graphql added + codegen run (session 23); fetches
+  level=0 categories + 10 children each for mega menu
+- Nav items replaced: Home / Shop (mega menu) / Wholesale / Contact (session 23)
+- topbar + nav i18n namespaces added to en.json + ar.json (session 23)
 
 ## Button-as-link pattern (important)
 
@@ -261,6 +285,8 @@ SearchBar.tsx, SearchOverlay.tsx (session 7).
 - `notFound` — title, subtitle, goHome, browse, checkUrl (session 17)
 - `home` — header, description, aboutLink, contactLink,
   shopByCountry (session 21)
+- `topbar` — freeShipping, invoices, wholesale, countries, quality (session 23)
+- `nav` — home, shop, wholesale, contact, viewAll, allCategories (session 23)
 - `error`, `button`, `welcome`, `goodbye` — misc
   (`error` extended in session 17: +title, +description, +tryAgain, +goHome, +code)
 

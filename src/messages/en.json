@@ -280,6 +280,21 @@
 			"waMessageAr": "مرحبا، أود الاستفسار عن أسعار الجملة"
 		}
 	},
+	"topbar": {
+		"freeShipping": "Free shipping on orders over 200 AED",
+		"invoices": "Official UAE tax invoices available",
+		"wholesale": "Wholesale orders welcome — WhatsApp us",
+		"countries": "Sourced from 15+ countries",
+		"quality": "Premium quality, competitive prices"
+	},
+	"nav": {
+		"home": "Home",
+		"shop": "Shop",
+		"wholesale": "Wholesale",
+		"contact": "Contact Us",
+		"viewAll": "View all products",
+		"allCategories": "All Categories"
+	},
 	"auth": {
 		"login": "Sign In",
 		"register": "Create Account",

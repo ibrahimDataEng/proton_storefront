@@ -1,0 +1,61 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { AnimatePresence, motion } from "framer-motion";
+import { isTopBarPath } from "./topbarPaths";
+
+export function TopBar() {
+	const pathname = usePathname();
+	const t = useTranslations("topbar");
+	const [tickerIndex, setTickerIndex] = useState(0);
+
+	const visible = isTopBarPath(pathname);
+
+	const messages = [
+		`✓ ${t("invoices")}`,
+		`📦 ${t("wholesale")}`,
+		`🌍 ${t("countries")}`,
+		`⭐ ${t("quality")}`,
+	];
+
+	// Expose topbar height as a CSS variable so HeaderWrapper + content can offset
+	useEffect(() => {
+		document.documentElement.style.setProperty("--topbar-height", visible ? "36px" : "0px");
+	}, [visible]);
+
+	useEffect(() => {
+		if (!visible) return;
+		const id = setInterval(() => {
+			setTickerIndex((i) => (i + 1) % messages.length);
+		}, 4000);
+		return () => clearInterval(id);
+	}, [visible, messages.length]);
+
+	if (!visible) return null;
+
+	return (
+		<div
+			role="banner"
+			className="fixed inset-x-0 top-0 z-[51] flex h-9 items-center justify-between bg-brand-primary px-4 sm:px-8"
+		>
+			<p className="shrink-0 text-xs text-white">🚚 {t("freeShipping")}</p>
+
+			<div className="relative flex h-5 items-center overflow-hidden">
+				<AnimatePresence mode="wait">
+					<motion.p
+						key={tickerIndex}
+						initial={{ opacity: 0, y: 8 }}
+						animate={{ opacity: 1, y: 0 }}
+						exit={{ opacity: 0, y: -8 }}
+						transition={{ duration: 0.4 }}
+						className="absolute right-0 whitespace-nowrap text-xs text-white"
+					>
+						{messages[tickerIndex]}
+					</motion.p>
+				</AnimatePresence>
+			</div>
+		</div>
+	);
+}

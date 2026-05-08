@@ -38,7 +38,7 @@ export const Nav = ({ channel, locale }: { channel: string; locale: string }) =>
 			</div>
 			<Suspense>
 				<MobileMenu>
-					<NavLinks channel={channel} locale={locale} />
+					<NavLinks channel={channel} locale={locale} mobile={true} />
 				</MobileMenu>
 			</Suspense>
 		</nav>
