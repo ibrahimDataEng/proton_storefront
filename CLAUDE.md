@@ -174,12 +174,23 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
     (AnimatePresence states: idle/pending/success/error + shake), attributes table,
     collapsible description
   - RelatedProducts: async server component, same-category, 4-col grid, Suspense skeleton
+- /pages/wholesale — full Wholesale page (session 22):
+  - WholesalePageClient: src/ui/components/wholesale/WholesalePageClient.tsx ("use client")
+  - Hero: brand-primary bg, animated count-up stats (4 counters, framer useInView)
+  - Targets: 2×2 card grid, spring-lift hover, green accent bar (start-aligned for RTL)
+  - Benefits: zigzag 3-row layout, BenefitRow sub-component, alternates slide-left/right
+  - Steps: horizontal timeline (desktop) / vertical stepper (mobile), sequential stagger
+  - FAQ: 5-item accordion, AnimatePresence height transition, + rotates to ×
+  - CTA: brand-primary bg, WhatsApp button (#25D366), pulse glow hover, wa.me link
+  - i18n: "wholesale" namespace in en.json + ar.json; all text via useTranslations
+  - RTL: useLocale() → isRtl, zigzag alternation flips for ar locale
+  - Routed via pages/[slug]/page.tsx: slug === "wholesale" → WholesalePageClient
 
-## Health status (post-Session 21)
+## Health status (post-Session 22)
 
 - TS errors: 0 (verified via `pnpm tsc --noEmit`)
 - Lint warnings: 7 (baseline — 6 in src/checkout/, 1 in Logo.tsx)
-- Working tree: clean on feature/ui-redesign-session-21
+- Working tree: clean on feature/ui-redesign-session-22
 - framer-motion@12.38.0 added as dependency (session 16)
 - .eslintrc.json override updated: global-error.tsx now in no-default-export exclusion list
 - console.log("jjj", locale) removed from products/[slug]/page.tsx (session 18)
@@ -191,6 +202,7 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
 - applyPromoCode + removePromoCode server actions added to cart/actions.ts (session 20)
 - CountrySection + BrandStorySection added to homepage (session 21)
 - country filter (origin-of-country attribute) wired to /products (session 21)
+- WholesalePageClient added; benefit image placeholders (brand-primary/10 color blocks) — replace with own photos when available (session 22)
 
 ## Button-as-link pattern (important)
 

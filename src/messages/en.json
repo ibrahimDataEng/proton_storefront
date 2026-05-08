@@ -193,6 +193,70 @@
 		"required": "This field is required",
 		"invalidEmail": "Please enter a valid email address"
 	},
+	"wholesale": {
+		"hero": {
+			"headline": "Your Success Partner in the UAE Market",
+			"subtitle": "We provide the finest nuts and food products at wholesale prices for business partners",
+			"stat1Value": "+200",
+			"stat1Label": "Business Clients",
+			"stat2Value": "+15",
+			"stat2Label": "Source Countries",
+			"stat3Value": "+10",
+			"stat3Label": "Years of Experience",
+			"stat4Value": "5",
+			"stat4Label": "Guaranteed Delivery Days"
+		},
+		"targets": {
+			"sectionTitle": "Who Is This Service For?",
+			"card1Title": "Restaurants & Cafés",
+			"card1Subtitle": "Fresh ingredients in regular quantities",
+			"card2Title": "Retail Stores",
+			"card2Subtitle": "Wide selection under your own brand",
+			"card3Title": "Corporate Gifts",
+			"card3Subtitle": "Custom packaging for events and companies",
+			"card4Title": "Manufacturing Companies",
+			"card4Subtitle": "High-quality raw materials with international certifications"
+		},
+		"benefits": {
+			"sectionTitle": "Wholesale Advantages",
+			"item1Title": "Regular Delivery",
+			"item1Subtitle": "Fixed weekly delivery schedule for your business",
+			"item2Title": "Official Invoices",
+			"item2Subtitle": "Tax invoices and full accounting support",
+			"item3Title": "Dedicated Representative",
+			"item3Subtitle": "Personal follow-up and priority on orders"
+		},
+		"steps": {
+			"sectionTitle": "How Do We Work Together?",
+			"step1Title": "Contact Us via WhatsApp",
+			"step1Subtitle": "Reach out and we'll respond within an hour",
+			"step2Title": "We Identify Your Needs",
+			"step2Subtitle": "We define your requirements and quantities",
+			"step3Title": "Receive a Quote in 24 Hours",
+			"step3Subtitle": "We send you a detailed price offer promptly",
+			"step4Title": "Regular Delivery to Your Door",
+			"step4Subtitle": "Scheduled delivery straight to your facility"
+		},
+		"faq": {
+			"sectionTitle": "Frequently Asked Questions",
+			"q1": "What is the minimum order quantity?",
+			"a1": "The minimum is 25 kilograms for most products",
+			"q2": "Do you provide tax invoices?",
+			"a2": "Yes, we provide official tax invoices for all wholesale orders",
+			"q3": "How long does delivery take?",
+			"a3": "2 to 5 business days within the UAE",
+			"q4": "Can packaging be customized?",
+			"a4": "Yes, we offer custom packaging options for brands",
+			"q5": "What payment methods are available?",
+			"a5": "Bank transfer, cheque, or cash on delivery"
+		},
+		"cta": {
+			"headline": "Start Your Partnership Today",
+			"subtitle": "Contact us via WhatsApp and we'll respond within an hour",
+			"button": "Chat on WhatsApp",
+			"hours": "Monday – Saturday, 9 AM to 5 PM"
+		}
+	},
 	"auth": {
 		"login": "Sign In",
 		"register": "Create Account",

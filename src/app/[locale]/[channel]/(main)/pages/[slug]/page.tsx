@@ -8,6 +8,7 @@ import { executeGraphQL } from "@/lib/graphql";
 import { getSaleorLanguage } from "@/lib/saleor-language";
 import { Container } from "@/ui/components/Container";
 import { ContactPageClient } from "@/ui/components/contact/ContactPageClient";
+import { WholesalePageClient } from "@/ui/components/wholesale/WholesalePageClient";
 
 const parser = edjsHTML();
 
@@ -21,6 +22,14 @@ export const generateMetadata = async (props: {
 		return {
 			title: `${t("title")} · Green Line Group`,
 			description: t("subtitle"),
+		};
+	}
+
+	if (params.slug === "wholesale") {
+		const t = await getTranslations({ locale: params.locale, namespace: "wholesale" });
+		return {
+			title: `${t("hero.headline")} · Green Line Group`,
+			description: t("hero.subtitle"),
 		};
 	}
 
@@ -48,6 +57,10 @@ export default async function Page(props: { params: Promise<{ slug: string; loca
 
 	if (params.slug === "contact-us") {
 		return <ContactPageClient />;
+	}
+
+	if (params.slug === "wholesale") {
+		return <WholesalePageClient />;
 	}
 
 	const language = getSaleorLanguage(params.locale);
