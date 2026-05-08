@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "framer-motion";
 import { isTopBarPath } from "./topbarPaths";
+import { Container } from "@/ui/components/Container";
 
 export function TopBar() {
 	const pathname = usePathname();
@@ -36,26 +37,25 @@ export function TopBar() {
 	if (!visible) return null;
 
 	return (
-		<div
-			role="banner"
-			className="fixed inset-x-0 top-0 z-[51] flex h-9 items-center justify-between bg-brand-primary px-4 sm:px-8"
-		>
-			<p className="shrink-0 text-xs text-white">🚚 {t("freeShipping")}</p>
+		<div role="banner" className="fixed inset-x-0 top-0 z-[51] h-9 bg-[#0D1410]">
+			<Container className="flex h-full items-center justify-between">
+				<p className="shrink-0 text-xs text-white">🚚 {t("freeShipping")}</p>
 
-			<div className="relative flex h-5 items-center overflow-hidden">
-				<AnimatePresence mode="wait">
-					<motion.p
-						key={tickerIndex}
-						initial={{ opacity: 0, y: 8 }}
-						animate={{ opacity: 1, y: 0 }}
-						exit={{ opacity: 0, y: -8 }}
-						transition={{ duration: 0.4 }}
-						className="absolute right-0 whitespace-nowrap text-xs text-white"
-					>
-						{messages[tickerIndex]}
-					</motion.p>
-				</AnimatePresence>
-			</div>
+				<div className="relative flex h-5 items-center overflow-hidden">
+					<AnimatePresence mode="wait">
+						<motion.p
+							key={tickerIndex}
+							initial={{ opacity: 0, y: 8 }}
+							animate={{ opacity: 1, y: 0 }}
+							exit={{ opacity: 0, y: -8 }}
+							transition={{ duration: 0.4 }}
+							className="absolute right-0 whitespace-nowrap text-xs text-white"
+						>
+							{messages[tickerIndex]}
+						</motion.p>
+					</AnimatePresence>
+				</div>
+			</Container>
 		</div>
 	);
 }
