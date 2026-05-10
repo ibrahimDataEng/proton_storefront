@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { MenuIcon } from "lucide-react";
 import { UserMenuContainer } from "./components/UserMenu/UserMenuContainer";
 import { CartNavItem } from "./components/CartNavItem";
 import { NavLinks } from "./components/NavLinks";
@@ -43,8 +44,18 @@ export const Nav = ({ channel, locale }: { channel: string; locale: string }) =>
 				</Suspense>
 			</div>
 
-			{/* Mobile full-screen drawer — replaces MobileMenu */}
-			<Suspense fallback={null}>
+			{/* Mobile drawer — fallback renders hamburger immediately while categories load */}
+			<Suspense
+				fallback={
+					<button
+						className="flex h-8 w-8 items-center justify-center self-center md:hidden"
+						disabled
+						aria-label="Open menu"
+					>
+						<MenuIcon className="h-6 w-6 shrink-0" aria-hidden />
+					</button>
+				}
+			>
 				<MobileDrawerWrapper locale={locale} />
 			</Suspense>
 		</nav>

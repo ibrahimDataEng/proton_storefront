@@ -1,4 +1,4 @@
-import { MobileDrawer } from "./MobileDrawer";
+import { MobileNavClient } from "./MobileNavClient";
 import { executeGraphQL } from "@/lib/graphql";
 import { CategoriesWithChildrenDocument } from "@/gql/graphql";
 import { getSaleorLanguage } from "@/lib/saleor-language";
@@ -17,5 +17,5 @@ export async function MobileDrawerWrapper({ locale }: MobileDrawerWrapperProps) 
 
 	const categories = data.categories?.edges.map((e) => e.node) ?? [];
 
-	return <MobileDrawer categories={categories} />;
+	return <MobileNavClient categories={categories} />;
 }
