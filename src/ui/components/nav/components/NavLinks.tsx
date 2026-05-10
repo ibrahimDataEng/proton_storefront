@@ -7,12 +7,8 @@ import { ShopNavItem } from "@/ui/components/nav/ShopNavItem";
 interface NavLinksProps {
 	channel: string;
 	locale: string;
-	mobile?: boolean;
 }
 
-// Server component — cannot use hooks; translations via getTranslations would require
-// async import but next-intl server usage needs the async API.
-// We pass locale as a prop and derive labels inline.
 function getLabel(key: string, locale: string): string {
 	const labels: Record<string, Record<string, string>> = {
 		home: { en: "Home", ar: "الرئيسية" },
@@ -22,7 +18,8 @@ function getLabel(key: string, locale: string): string {
 	return labels[key]?.[locale] ?? labels[key]?.["en"] ?? key;
 }
 
-export const NavLinks = async ({ locale, mobile = false }: NavLinksProps) => {
+/** Desktop nav items only. Mobile nav is handled by MobileDrawer. */
+export const NavLinks = async ({ locale }: NavLinksProps) => {
 	const language = getSaleorLanguage(locale);
 
 	const data = await executeGraphQL(CategoriesWithChildrenDocument, {
@@ -36,7 +33,7 @@ export const NavLinks = async ({ locale, mobile = false }: NavLinksProps) => {
 		<>
 			<NavLink href="/">{getLabel("home", locale)}</NavLink>
 
-			<ShopNavItem categories={categories} mobile={mobile} />
+			<ShopNavItem categories={categories} />
 
 			<NavLink href="/pages/wholesale">{getLabel("wholesale", locale)}</NavLink>
 
