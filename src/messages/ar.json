@@ -296,6 +296,15 @@
 		"viewAll": "عرض جميع المنتجات",
 		"allCategories": "جميع الفئات"
 	},
+	"bottomNav": {
+		"home": "الرئيسية",
+		"categories": "الفئات",
+		"shop": "المتجر",
+		"account": "حسابي",
+		"cart": "السلة",
+		"back": "رجوع",
+		"viewAll": "عرض الكل"
+	},
 	"auth": {
 		"login": "تسجيل الدخول",
 		"register": "إنشاء حساب",

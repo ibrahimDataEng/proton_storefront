@@ -1,12 +1,10 @@
 import { Suspense } from "react";
-import { MenuIcon } from "lucide-react";
 import { UserMenuContainer } from "./components/UserMenu/UserMenuContainer";
 import { CartNavItem } from "./components/CartNavItem";
 import { NavLinks } from "./components/NavLinks";
 import { SearchBar } from "./components/SearchBar";
 import { MobileSearchTrigger } from "./components/MobileSearchTrigger";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
-import { MobileDrawerWrapper } from "./MobileDrawerWrapper";
 
 export const Nav = ({ channel, locale }: { channel: string; locale: string }) => {
 	return (
@@ -23,41 +21,30 @@ export const Nav = ({ channel, locale }: { channel: string; locale: string }) =>
 					<SearchBar channel={channel} locale={locale} />
 				</div>
 
-				{/* Mobile search icon */}
+				{/* Mobile search icon — visible on mobile, hidden on lg+ */}
 				<div className="flex lg:hidden">
 					<MobileSearchTrigger channel={channel} locale={locale} />
 				</div>
 
-				<div>
+				{/* Language switcher — hidden on mobile (available in MobileDrawer) */}
+				<div className="hidden md:block">
 					<LanguageSwitcher />
 				</div>
 
-				<Suspense fallback={<div className="w-8" />}>
-					<UserMenuContainer />
-				</Suspense>
+				{/* User menu — hidden on mobile (account in bottom bar) */}
+				<div className="hidden md:block">
+					<Suspense fallback={<div className="w-8" />}>
+						<UserMenuContainer />
+					</Suspense>
+				</div>
 			</div>
 
-			{/* Cart — always visible */}
-			<div className="flex items-center">
+			{/* Cart — hidden on mobile (cart in bottom bar) */}
+			<div className="hidden md:flex md:items-center">
 				<Suspense fallback={<div className="w-6" />}>
 					<CartNavItem channel={channel} locale={locale} />
 				</Suspense>
 			</div>
-
-			{/* Mobile drawer — fallback renders hamburger immediately while categories load */}
-			<Suspense
-				fallback={
-					<button
-						className="flex h-8 w-8 items-center justify-center self-center md:hidden"
-						disabled
-						aria-label="Open menu"
-					>
-						<MenuIcon className="h-6 w-6 shrink-0" aria-hidden />
-					</button>
-				}
-			>
-				<MobileDrawerWrapper locale={locale} />
-			</Suspense>
 		</nav>
 	);
 };
