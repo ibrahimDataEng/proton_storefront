@@ -191,7 +191,8 @@
 		"sent": "Message Sent!",
 		"sentSubtitle": "Thanks for reaching out — we'll be in touch shortly.",
 		"required": "This field is required",
-		"invalidEmail": "Please enter a valid email address"
+		"invalidEmail": "Please enter a valid email address",
+		"sendError": "Failed to send message. Please try again or email us directly."
 	},
 	"wholesale": {
 		"hero": {

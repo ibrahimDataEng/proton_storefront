@@ -59,6 +59,9 @@ importers:
       next-intl:
         specifier: 4.3.9
         version: 4.3.9(next@15.5.6(@babel/core@7.28.5)(@playwright/test@1.50.1)(react-dom@19.2.0(react@19.2.0))(react@19.2.0))(react@19.2.0)(typescript@5.3.3)
+      nodemailer:
+        specifier: 8.0.7
+        version: 8.0.7
       query-string:
         specifier: 8.1.0
         version: 8.1.0
@@ -132,6 +135,9 @@ importers:
       '@types/node':
         specifier: 20.10.0
         version: 20.10.0
+      '@types/nodemailer':
+        specifier: 8.0.0
+        version: 8.0.0
       '@types/react':
         specifier: ^19.0.0
         version: 19.2.2
@@ -1180,6 +1186,9 @@ packages:
 
   '@types/node@20.10.0':
     resolution: {integrity: sha512-D0WfRmU9TQ8I9PFx9Yc+EBHw+vSpIub4IDvQivcp26PtPrdMGAq5SDcpXEo/epqa/DXotVpekHiLNTg3iaKXBQ==}
+
+  '@types/nodemailer@8.0.0':
+    resolution: {integrity: sha512-fyf8jWULsCo0d0BuoQ75i6IeoHs47qcqxWc7yUdUcV0pOZGjUTTOvwdG1PRXUDqN/8A64yQdQdnA2pZgcdi+cA==}
 
   '@types/react-dom@19.2.2':
     resolution: {integrity: sha512-9KQPoO6mZCi7jcIStSnlOWn2nEF3mNmyr3rIAsGnAbQKYbRLyqmeSc39EVgtxXVia+LMT8j3knZLAZAh+xLmrw==}
@@ -2905,6 +2914,10 @@ packages:
 
   node-releases@2.0.27:
     resolution: {integrity: sha512-nmh3lCkYZ3grZvqcCH+fjmQ7X+H0OeZgP40OierEaAptX4XofMh5kwNbWh7lBduUzCcV/8kZ+NDLCwm2iorIlA==}
+
+  nodemailer@8.0.7:
+    resolution: {integrity: sha512-pkjE4mkBzQjdJT4/UmlKl3pX0rC9fZmjh7c6C9o7lv66Ac6w9WCnzPzhbPNxwZAzlF4mdq4CSWB5+FbK6FWCow==}
+    engines: {node: '>=6.0.0'}
 
   normalize-path@2.1.1:
     resolution: {integrity: sha512-3pKJwH184Xo/lnH6oyP1q2pMd7HcypqqmRs91/6/i2CGtWwIKGCkOOMTm/zXbgTEWHw1uNpNi/igc3ePOYHb6w==}
@@ -5098,6 +5111,10 @@ snapshots:
     dependencies:
       undici-types: 5.26.5
 
+  '@types/nodemailer@8.0.0':
+    dependencies:
+      '@types/node': 20.10.0
+
   '@types/react-dom@19.2.2(@types/react@19.2.2)':
     dependencies:
       '@types/react': 19.2.2
@@ -7031,6 +7048,8 @@ snapshots:
   node-int64@0.4.0: {}
 
   node-releases@2.0.27: {}
+
+  nodemailer@8.0.7: {}
 
   normalize-path@2.1.1:
     dependencies:

@@ -3,11 +3,11 @@
 import { type FormEvent, type ReactNode, useRef, useState } from "react";
 import { motion, AnimatePresence, useInView } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { Mail, Phone, MapPin, Clock, Send, CheckCircle, Loader2 } from "lucide-react";
+import { Mail, Phone, MapPin, Clock, Send, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 import { clsx } from "clsx";
 import { Container } from "@/ui/components/Container";
 
-type FormStatus = "idle" | "sending" | "sent";
+type FormStatus = "idle" | "sending" | "sent" | "error";
 
 interface FormState {
 	name: string;
@@ -144,12 +144,27 @@ export function ContactPageClient() {
 		}
 		setErrors({});
 		setStatus("sending");
-		await new Promise<void>((res) => setTimeout(res, 1500));
-		setStatus("sent");
-		setTimeout(() => {
-			setStatus("idle");
-			setForm({ name: "", email: "", subject: "", message: "" });
-		}, 5000);
+		try {
+			const res = await fetch("/api/contact", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify(form),
+			});
+			const data = (await res.json()) as { success?: boolean; error?: string };
+			if (data.success) {
+				setStatus("sent");
+				setTimeout(() => {
+					setStatus("idle");
+					setForm({ name: "", email: "", subject: "", message: "" });
+				}, 5000);
+			} else {
+				setStatus("error");
+				setTimeout(() => setStatus("idle"), 5000);
+			}
+		} catch {
+			setStatus("error");
+			setTimeout(() => setStatus("idle"), 5000);
+		}
 	};
 
 	const inputClass = (hasError: boolean) =>
@@ -289,7 +304,9 @@ export function ContactPageClient() {
 										"disabled:pointer-events-none",
 										status === "sent"
 											? "bg-green-600 text-white"
-											: "bg-brand-primary text-content-inverse hover:bg-brand-primary/90",
+											: status === "error"
+												? "bg-red-600 text-white"
+												: "bg-brand-primary text-content-inverse hover:bg-brand-primary/90",
 									)}
 								>
 									<AnimatePresence mode="wait" initial={false}>
@@ -315,6 +332,17 @@ export function ContactPageClient() {
 												<CheckCircle className="h-4 w-4" />
 												{t("sent")}
 											</motion.span>
+										) : status === "error" ? (
+											<motion.span
+												key="error"
+												initial={{ opacity: 0, scale: 0.8 }}
+												animate={{ opacity: 1, scale: 1 }}
+												exit={{ opacity: 0 }}
+												className="flex items-center gap-2"
+											>
+												<AlertCircle className="h-4 w-4" />
+												{t("sendError")}
+											</motion.span>
 										) : (
 											<motion.span
 												key="idle"
@@ -331,16 +359,28 @@ export function ContactPageClient() {
 								</button>
 							</motion.div>
 
-							{/* Success note */}
+							{/* Success / error note */}
 							<AnimatePresence>
 								{status === "sent" && (
 									<motion.p
+										key="sent-note"
 										initial={{ opacity: 0, y: 8 }}
 										animate={{ opacity: 1, y: 0 }}
 										exit={{ opacity: 0, y: -8 }}
 										className="text-center text-sm text-content-secondary"
 									>
 										{t("sentSubtitle")}
+									</motion.p>
+								)}
+								{status === "error" && (
+									<motion.p
+										key="error-note"
+										initial={{ opacity: 0, y: 8 }}
+										animate={{ opacity: 1, y: 0 }}
+										exit={{ opacity: 0, y: -8 }}
+										className="text-center text-sm text-red-500"
+									>
+										{t("sendError")}
 									</motion.p>
 								)}
 							</AnimatePresence>
