@@ -21,8 +21,8 @@ export const Nav = ({ channel, locale }: { channel: string; locale: string }) =>
 					<SearchBar channel={channel} locale={locale} />
 				</div>
 
-				{/* Mobile search icon — visible on mobile, hidden on lg+ */}
-				<div className="flex lg:hidden">
+				{/* Search icon — tablet only (md to lg); mobile header handles search on <md */}
+				<div className="hidden md:flex lg:hidden">
 					<MobileSearchTrigger channel={channel} locale={locale} />
 				</div>
 

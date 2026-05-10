@@ -1,9 +1,8 @@
-import { Suspense, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { Footer } from "@/ui/components/Footer";
 import { Header } from "@/ui/components/Header";
 import { HeaderWrapper } from "@/ui/components/HeaderWrapper";
 import { TopBar } from "@/ui/components/nav/TopBar";
-import { BottomNavWrapper } from "@/ui/components/nav/BottomNavWrapper";
 import { BottomNavClient } from "@/ui/components/nav/BottomNavClient";
 
 export const metadata = {
@@ -32,10 +31,8 @@ export default async function RootLayout(props: {
 				<Footer channel={channel} locale={locale} />
 			</div>
 
-			{/* Mobile bottom navigation bar */}
-			<Suspense fallback={<BottomNavClient categories={[]} />}>
-				<BottomNavWrapper locale={locale} />
-			</Suspense>
+			{/* Mobile bottom navigation bar — always available, no async dependency */}
+			<BottomNavClient />
 		</>
 	);
 }
