@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { isTopBarPath } from "./topbarPaths";
 import { Container } from "@/ui/components/Container";
 
@@ -43,7 +43,7 @@ export function TopBar() {
 
 				<div className="relative flex h-5 items-center overflow-hidden">
 					<AnimatePresence mode="wait">
-						<motion.p
+						<m.p
 							key={tickerIndex}
 							initial={{ opacity: 0, y: 8 }}
 							animate={{ opacity: 1, y: 0 }}
@@ -52,7 +52,7 @@ export function TopBar() {
 							className="absolute right-0 whitespace-nowrap text-xs text-white"
 						>
 							{messages[tickerIndex]}
-						</motion.p>
+						</m.p>
 					</AnimatePresence>
 				</div>
 			</Container>

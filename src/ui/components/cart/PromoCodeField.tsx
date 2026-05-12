@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { CheckCircle, X } from "lucide-react";
 import { clsx } from "clsx";
@@ -83,7 +83,7 @@ export function PromoCodeField({ checkoutId, appliedVoucherCode, discount }: Pro
 	return (
 		<AnimatePresence mode="wait" initial={false}>
 			{isApplied ? (
-				<motion.div
+				<m.div
 					key="applied"
 					initial={{ opacity: 0, scale: 0.97 }}
 					animate={{ opacity: 1, scale: 1 }}
@@ -118,9 +118,9 @@ export function PromoCodeField({ checkoutId, appliedVoucherCode, discount }: Pro
 							<X className="h-4 w-4" aria-hidden="true" />
 						)}
 					</button>
-				</motion.div>
+				</m.div>
 			) : (
-				<motion.div
+				<m.div
 					key="input"
 					initial={{ opacity: 0, scale: 0.97 }}
 					animate={{ opacity: 1, scale: 1 }}
@@ -158,16 +158,16 @@ export function PromoCodeField({ checkoutId, appliedVoucherCode, discount }: Pro
 						</button>
 					</div>
 					{applyStatus === "error" && errorMessage && (
-						<motion.p
+						<m.p
 							initial={{ opacity: 0, y: -4 }}
 							animate={{ opacity: 1, y: 0 }}
 							className="text-xs text-red-600"
 							role="alert"
 						>
 							{errorMessage}
-						</motion.p>
+						</m.p>
 					)}
-				</motion.div>
+				</m.div>
 			)}
 		</AnimatePresence>
 	);

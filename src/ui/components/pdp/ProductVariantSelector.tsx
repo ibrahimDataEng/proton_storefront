@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { clsx } from "clsx";
 
 interface Variant {
@@ -47,7 +47,7 @@ export function ProductVariantSelector({ variants, selectedVariantId, onVariantC
 					const displayName = variant.translation?.name ?? variant.name;
 
 					return (
-						<motion.button
+						<m.button
 							key={variant.id}
 							type="button"
 							role="radio"
@@ -64,7 +64,7 @@ export function ProductVariantSelector({ variants, selectedVariantId, onVariantC
 							)}
 						>
 							{isOos ? <s>{displayName}</s> : displayName}
-						</motion.button>
+						</m.button>
 					);
 				})}
 			</div>

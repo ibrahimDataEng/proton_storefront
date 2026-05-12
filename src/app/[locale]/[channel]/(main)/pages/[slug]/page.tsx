@@ -3,12 +3,18 @@ import { type Metadata } from "next";
 import edjsHTML from "editorjs-html";
 import xss from "xss";
 import { getTranslations } from "next-intl/server";
+import dynamic from "next/dynamic";
 import { PageGetBySlugDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 import { getSaleorLanguage } from "@/lib/saleor-language";
 import { Container } from "@/ui/components/Container";
-import { ContactPageClient } from "@/ui/components/contact/ContactPageClient";
-import { WholesalePageClient } from "@/ui/components/wholesale/WholesalePageClient";
+
+const ContactPageClient = dynamic(() =>
+	import("@/ui/components/contact/ContactPageClient").then((m) => m.ContactPageClient),
+);
+const WholesalePageClient = dynamic(() =>
+	import("@/ui/components/wholesale/WholesalePageClient").then((m) => m.WholesalePageClient),
+);
 
 const parser = edjsHTML();
 

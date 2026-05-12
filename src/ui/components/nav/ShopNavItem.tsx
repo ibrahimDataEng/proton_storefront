@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { ArrowLeft, ArrowRight, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import clsx from "clsx";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
@@ -71,7 +71,7 @@ export function ShopNavItem({ categories }: ShopNavItemProps) {
 
 			<AnimatePresence>
 				{open && (
-					<motion.div
+					<m.div
 						initial={{ opacity: 0, scaleY: 0.95 }}
 						animate={{ opacity: 1, scaleY: 1 }}
 						exit={{ opacity: 0, scaleY: 0.95 }}
@@ -123,7 +123,7 @@ export function ShopNavItem({ categories }: ShopNavItemProps) {
 										</p>
 
 										<AnimatePresence mode="wait">
-											<motion.div
+											<m.div
 												key={activeCategory.id}
 												initial={{ opacity: 0 }}
 												animate={{ opacity: 1 }}
@@ -132,7 +132,7 @@ export function ShopNavItem({ categories }: ShopNavItemProps) {
 												className="grid grid-cols-3 gap-2 xl:grid-cols-4"
 											>
 												{activeCategory.children?.edges.map(({ node }, i) => (
-													<motion.div
+													<m.div
 														key={node.id}
 														initial={{ opacity: 0, y: 6 }}
 														animate={{ opacity: 1, y: 0 }}
@@ -145,11 +145,11 @@ export function ShopNavItem({ categories }: ShopNavItemProps) {
 														>
 															{getName(node)}
 														</LinkWithChannel>
-													</motion.div>
+													</m.div>
 												))}
 
 												{(!activeCategory.children || activeCategory.children.edges.length === 0) && (
-													<motion.div
+													<m.div
 														initial={{ opacity: 0, y: 6 }}
 														animate={{ opacity: 1, y: 0 }}
 														transition={{ duration: 0.2 }}
@@ -161,9 +161,9 @@ export function ShopNavItem({ categories }: ShopNavItemProps) {
 														>
 															{t("allCategories")}
 														</LinkWithChannel>
-													</motion.div>
+													</m.div>
 												)}
-											</motion.div>
+											</m.div>
 										</AnimatePresence>
 									</div>
 								)}
@@ -181,7 +181,7 @@ export function ShopNavItem({ categories }: ShopNavItemProps) {
 								</LinkWithChannel>
 							</div>
 						</div>
-					</motion.div>
+					</m.div>
 				)}
 			</AnimatePresence>
 		</li>

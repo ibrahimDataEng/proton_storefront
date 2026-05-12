@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 
 export default function Error({ error, reset }: { error: Error; reset: () => void }) {
 	useEffect(() => {
@@ -10,7 +10,7 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
 
 	return (
 		<div className="flex min-h-[60vh] flex-col items-center justify-center px-6 py-16 text-center">
-			<motion.svg
+			<m.svg
 				xmlns="http://www.w3.org/2000/svg"
 				viewBox="0 0 120 120"
 				className="mb-8 h-28 w-28 text-status-warning"
@@ -20,7 +20,7 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
 				transition={{ duration: 0.5, ease: "easeOut" }}
 			>
 				{/* Triangle warning */}
-				<motion.path
+				<m.path
 					d="M60 15 L105 95 L15 95 Z"
 					fill="currentColor"
 					opacity="0.12"
@@ -28,7 +28,7 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
 					animate={{ scale: 1 }}
 					transition={{ duration: 0.4, delay: 0.1 }}
 				/>
-				<motion.path
+				<m.path
 					d="M60 20 L101 92 L19 92 Z"
 					fill="none"
 					stroke="currentColor"
@@ -40,7 +40,7 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
 					transition={{ duration: 0.6, delay: 0.2 }}
 				/>
 				{/* Exclamation stem */}
-				<motion.rect
+				<m.rect
 					x="57"
 					y="48"
 					width="6"
@@ -54,7 +54,7 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
 					transition={{ delay: 0.6, duration: 0.3 }}
 				/>
 				{/* Exclamation dot */}
-				<motion.circle
+				<m.circle
 					cx="60"
 					cy="80"
 					r="3.5"
@@ -64,9 +64,9 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
 					animate={{ scale: 1 }}
 					transition={{ delay: 0.8, duration: 0.25, type: "spring" }}
 				/>
-			</motion.svg>
+			</m.svg>
 
-			<motion.div
+			<m.div
 				initial={{ opacity: 0, y: 10 }}
 				animate={{ opacity: 1, y: 0 }}
 				transition={{ delay: 0.35, duration: 0.4 }}
@@ -79,9 +79,9 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
 						{error.message}
 					</code>
 				)}
-			</motion.div>
+			</m.div>
 
-			<motion.button
+			<m.button
 				initial={{ opacity: 0 }}
 				animate={{ opacity: 1 }}
 				transition={{ delay: 0.55, duration: 0.3 }}
@@ -91,7 +91,7 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
 				className="mt-8 inline-flex h-11 items-center justify-center rounded-lg bg-brand-primary px-6 text-sm font-medium text-content-inverse transition-colors hover:bg-brand-primary/90"
 			>
 				Try again
-			</motion.button>
+			</m.button>
 		</div>
 	);
 }

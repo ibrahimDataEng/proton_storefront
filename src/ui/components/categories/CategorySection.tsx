@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef } from "react";
-import { motion, useInView } from "framer-motion";
+import { m, useInView } from "framer-motion";
 import { ArrowRight } from "lucide-react";
 import { useLocale } from "next-intl";
 import clsx from "clsx";
@@ -73,7 +73,7 @@ export function CategorySection({ category, colorIndex }: CategorySectionProps) 
 			{/* Subcategory cards — horizontal scroll on mobile, 4-col grid on md+ */}
 			<div className="flex gap-3 overflow-x-auto pb-2 md:grid md:grid-cols-4 md:gap-4 md:overflow-visible md:pb-0">
 				{children.map(({ node }, i) => (
-					<motion.div
+					<m.div
 						key={node.id}
 						initial={{ opacity: 0, y: 14 }}
 						animate={isInView ? { opacity: 1, y: 0 } : {}}
@@ -89,12 +89,12 @@ export function CategorySection({ category, colorIndex }: CategorySectionProps) 
 						>
 							{getName(node)}
 						</LinkWithChannel>
-					</motion.div>
+					</m.div>
 				))}
 
 				{/* No children — show the root category itself */}
 				{children.length === 0 && (
-					<motion.div
+					<m.div
 						initial={{ opacity: 0, y: 14 }}
 						animate={isInView ? { opacity: 1, y: 0 } : {}}
 						transition={{ duration: 0.25 }}
@@ -109,7 +109,7 @@ export function CategorySection({ category, colorIndex }: CategorySectionProps) 
 						>
 							{getName(category)}
 						</LinkWithChannel>
-					</motion.div>
+					</m.div>
 				)}
 			</div>
 		</section>

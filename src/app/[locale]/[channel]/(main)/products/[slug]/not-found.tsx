@@ -1,7 +1,7 @@
 "use client";
 
 import { useTranslations } from "next-intl";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 
 export default function NotFound() {
@@ -10,7 +10,7 @@ export default function NotFound() {
 	return (
 		<div className="mx-auto flex min-h-[60vh] max-w-lg flex-col items-center justify-center px-8 py-16 text-center">
 			{/* Animated broken-box SVG illustration */}
-			<motion.svg
+			<m.svg
 				xmlns="http://www.w3.org/2000/svg"
 				viewBox="0 0 120 120"
 				className="mb-8 h-32 w-32 text-brand-muted"
@@ -20,7 +20,7 @@ export default function NotFound() {
 				transition={{ duration: 0.5, ease: "easeOut" }}
 			>
 				{/* Box base */}
-				<motion.rect
+				<m.rect
 					x="20"
 					y="55"
 					width="80"
@@ -33,7 +33,7 @@ export default function NotFound() {
 					transition={{ duration: 0.6, delay: 0.2 }}
 				/>
 				{/* Box lid left */}
-				<motion.path
+				<m.path
 					d="M20 55 L60 40 L60 55 Z"
 					fill="currentColor"
 					opacity={0.25}
@@ -42,7 +42,7 @@ export default function NotFound() {
 					transition={{ delay: 0.4, duration: 0.3 }}
 				/>
 				{/* Box lid right — tilted open */}
-				<motion.path
+				<m.path
 					d="M100 55 L60 40 L60 55 Z"
 					fill="currentColor"
 					opacity={0.4}
@@ -52,7 +52,7 @@ export default function NotFound() {
 					transition={{ delay: 0.6, duration: 0.5, ease: "easeOut" }}
 				/>
 				{/* Question mark inside */}
-				<motion.text
+				<m.text
 					x="60"
 					y="90"
 					textAnchor="middle"
@@ -65,9 +65,9 @@ export default function NotFound() {
 					transition={{ delay: 0.7, duration: 0.4 }}
 				>
 					?
-				</motion.text>
+				</m.text>
 				{/* Sparkles */}
-				<motion.circle
+				<m.circle
 					cx="25"
 					cy="35"
 					r="3"
@@ -77,7 +77,7 @@ export default function NotFound() {
 					animate={{ opacity: [0, 0.5, 0] }}
 					transition={{ delay: 0.8, duration: 1.5, repeat: Infinity, repeatDelay: 1 }}
 				/>
-				<motion.circle
+				<m.circle
 					cx="95"
 					cy="30"
 					r="2"
@@ -87,7 +87,7 @@ export default function NotFound() {
 					animate={{ opacity: [0, 0.4, 0] }}
 					transition={{ delay: 1.2, duration: 1.5, repeat: Infinity, repeatDelay: 1.2 }}
 				/>
-				<motion.circle
+				<m.circle
 					cx="15"
 					cy="70"
 					r="2"
@@ -97,9 +97,9 @@ export default function NotFound() {
 					animate={{ opacity: [0, 0.3, 0] }}
 					transition={{ delay: 1.6, duration: 1.5, repeat: Infinity, repeatDelay: 0.8 }}
 				/>
-			</motion.svg>
+			</m.svg>
 
-			<motion.div
+			<m.div
 				initial={{ opacity: 0, y: 12 }}
 				animate={{ opacity: 1, y: 0 }}
 				transition={{ delay: 0.3, duration: 0.4 }}
@@ -108,9 +108,9 @@ export default function NotFound() {
 				<span className="text-6xl font-bold text-brand-muted opacity-30">404</span>
 				<h1 className="text-2xl font-semibold text-content-primary">{t("title")}</h1>
 				<p className="text-content-secondary">{t("subtitle")}</p>
-			</motion.div>
+			</m.div>
 
-			<motion.div
+			<m.div
 				initial={{ opacity: 0 }}
 				animate={{ opacity: 1 }}
 				transition={{ delay: 0.6, duration: 0.4 }}
@@ -128,7 +128,7 @@ export default function NotFound() {
 				>
 					{t("goHome")}
 				</LinkWithChannel>
-			</motion.div>
+			</m.div>
 		</div>
 	);
 }

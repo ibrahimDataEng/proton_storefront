@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { usePathname as useNextPathname } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, m } from "framer-motion";
 import { ChevronLeft, ChevronRight, ShoppingBagIcon, UserIcon, X } from "lucide-react";
 import clsx from "clsx";
 import { Link, usePathname as useIntlPathname } from "@/i18n/navigation";
@@ -116,7 +116,7 @@ export function MobileDrawer({ categories, isOpen, onClose }: MobileDrawerProps)
 			{isOpen && (
 				<>
 					{/* Backdrop */}
-					<motion.div
+					<m.div
 						key="mobile-drawer-backdrop"
 						initial={{ opacity: 0 }}
 						animate={{ opacity: 1 }}
@@ -128,7 +128,7 @@ export function MobileDrawer({ categories, isOpen, onClose }: MobileDrawerProps)
 					/>
 
 					{/* Drawer panel — slides in from right (LTR) / left (RTL) */}
-					<motion.div
+					<m.div
 						key="mobile-drawer-panel"
 						id="mobile-drawer"
 						role="dialog"
@@ -168,7 +168,7 @@ export function MobileDrawer({ categories, isOpen, onClose }: MobileDrawerProps)
 						{/* ── Level content — animated slides ── */}
 						<div className="relative flex-1 overflow-hidden">
 							<AnimatePresence mode="wait" custom={custom}>
-								<motion.div
+								<m.div
 									key={levelKey}
 									custom={custom}
 									variants={slideVariants}
@@ -277,7 +277,7 @@ export function MobileDrawer({ categories, isOpen, onClose }: MobileDrawerProps)
 											</div>
 										</div>
 									)}
-								</motion.div>
+								</m.div>
 							</AnimatePresence>
 						</div>
 
@@ -339,7 +339,7 @@ export function MobileDrawer({ categories, isOpen, onClose }: MobileDrawerProps)
 								</div>
 							</div>
 						</div>
-					</motion.div>
+					</m.div>
 				</>
 			)}
 		</AnimatePresence>

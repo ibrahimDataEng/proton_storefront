@@ -1,7 +1,7 @@
 "use client";
 
 import { type FormEvent, type ReactNode, useRef, useState } from "react";
-import { motion, AnimatePresence, useInView } from "framer-motion";
+import { m, AnimatePresence, useInView } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { Mail, Phone, MapPin, Clock, Send, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 import { clsx } from "clsx";
@@ -49,7 +49,7 @@ interface ContactCardProps {
 
 function ContactCard({ icon, label, value, href }: ContactCardProps) {
 	return (
-		<motion.div
+		<m.div
 			variants={itemVariants}
 			whileHover={{ y: -4, transition: { type: "spring", stiffness: 400, damping: 25 } }}
 			className="group relative overflow-hidden rounded-xl border border-line-subtle bg-surface-raised p-5 shadow-soft transition-shadow hover:shadow-raised"
@@ -73,7 +73,7 @@ function ContactCard({ icon, label, value, href }: ContactCardProps) {
 					)}
 				</div>
 			</div>
-		</motion.div>
+		</m.div>
 	);
 }
 
@@ -178,7 +178,7 @@ export function ContactPageClient() {
 	return (
 		<Container className="py-12 md:py-16">
 			{/* Hero */}
-			<motion.div
+			<m.div
 				ref={heroRef}
 				initial={{ opacity: 0, y: 20 }}
 				animate={heroInView ? { opacity: 1, y: 0 } : {}}
@@ -187,19 +187,19 @@ export function ContactPageClient() {
 			>
 				<h1 className="text-4xl font-bold tracking-tight text-content-primary md:text-5xl">{t("title")}</h1>
 				<p className="mt-3 text-lg text-content-secondary">{t("subtitle")}</p>
-				<motion.div
+				<m.div
 					initial={{ scaleX: 0 }}
 					animate={heroInView ? { scaleX: 1 } : {}}
 					transition={{ delay: 0.3, duration: 0.4, ease: "easeOut" }}
 					style={{ transformOrigin: "center" }}
 					className="mx-auto mt-5 h-1 w-16 rounded-full bg-brand-primary"
 				/>
-			</motion.div>
+			</m.div>
 
 			{/* Two-column layout */}
 			<div className="grid gap-8 lg:grid-cols-[2fr_3fr] lg:gap-12">
 				{/* Contact info cards */}
-				<motion.div
+				<m.div
 					ref={cardsRef}
 					variants={containerVariants}
 					initial="hidden"
@@ -209,11 +209,11 @@ export function ContactPageClient() {
 					{cards.map((card) => (
 						<ContactCard key={card.id} {...card} />
 					))}
-				</motion.div>
+				</m.div>
 
 				{/* Contact form */}
 				<div ref={formRef}>
-					<motion.div
+					<m.div
 						variants={itemVariants}
 						initial="hidden"
 						animate={formInView ? "visible" : "hidden"}
@@ -221,7 +221,7 @@ export function ContactPageClient() {
 					>
 						<h2 className="mb-6 text-2xl font-semibold text-content-primary">{t("formTitle")}</h2>
 
-						<motion.form
+						<m.form
 							variants={containerVariants}
 							initial="hidden"
 							animate={formInView ? "visible" : "hidden"}
@@ -230,7 +230,7 @@ export function ContactPageClient() {
 							className="flex flex-col gap-5"
 						>
 							{/* Name */}
-							<motion.div variants={formItemVariants}>
+							<m.div variants={formItemVariants}>
 								<label className="mb-1.5 block text-sm font-medium text-content-primary">
 									{t("nameLabel")}
 								</label>
@@ -243,10 +243,10 @@ export function ContactPageClient() {
 									className={inputClass(!!errors.name)}
 								/>
 								{errors.name && <p className="mt-1 text-xs text-red-500">{errors.name}</p>}
-							</motion.div>
+							</m.div>
 
 							{/* Email */}
-							<motion.div variants={formItemVariants}>
+							<m.div variants={formItemVariants}>
 								<label className="mb-1.5 block text-sm font-medium text-content-primary">
 									{t("emailFieldLabel")}
 								</label>
@@ -259,10 +259,10 @@ export function ContactPageClient() {
 									className={inputClass(!!errors.email)}
 								/>
 								{errors.email && <p className="mt-1 text-xs text-red-500">{errors.email}</p>}
-							</motion.div>
+							</m.div>
 
 							{/* Subject */}
-							<motion.div variants={formItemVariants}>
+							<m.div variants={formItemVariants}>
 								<label className="mb-1.5 block text-sm font-medium text-content-primary">
 									{t("subjectLabel")}
 								</label>
@@ -275,10 +275,10 @@ export function ContactPageClient() {
 									className={inputClass(!!errors.subject)}
 								/>
 								{errors.subject && <p className="mt-1 text-xs text-red-500">{errors.subject}</p>}
-							</motion.div>
+							</m.div>
 
 							{/* Message */}
-							<motion.div variants={formItemVariants}>
+							<m.div variants={formItemVariants}>
 								<label className="mb-1.5 block text-sm font-medium text-content-primary">
 									{t("messageLabel")}
 								</label>
@@ -291,10 +291,10 @@ export function ContactPageClient() {
 									className={clsx(inputClass(!!errors.message), "resize-none")}
 								/>
 								{errors.message && <p className="mt-1 text-xs text-red-500">{errors.message}</p>}
-							</motion.div>
+							</m.div>
 
 							{/* Submit */}
-							<motion.div variants={formItemVariants}>
+							<m.div variants={formItemVariants}>
 								<button
 									type="submit"
 									disabled={status === "sending" || status === "sent"}
@@ -311,7 +311,7 @@ export function ContactPageClient() {
 								>
 									<AnimatePresence mode="wait" initial={false}>
 										{status === "sending" ? (
-											<motion.span
+											<m.span
 												key="sending"
 												initial={{ opacity: 0, y: 8 }}
 												animate={{ opacity: 1, y: 0 }}
@@ -320,9 +320,9 @@ export function ContactPageClient() {
 											>
 												<Loader2 className="h-4 w-4 animate-spin" />
 												{t("sending")}
-											</motion.span>
+											</m.span>
 										) : status === "sent" ? (
-											<motion.span
+											<m.span
 												key="sent"
 												initial={{ opacity: 0, scale: 0.8 }}
 												animate={{ opacity: 1, scale: 1 }}
@@ -331,9 +331,9 @@ export function ContactPageClient() {
 											>
 												<CheckCircle className="h-4 w-4" />
 												{t("sent")}
-											</motion.span>
+											</m.span>
 										) : status === "error" ? (
-											<motion.span
+											<m.span
 												key="error"
 												initial={{ opacity: 0, scale: 0.8 }}
 												animate={{ opacity: 1, scale: 1 }}
@@ -342,9 +342,9 @@ export function ContactPageClient() {
 											>
 												<AlertCircle className="h-4 w-4" />
 												{t("sendError")}
-											</motion.span>
+											</m.span>
 										) : (
-											<motion.span
+											<m.span
 												key="idle"
 												initial={{ opacity: 0, y: -8 }}
 												animate={{ opacity: 1, y: 0 }}
@@ -353,16 +353,16 @@ export function ContactPageClient() {
 											>
 												<Send className="h-4 w-4" />
 												{t("submit")}
-											</motion.span>
+											</m.span>
 										)}
 									</AnimatePresence>
 								</button>
-							</motion.div>
+							</m.div>
 
 							{/* Success / error note */}
 							<AnimatePresence>
 								{status === "sent" && (
-									<motion.p
+									<m.p
 										key="sent-note"
 										initial={{ opacity: 0, y: 8 }}
 										animate={{ opacity: 1, y: 0 }}
@@ -370,10 +370,10 @@ export function ContactPageClient() {
 										className="text-center text-sm text-content-secondary"
 									>
 										{t("sentSubtitle")}
-									</motion.p>
+									</m.p>
 								)}
 								{status === "error" && (
-									<motion.p
+									<m.p
 										key="error-note"
 										initial={{ opacity: 0, y: 8 }}
 										animate={{ opacity: 1, y: 0 }}
@@ -381,11 +381,11 @@ export function ContactPageClient() {
 										className="text-center text-sm text-red-500"
 									>
 										{t("sendError")}
-									</motion.p>
+									</m.p>
 								)}
 							</AnimatePresence>
-						</motion.form>
-					</motion.div>
+						</m.form>
+					</m.div>
 				</div>
 			</div>
 		</Container>
