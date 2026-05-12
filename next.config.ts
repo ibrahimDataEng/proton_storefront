@@ -32,7 +32,7 @@ const nextConfig: NextConfig = {
 		],
 	},
 	experimental: {
-		optimizePackageImports: ["framer-motion", "lucide-react"],
+		optimizePackageImports: ["lucide-react"],
 	},
 
 	compiler: {
