@@ -40,7 +40,7 @@ export default async function Page(props: { params: Promise<{ channel: string; l
 						}
 					/>
 
-					<SavedForLater channel={channel} />
+					<SavedForLater channel={channel} locale={locale} />
 
 					<Suspense fallback={<CartRecommendationsSkeleton />}>
 						<CartRecommendations
@@ -92,7 +92,7 @@ export default async function Page(props: { params: Promise<{ channel: string; l
 					</div>
 				</div>
 
-				<SavedForLater channel={channel} />
+				<SavedForLater channel={channel} locale={locale} />
 
 				<Suspense fallback={<CartRecommendationsSkeleton />}>
 					<CartRecommendations

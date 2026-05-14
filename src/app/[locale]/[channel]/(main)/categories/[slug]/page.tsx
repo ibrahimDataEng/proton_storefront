@@ -9,6 +9,7 @@ import { ProductList } from "@/ui/components/ProductList";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 import { EmptyState } from "@/ui/components/EmptyState";
 import { CategorySidebarWrapper } from "@/ui/components/CategorySidebarWrapper";
+import { Breadcrumb } from "@/ui/components/products/Breadcrumb";
 
 export const generateMetadata = async (
 	props: { params: Promise<{ slug: string; channel: string; locale: string }> },
@@ -65,6 +66,12 @@ export default async function Page(props: {
 				<CategorySidebarWrapper locale={locale} activeSlug={params.slug} />
 				<div className="mr-16 min-w-0 flex-1 md:mr-0">
 					<Container className="pb-16 pt-8">
+						<Breadcrumb
+							categorySlug={params.slug}
+							locale={locale}
+							channel={params.channel}
+							mode="categories"
+						/>
 						<h1 className="pb-4 text-xl font-semibold text-content-primary">{name}</h1>
 						<EmptyState
 							icon={<PackageX size={56} aria-hidden="true" />}
@@ -90,6 +97,7 @@ export default async function Page(props: {
 			<CategorySidebarWrapper locale={locale} activeSlug={params.slug} />
 			<div className="mr-16 min-w-0 flex-1 md:mr-0">
 				<Container className="pb-16 pt-8">
+					<Breadcrumb categorySlug={params.slug} locale={locale} channel={params.channel} mode="categories" />
 					<h1 className="pb-8 text-xl font-semibold text-content-primary">{name}</h1>
 					<ProductList products={products} />
 				</Container>

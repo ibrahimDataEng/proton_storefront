@@ -32,13 +32,18 @@ export const deleteLineFromCheckout = async ({ lineId, checkoutId }: deleteLineF
 export async function addLineToCheckout({
 	variantId,
 	channel,
+	locale,
 }: {
 	variantId: string;
 	channel: string;
+	locale: string;
 }): Promise<{ ok: boolean; redirect: boolean }> {
-	const checkoutId = await Checkout.getIdFromCookies(channel);
+	let checkoutId = await Checkout.getIdFromCookies(channel);
 	if (!checkoutId) {
-		return { ok: false, redirect: true };
+		const checkout = await Checkout.findOrCreate({ channel, locale });
+		if (!checkout?.id) return { ok: false, redirect: false };
+		await Checkout.saveIdToCookie(channel, checkout.id);
+		checkoutId = checkout.id;
 	}
 	const result = await executeGraphQL(CheckoutAddLineDocument, {
 		variables: { id: checkoutId, productVariantId: variantId },
@@ -56,14 +61,19 @@ export async function addLineWithQuantity({
 	variantId,
 	channel,
 	quantity,
+	locale,
 }: {
 	variantId: string;
 	channel: string;
 	quantity: number;
+	locale: string;
 }): Promise<{ ok: boolean; redirect: boolean }> {
-	const checkoutId = await Checkout.getIdFromCookies(channel);
+	let checkoutId = await Checkout.getIdFromCookies(channel);
 	if (!checkoutId) {
-		return { ok: false, redirect: true };
+		const checkout = await Checkout.findOrCreate({ channel, locale });
+		if (!checkout?.id) return { ok: false, redirect: false };
+		await Checkout.saveIdToCookie(channel, checkout.id);
+		checkoutId = checkout.id;
 	}
 	const result = await executeGraphQL(CheckoutAddLineWithQuantityDocument, {
 		variables: { id: checkoutId, productVariantId: variantId, quantity },

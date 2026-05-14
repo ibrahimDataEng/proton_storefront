@@ -1,0 +1,16 @@
+query CategoryBreadcrumb($slug: String!, $languageCode: LanguageCodeEnum!) {
+	category(slug: $slug) {
+		name
+		slug
+		translation(languageCode: $languageCode) {
+			name
+		}
+		parent {
+			name
+			slug
+			translation(languageCode: $languageCode) {
+				name
+			}
+		}
+	}
+}

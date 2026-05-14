@@ -31,6 +31,7 @@ export function ProductAddButton({
 	const t = useTranslations("products");
 	const params = useParams();
 	const channel = (params.channel as string) ?? "";
+	const locale = (params.locale as string) ?? "en";
 	const [state, setState] = useState<"idle" | "pending" | "added" | "error">("idle");
 
 	if (!isAvailable) {
@@ -62,7 +63,7 @@ export function ProductAddButton({
 	const handleClick = async () => {
 		if (!selectedVariantId || state === "pending" || state === "added") return;
 		setState("pending");
-		const result = await addLineToCheckout({ variantId: selectedVariantId, channel });
+		const result = await addLineToCheckout({ variantId: selectedVariantId, channel, locale });
 		if (!result.ok) {
 			setState("error");
 			setTimeout(() => setState("idle"), 2000);

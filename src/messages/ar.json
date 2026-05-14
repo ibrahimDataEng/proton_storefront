@@ -48,7 +48,8 @@
 	"categories": {
 		"allCategories": "جميع الفئات",
 		"noProducts": "لا توجد منتجات متاحة في هذه الفئة حالياً.",
-		"backToHome": "العودة للرئيسية"
+		"backToHome": "العودة للرئيسية",
+		"breadcrumbLabel": "الفئات"
 	},
 	"cart": {
 		"title": "سلة التسوق",
@@ -117,7 +118,9 @@
 		"onlyLeft": "{count} فقط متبقي",
 		"quantity": "الكمية",
 		"filteredByCountry": "البلد",
-		"clearCountry": "مسح"
+		"clearCountry": "مسح",
+		"home": "الرئيسية",
+		"allProducts": "المنتجات"
 	},
 	"availability": {
 		"outofstock": "غير متوفر"

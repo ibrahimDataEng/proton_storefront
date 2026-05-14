@@ -15,6 +15,7 @@ import { ProductList } from "@/ui/components/ProductList";
 import { FilterBar } from "@/ui/components/products/FilterBar";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 import { CategorySidebarWrapper } from "@/ui/components/CategorySidebarWrapper";
+import { Breadcrumb } from "@/ui/components/products/Breadcrumb";
 import { ProductsPerPage } from "@/app/[locale]/config";
 
 export const metadata = {
@@ -144,6 +145,7 @@ export default async function Page(props: {
 		<div className="mx-auto flex max-w-7xl">
 			<CategorySidebarWrapper locale={locale} activeSlug={activeCategory} />
 			<section className="mr-16 min-w-0 flex-1 p-8 pb-16 md:mr-0">
+				<Breadcrumb categorySlug={activeCategory ?? null} locale={locale} channel={channel} />
 				<h1 className="mb-6 text-2xl font-semibold text-content-primary">{t("title")}</h1>
 				<FilterBar
 					totalCount={products.totalCount ?? productNodes.length}

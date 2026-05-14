@@ -92,7 +92,7 @@ export function ProductInfo({ product, locale, channel }: Props) {
 	const handleAddToCart = async () => {
 		if (!selectedVariantId || addStatus === "pending" || addStatus === "success") return;
 		setAddStatus("pending");
-		const result = await addLineWithQuantity({ variantId: selectedVariantId, channel, quantity });
+		const result = await addLineWithQuantity({ variantId: selectedVariantId, channel, quantity, locale });
 		if (!result.ok) {
 			setAddStatus("error");
 			setTimeout(() => setAddStatus("idle"), 2000);

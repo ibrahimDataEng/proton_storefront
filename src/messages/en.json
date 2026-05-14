@@ -48,7 +48,8 @@
 	"categories": {
 		"allCategories": "All Categories",
 		"noProducts": "No products available in this category yet.",
-		"backToHome": "Back to home"
+		"backToHome": "Back to home",
+		"breadcrumbLabel": "Categories"
 	},
 	"cart": {
 		"title": "Your Cart",
@@ -117,7 +118,9 @@
 		"onlyLeft": "Only {count} left",
 		"quantity": "Quantity",
 		"filteredByCountry": "Country",
-		"clearCountry": "Clear"
+		"clearCountry": "Clear",
+		"home": "Home",
+		"allProducts": "Products"
 	},
 	"availability": {
 		"outofstock": "Out of stock"

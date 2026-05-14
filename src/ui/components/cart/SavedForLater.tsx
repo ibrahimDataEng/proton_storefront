@@ -101,11 +101,12 @@ export function SaveForLaterButton({ item, label }: SaveForLaterButtonProps) {
 interface MoveToCartButtonProps {
 	item: SavedItem;
 	channel: string;
+	locale: string;
 	onSuccess: () => void;
 	label: string;
 }
 
-function MoveToCartButton({ item, channel, onSuccess, label }: MoveToCartButtonProps) {
+function MoveToCartButton({ item, channel, locale, onSuccess, label }: MoveToCartButtonProps) {
 	const [state, setState] = useState<"idle" | "pending" | "error" | "redirect">("idle");
 
 	if (state === "redirect") {
@@ -123,7 +124,7 @@ function MoveToCartButton({ item, channel, onSuccess, label }: MoveToCartButtonP
 		if (state === "pending") return;
 		setState("pending");
 		try {
-			const result = await addLineToCheckout({ variantId: item.variantId, channel });
+			const result = await addLineToCheckout({ variantId: item.variantId, channel, locale });
 			if (result.redirect) {
 				setState("redirect");
 				return;
@@ -158,9 +159,10 @@ function MoveToCartButton({ item, channel, onSuccess, label }: MoveToCartButtonP
 
 interface SavedForLaterProps {
 	channel?: string;
+	locale?: string;
 }
 
-export function SavedForLater({ channel }: SavedForLaterProps) {
+export function SavedForLater({ channel, locale = "en" }: SavedForLaterProps) {
 	const t = useTranslations("cart");
 	const { items, removeItem } = useSavedItems();
 
@@ -204,6 +206,7 @@ export function SavedForLater({ channel }: SavedForLaterProps) {
 								<MoveToCartButton
 									item={item}
 									channel={channel}
+									locale={locale}
 									onSuccess={() => removeItem(item.id)}
 									label={t("moveToCart")}
 								/>
