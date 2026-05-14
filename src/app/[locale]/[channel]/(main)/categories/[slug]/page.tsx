@@ -55,6 +55,7 @@ export default async function Page(props: {
 	}
 
 	const t = await getTranslations("categories");
+	const tProducts = await getTranslations("products");
 
 	const localizedCategory = locale === "ar" && category?.translation ? category.translation : category;
 	const name = localizedCategory?.name || category.name;
@@ -98,7 +99,12 @@ export default async function Page(props: {
 			<div className="mr-16 min-w-0 flex-1 md:mr-0">
 				<Container className="pb-16 pt-8">
 					<Breadcrumb categorySlug={params.slug} locale={locale} channel={params.channel} mode="categories" />
-					<h1 className="pb-8 text-xl font-semibold text-content-primary">{name}</h1>
+					<h1 className="pb-4 text-xl font-semibold text-content-primary">{name}</h1>
+					{products.length > 0 && (
+						<p className="mb-4 text-sm text-content-secondary">
+							{tProducts("count", { count: products.length })}
+						</p>
+					)}
 					<ProductList products={products} />
 				</Container>
 			</div>
