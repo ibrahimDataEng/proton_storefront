@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getLocale } from "next-intl/server";
 import { invariant } from "ts-invariant";
 import { RootWrapper } from "./pageWrapper";
@@ -29,12 +30,8 @@ export default async function CheckoutPage(props: {
 		<div className="min-h-dvh bg-[#f8faf9]" dir={locale === "ar" ? "rtl" : "ltr"}>
 			<header className="border-b border-neutral-100 bg-white">
 				<div className="mx-auto flex max-w-7xl items-center justify-between px-8 py-4">
-					<Link
-						aria-label={locale === "ar" ? "الرئيسية" : "Home"}
-						href={`/${locale}`}
-						className="text-lg font-bold text-[#2d6a4f]"
-					>
-						Green Line Store
+					<Link aria-label={locale === "ar" ? "الرئيسية" : "Home"} href={`/${locale}`}>
+						<Image src="/logo.png" width={140} height={32} alt="Green Line Store" className="h-8 w-auto" />
 					</Link>
 					<a
 						href="https://wa.me/971558711442"
@@ -47,9 +44,9 @@ export default async function CheckoutPage(props: {
 				</div>
 			</header>
 			<CheckoutTrustBar />
-			<section className="mx-auto flex min-h-dvh max-w-7xl flex-col px-8 pb-8 pt-6">
+			<section className="mx-auto flex min-h-dvh max-w-7xl flex-col px-4 pb-8 pt-6 md:px-8">
 				<h1 className="mb-6 text-2xl font-bold text-neutral-800">{locale === "ar" ? "الدفع" : "Checkout"}</h1>
-				<section className="mb-12 flex-1">
+				<section className="mb-12 flex-1 rounded-xl border border-neutral-100/80 bg-white p-4 shadow-sm md:p-8">
 					<RootWrapper saleorApiUrl={process.env.NEXT_PUBLIC_SALEOR_API_URL} />
 				</section>
 			</section>

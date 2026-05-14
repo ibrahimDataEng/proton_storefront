@@ -21,7 +21,7 @@ export const CheckoutStepper: FC<CheckoutStepperProps> = ({ currentStep }) => {
 	const stepIndex = steps.findIndex((s) => s.id === currentStep);
 
 	return (
-		<nav aria-label="Checkout progress" className="mb-8 w-full">
+		<nav aria-label="Checkout progress" className="mb-8 w-full border-b border-neutral-100 py-6">
 			<ol className="flex w-full items-center">
 				{steps.map((step, index) => {
 					const isCompleted = index < stepIndex;

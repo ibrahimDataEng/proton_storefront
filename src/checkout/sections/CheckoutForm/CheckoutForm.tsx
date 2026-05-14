@@ -1,5 +1,6 @@
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
+import { toast } from "react-toastify";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { Contact } from "@/checkout/sections/Contact";
 import { DeliveryMethods } from "@/checkout/sections/DeliveryMethods";
@@ -15,6 +16,7 @@ import { PaymentSection, PaymentSectionSkeleton } from "@/checkout/sections/Paym
 import { GuestBillingAddressSection } from "@/checkout/sections/GuestBillingAddressSection";
 import { useUser } from "@/checkout/hooks/useUser";
 import { CheckoutStepper } from "@/checkout/components/CheckoutStepper";
+import { CheckoutErrorBanner } from "@/checkout/components/CheckoutErrorBanner";
 import { Button } from "@/checkout/components/Button";
 import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 
@@ -35,8 +37,36 @@ export const CheckoutForm = () => {
 	const [showOnlyContact, setShowOnlyContact] = useState(!!passwordResetToken);
 	const [currentStep, setCurrentStep] = useState<Step>("contact");
 	const [direction, setDirection] = useState<"forward" | "back">("forward");
+	const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+	useEffect(() => {
+		const unsubscribe = toast.onChange((payload) => {
+			if (payload.type === "error" && payload.status === "added") {
+				const content = payload.content;
+				let message: string | null = null;
+				if (typeof content === "string") {
+					message = content;
+				} else if (content && typeof content === "object") {
+					const el = content as { props?: { children?: unknown } };
+					if (el.props?.children) message = String(el.props.children);
+				}
+				if (message) setCheckoutError(message);
+			}
+		});
+		return unsubscribe;
+	}, []);
+
+	useEffect(() => {
+		setCheckoutError(null);
+	}, [currentStep]);
 
 	const goNext = (next: Step) => {
+		// Session 25: validate before advancing
+		const form = document.querySelector("form");
+		if (form && !form.checkValidity()) {
+			form.reportValidity();
+			return;
+		}
 		setDirection("forward");
 		setCurrentStep(next);
 	};
@@ -170,6 +200,7 @@ export const CheckoutForm = () => {
 		<div className="flex flex-col items-end">
 			<div className="flex w-full flex-col rounded">
 				<CheckoutStepper currentStep={currentStep} />
+				<CheckoutErrorBanner message={checkoutError} onDismiss={() => setCheckoutError(null)} />
 				<AnimatePresence mode="wait" custom={direction}>
 					<motion.div
 						key={currentStep}

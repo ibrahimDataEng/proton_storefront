@@ -209,13 +209,13 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   - i18n: "wholesale" namespace in en.json + ar.json; all text via useTranslations, zero hardcoded strings
   - RTL: word-stagger works in both directions, zigzag CSS-grid reversal works naturally
 
-## Health status (post-Session 24)
+## Health status (post-Session 25)
 
 - TS errors: 0 (verified via `pnpm tsc --noEmit`)
-- Lint warnings: 6 (all in src/checkout/ baseline — Logo.tsx warning no longer appears)
+- Lint warnings: 7 (baseline — 6 in src/checkout/ + 1 Logo.tsx warning restored)
 - Brand-primary updated: #2D3B2E → #2D6A4F (richer, more vibrant green); dark mode #4A5D4A → #4D8C6B
 - Checkout brand applied: all checkout primitives now use #2d6a4f (Button, inputs, SelectBox, icons, AppConfigProvider)
-- Working tree: clean on feature/ui-redesign-session-24
+- Working tree: clean on feature/ui-redesign-session-25
 - framer-motion@12.38.0 added as dependency (session 16)
 - .eslintrc.json override updated: global-error.tsx now in no-default-export exclusion list
 - console.log("jjj", locale) removed from products/[slug]/page.tsx (session 18)
@@ -236,6 +236,11 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   level=0 categories + 10 children each for mega menu
 - Nav items replaced: Home / Shop (mega menu) / Wholesale / Contact (session 23)
 - topbar + nav i18n namespaces added to en.json + ar.json (session 23)
+- Checkout wizard built (session 24): 3-step Contact→Shipping→Payment with AnimatePresence transitions, CheckoutStepper, brand theming, trust bar, WhatsApp button
+- CheckoutErrorBanner added (session 25): toast.onChange interception, inline red alert with dismiss + WhatsApp help
+- ToastContainer moved to bottom-center (session 25)
+- HTML5 native form validation on wizard step advance (session 25)
+- CheckoutDiscovery hidden (session 25); checkout page wrapped in card; logo uses Image directly
 
 ## Button-as-link pattern (important)
 
@@ -348,6 +353,18 @@ runs next-intl first, then silently refreshes expiring tokens (<5 min) via
 
 - flagcdn.com — country flag images in CountrySection (no API key, free, https:\*\* wildcard covers it)
 - images.unsplash.com — BrandStorySection nuts background (replace with own photo when ready)
+
+## Checkout UX Polish (Session 25)
+
+- **Form validation**: `goNext()` in CheckoutForm.tsx runs `document.querySelector("form")?.checkValidity()` before advancing — HTML5 native validation (no hooks/state touched); reports validity inline if form is invalid
+- **Inline error banner**: `src/checkout/components/CheckoutErrorBanner.tsx` — intercepts toast errors via `toast.onChange` in a useEffect; renders red alert with dismiss + WhatsApp help link; auto-clears on step change
+- **ToastContainer**: `src/checkout/Root.tsx` — now `position="bottom-center"`, `autoClose={5000}`, `hideProgressBar={false}`, `style={{ fontSize: "14px" }}` (spread after `alertsContainerProps`)
+- **CheckoutStepper**: added `py-6 border-b border-neutral-100` for breathing room
+- **Checkout page card**: form content wrapped in `bg-white shadow-sm border border-neutral-100/80 rounded-xl p-4 md:p-8`
+- **Logo swap**: checkout header now uses `<Image src="/logo.png" width={140} height={32} />` (NOT Logo.tsx — that uses LinkWithChannel which generates channel URLs incompatible with checkout)
+- **Contact spacing**: SignInFormContainer "already have an account?" row now has `border-t border-neutral-100 pt-4 mt-4`
+- **CheckoutDiscovery**: hidden via `<div className="hidden">` wrapper in Checkout.tsx (component too complex to safely modify)
+- **checkoutId persistence**: URL-param only (`?checkout=CHECKOUT_ID`) — NO localStorage/sessionStorage involved. "Previous order data" is Saleor server behavior, not client storage. No code fix needed.
 
 ## Checkout Wizard (Session 24)
 

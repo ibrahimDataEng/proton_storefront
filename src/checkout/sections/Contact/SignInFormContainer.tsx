@@ -23,21 +23,23 @@ export const SignInFormContainer: React.FC<PropsWithChildren<SignInFormContainer
 			<div className="mb-2 flex flex-col">
 				<div className="flex flex-row items-baseline justify-between @container">
 					<Title>{title}</Title>
-					<div className="flex flex-row">
-						{redirectSubtitle && (
-							<p color="secondary" className="mr-2 hidden @sm:inline">
-								{redirectSubtitle}
-							</p>
-						)}
-						{redirectButtonLabel && (
-							<Button
-								ariaLabel={redirectButtonLabel}
-								onClick={onSectionChange}
-								variant="tertiary"
-								label={redirectButtonLabel}
-							/>
-						)}
-					</div>
+					{(redirectSubtitle || redirectButtonLabel) && (
+						<div className="mt-4 flex flex-row items-center border-t border-neutral-100 pt-4">
+							{redirectSubtitle && (
+								<p color="secondary" className="mr-2 hidden @sm:inline">
+									{redirectSubtitle}
+								</p>
+							)}
+							{redirectButtonLabel && (
+								<Button
+									ariaLabel={redirectButtonLabel}
+									onClick={onSectionChange}
+									variant="tertiary"
+									label={redirectButtonLabel}
+								/>
+							)}
+						</div>
+					)}
 				</div>
 				{subtitle && (
 					<p color="secondary" className="mt-3">

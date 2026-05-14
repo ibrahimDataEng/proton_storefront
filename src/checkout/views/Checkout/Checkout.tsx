@@ -33,7 +33,9 @@ export const Checkout = () => {
 				) : (
 					<div className="grid min-h-screen grid-cols-1 gap-8 gap-x-16 lg:grid-cols-2">
 						<div className={locale === "ar" ? "lg:order-2" : "lg:order-1"}>
-							<CheckoutDiscovery checkout={checkout} />
+							<div className="hidden">
+								<CheckoutDiscovery checkout={checkout} />
+							</div>
 							<Suspense fallback={<CheckoutFormSkeleton />}>
 								<CheckoutForm />
 							</Suspense>
