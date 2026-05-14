@@ -14,13 +14,13 @@ export const OrderConfirmation = () => {
 		<main className="grid grid-cols-1 gap-x-16 lg:grid-cols-2" dir={locale === "ar" ? "rtl" : "ltr"}>
 			<div>
 				<div className="mb-6 flex items-center gap-3">
-					<div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-						<svg className="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#e8f5ee]">
+						<svg className="h-6 w-6 text-[#2d6a4f]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
 						</svg>
 					</div>
 					<div>
-						<p className="text-lg font-bold text-green-700" data-testid="orderConfrmationTitle">
+						<p className="text-lg font-bold text-[#1a4a32]" data-testid="orderConfrmationTitle">
 							{orderConfirmation.title.replace("{number}", order.number ?? "")}
 						</p>
 						<p className="text-sm text-neutral-500">
@@ -39,7 +39,7 @@ export const OrderConfirmation = () => {
 				<div className="mt-8 flex flex-col gap-3 sm:flex-row">
 					<a
 						href={`/${locale}`}
-						className="flex-1 rounded-md bg-black px-6 py-3 text-center text-sm font-medium text-white hover:bg-neutral-800"
+						className="flex-1 rounded-md bg-[#2d6a4f] px-6 py-3 text-center text-sm font-medium text-white hover:bg-[#235c43]"
 					>
 						{orderConfirmation.continueShopping}
 					</a>
@@ -51,8 +51,15 @@ export const OrderConfirmation = () => {
 					</button>
 				</div>
 
-				<div className="mt-6 rounded-lg bg-blue-50 p-4 text-sm text-blue-700">
-					{orderConfirmation.needHelp}
+				<div className="mt-6 rounded-lg bg-[#e8f5ee] p-4 text-sm text-[#2d6a4f]">
+					<a
+						href="https://wa.me/971558711442"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="font-medium underline hover:text-[#1a4a32]"
+					>
+						{orderConfirmation.needHelp}
+					</a>
 				</div>
 			</div>
 			<Suspense fallback={<SummarySkeleton />}>

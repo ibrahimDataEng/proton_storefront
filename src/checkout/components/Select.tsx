@@ -43,13 +43,13 @@ export const Select = <TName extends string, TData extends string>({
 	return (
 		<div className="space-y-0.5">
 			<label className="flex flex-col">
-				<span className="text-xs text-neutral-700">{label}</span>
+				<span className="text-xs text-neutral-600">{label}</span>
 				<select
 					{...fieldProps}
 					{...rest}
 					onBlur={handleBlur}
 					onChange={handleChange}
-					className="mt-1 block w-full rounded-md border-neutral-300 shadow-sm focus:border-neutral-300 focus:ring focus:ring-neutral-200 focus:ring-opacity-50"
+					className="mt-1 block w-full rounded-md border-neutral-200 shadow-sm focus:border-[#2d6a4f] focus:ring focus:ring-[#2d6a4f] focus:ring-opacity-30"
 				>
 					{showPlaceholder && (
 						<option disabled value="">
@@ -63,7 +63,7 @@ export const Select = <TName extends string, TData extends string>({
 					))}
 				</select>
 			</label>
-			{error && <p className="text-sm text-red-500">{error}</p>}
+			{error && <p className="text-sm text-red-600">{error}</p>}
 		</div>
 	);
 };

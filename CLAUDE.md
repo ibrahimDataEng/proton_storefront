@@ -11,7 +11,7 @@
 ## Architecture
 
 - Storefront: src/app/ (App Router, /[locale]/[channel]/...)
-- Checkout sub-app: src/checkout/ — SEPARATE, DO NOT TOUCH
+- Checkout sub-app: src/checkout/ — separate sub-app; see "Checkout Wizard (Session 24)" section for permitted changes
 - Components: src/ui/components/ (NOT src/components/ — that doesn't exist)
 - Atoms: src/ui/atoms/
 - Theme tokens: src/ui/theme/tokens.ts
@@ -209,12 +209,13 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   - i18n: "wholesale" namespace in en.json + ar.json; all text via useTranslations, zero hardcoded strings
   - RTL: word-stagger works in both directions, zigzag CSS-grid reversal works naturally
 
-## Health status (post-Session 23)
+## Health status (post-Session 24)
 
 - TS errors: 0 (verified via `pnpm tsc --noEmit`)
-- Lint warnings: 7 (baseline — 6 in src/checkout/, 1 in Logo.tsx)
+- Lint warnings: 6 (all in src/checkout/ baseline — Logo.tsx warning no longer appears)
 - Brand-primary updated: #2D3B2E → #2D6A4F (richer, more vibrant green); dark mode #4A5D4A → #4D8C6B
-- Working tree: clean on feature/ui-redesign-session-23
+- Checkout brand applied: all checkout primitives now use #2d6a4f (Button, inputs, SelectBox, icons, AppConfigProvider)
+- Working tree: clean on feature/ui-redesign-session-24
 - framer-motion@12.38.0 added as dependency (session 16)
 - .eslintrc.json override updated: global-error.tsx now in no-default-export exclusion list
 - console.log("jjj", locale) removed from products/[slug]/page.tsx (session 18)
@@ -287,6 +288,7 @@ SearchBar.tsx, SearchOverlay.tsx (session 7).
   shopByCountry (session 21)
 - `topbar` — freeShipping, invoices, wholesale, countries, quality (session 23)
 - `nav` — home, shop, wholesale, contact, viewAll, allCategories (session 23)
+- `checkout` — securePay, freeReturns, fastDelivery (session 24 — used by CheckoutTrustBar)
 - `error`, `button`, `welcome`, `goodbye` — misc
   (`error` extended in session 17: +title, +description, +tryAgain, +goHome, +code)
 
@@ -347,9 +349,32 @@ runs next-intl first, then silently refreshes expiring tokens (<5 min) via
 - flagcdn.com — country flag images in CountrySection (no API key, free, https:\*\* wildcard covers it)
 - images.unsplash.com — BrandStorySection nuts background (replace with own photo when ready)
 
+## Checkout Wizard (Session 24)
+
+- 3-step wizard: Contact → Shipping → Review & Pay
+- Step controller: `src/checkout/sections/CheckoutForm/CheckoutForm.tsx` (useState for currentStep + direction, no hook changes)
+- Stepper UI: `src/checkout/components/CheckoutStepper.tsx` (pure CSS transitions, step labels from checkoutMessages.ts `wizard` key)
+- Step transition: framer-motion AnimatePresence mode="wait" + motion.div slide left/right based on direction
+- CollapseSection.tsx simplified to passthrough wrapper
+- Trust components: `src/ui/components/checkout/CheckoutTrustBar.tsx` (server, i18n "checkout" namespace) + `CheckoutWhatsApp.tsx` (client, floating WhatsApp button)
+- Brand color `#2d6a4f` applied throughout all checkout primitives (Button, inputs, SelectBox, icons, AppConfigProvider)
+- All SVG icons updated: `#394052` → `#2d6a4f`, `#B65757` → `#dc2626`, `#2C9B2A` → `#2d6a4f`
+- Wizard strings added to `checkoutMessages.ts` under `wizard` key (EN + AR)
+- `"checkout"` namespace added to `en.json` + `ar.json`: securePay, freeReturns, fastDelivery
+
+**NEVER touch:**
+
+- `src/checkout/hooks/` (any file)
+- `src/checkout/state/` (any file)
+- `src/checkout/graphql/` (any file)
+- `src/checkout/sections/PaymentSection/AdyenDropIn/`
+- `src/checkout/sections/PaymentSection/StripeElements/`
+
+**CSS className changes and UI-only component rewrites in src/checkout/ are permitted with explicit session approval only.**
+
 ## Rules (ALWAYS follow)
 
-- DO NOT touch src/checkout/ under any circumstances
+- src/checkout/ — NEVER touch hooks/, state/, graphql/, AdyenDropIn/, StripeElements/. CSS className changes and UI-only component rewrites are permitted with explicit session approval only.
 - DO NOT touch src/gql/ or src/graphql/
 - DO NOT hardcode product/category data
 - Use LinkWithChannel (@/ui/atoms/LinkWithChannel) for ALL internal links

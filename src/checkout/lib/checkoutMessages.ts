@@ -129,6 +129,15 @@ const checkoutMessages = {
 			printOrder: "Print Order",
 			needHelp: "Need help? Contact us via WhatsApp or email",
 		},
+		wizard: {
+			stepContact: "Contact",
+			stepShipping: "Shipping",
+			stepPayment: "Review & Pay",
+			continueToShipping: "Continue to Shipping",
+			continueToPayment: "Continue to Review & Pay",
+			back: "Back",
+			backToShipping: "Back to Shipping",
+		},
 		orderInfo: {
 			contactDetails: "Contact details",
 		},
@@ -355,6 +364,15 @@ const checkoutMessages = {
 			continueShopping: "متابعة التسوق",
 			printOrder: "طباعة الطلب",
 			needHelp: "هل تحتاج مساعدة؟ تواصل معنا عبر واتساب أو البريد الإلكتروني",
+		},
+		wizard: {
+			stepContact: "التواصل",
+			stepShipping: "الشحن",
+			stepPayment: "المراجعة والدفع",
+			continueToShipping: "المتابعة للشحن",
+			continueToPayment: "المتابعة للمراجعة والدفع",
+			back: "رجوع",
+			backToShipping: "العودة للشحن",
 		},
 		orderInfo: {
 			contactDetails: "بيانات التواصل",

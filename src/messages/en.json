@@ -351,5 +351,10 @@
 			"INVALID_PASSWORD": "Current password is incorrect.",
 			"unknown": "Something went wrong. Please try again."
 		}
+	},
+	"checkout": {
+		"securePay": "Secure Checkout",
+		"freeReturns": "Free Returns",
+		"fastDelivery": "Fast UAE Delivery"
 	}
 }
