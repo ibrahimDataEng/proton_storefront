@@ -1,6 +1,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "react-toastify";
+import { useLocale } from "next-intl";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { Contact } from "@/checkout/sections/Contact";
 import { DeliveryMethods } from "@/checkout/sections/DeliveryMethods";
@@ -33,6 +34,7 @@ export const CheckoutForm = () => {
 	const { checkout } = useCheckout();
 	const { passwordResetToken } = getQueryParams();
 	const { wizard } = useCheckoutMessages();
+	const locale = useLocale();
 
 	const [showOnlyContact, setShowOnlyContact] = useState(!!passwordResetToken);
 	const [currentStep, setCurrentStep] = useState<Step>("contact");
@@ -61,7 +63,24 @@ export const CheckoutForm = () => {
 	}, [currentStep]);
 
 	const goNext = (next: Step) => {
-		// Session 25: validate before advancing
+		// When advancing from contact step as a guest, validate email via regex
+		// (TextInput renders type="text" so native checkValidity() won't catch format errors)
+		if (next === "shipping" && !user) {
+			const emailInput = document.querySelector('input[name="email"]');
+			if (emailInput instanceof HTMLInputElement) {
+				const val = emailInput.value.trim();
+				const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+				if (!emailOk) {
+					emailInput.focus();
+					setCheckoutError(
+						locale === "ar" ? "يرجى إدخال بريد إلكتروني صحيح" : "Please enter a valid email address",
+					);
+					window.scrollTo({ top: 0, behavior: "smooth" });
+					return;
+				}
+			}
+		}
+		// Validate all other required fields via native HTML5 constraint API
 		const form = document.querySelector("form");
 		if (form && !form.checkValidity()) {
 			form.reportValidity();
