@@ -1,4 +1,4 @@
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 import { useLocale } from "next-intl";
 import { Summary, SummarySkeleton } from "@/checkout/sections/Summary";
 import { OrderInfo } from "@/checkout/sections/OrderInfo";
@@ -9,6 +9,16 @@ export const OrderConfirmation = () => {
 	const { orderConfirmation } = useCheckoutMessages();
 	const { order } = useOrder();
 	const locale = useLocale();
+
+	useEffect(() => {
+		// Session 25 patch: clear stale checkout data after order completes
+		document.cookie.split(";").forEach((c) => {
+			const name = c.split("=")[0].trim();
+			if (name.startsWith("checkoutId-")) {
+				document.cookie = `${name}=; Max-Age=0; path=/`;
+			}
+		});
+	}, []);
 
 	return (
 		<main className="grid grid-cols-1 gap-x-16 lg:grid-cols-2" dir={locale === "ar" ? "rtl" : "ltr"}>

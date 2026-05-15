@@ -27,11 +27,11 @@ export default async function CheckoutPage(props: {
 	}
 
 	return (
-		<div className="min-h-dvh bg-[#f8faf9]" dir={locale === "ar" ? "rtl" : "ltr"}>
+		<div className="min-h-dvh bg-[#FAF7F2]" dir={locale === "ar" ? "rtl" : "ltr"}>
 			<header className="border-b border-neutral-100 bg-white">
-				<div className="mx-auto flex max-w-7xl items-center justify-between px-8 py-4">
+				<div className="mx-auto flex min-h-[64px] max-w-7xl items-center justify-between px-8 py-2">
 					<Link aria-label={locale === "ar" ? "الرئيسية" : "Home"} href={`/${locale}`}>
-						<Image src="/logo.png" width={140} height={32} alt="Green Line Store" className="h-8 w-auto" />
+						<Image src="/logo.png" width={160} height={48} alt="Green Line Store" className="h-12 w-auto" />
 					</Link>
 					<a
 						href="https://wa.me/971558711442"
