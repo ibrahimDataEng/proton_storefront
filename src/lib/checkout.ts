@@ -48,8 +48,14 @@ export async function findOrCreate({
 }) {
 	if (checkoutId) {
 		const checkout = await find(checkoutId, locale);
-		if (checkout) return checkout;
-		// Session 25: checkout was completed or expired — create fresh and update cookie
+		if (checkout) {
+			// If this checkout has an associated order, it was completed —
+			// treat it as stale and create a fresh one
+			// Session 25: stale checkout fix
+			const hasOrder = !!(checkout as unknown as { order?: { id: string } }).order?.id;
+			if (!hasOrder) return checkout;
+		}
+		// checkout is null/undefined or was completed — fall through to create fresh
 	}
 	const fresh = (await create({ channel, locale })).checkoutCreate?.checkout;
 	if (fresh?.id) await saveIdToCookie(channel, fresh.id);

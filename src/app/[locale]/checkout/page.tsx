@@ -34,9 +34,9 @@ export default async function CheckoutPage(props: {
 						<Image
 							src="/logo.png"
 							alt="Green Line Group"
-							width={140}
+							width={56}
 							height={56}
-							className="h-10 w-auto object-contain"
+							className="h-14 w-14 object-contain"
 							priority
 						/>
 					</Link>
