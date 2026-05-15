@@ -31,7 +31,14 @@ export default async function CheckoutPage(props: {
 			<header className="border-b border-neutral-100 bg-white">
 				<div className="mx-auto flex min-h-[64px] max-w-7xl items-center justify-between px-8 py-2">
 					<Link aria-label={locale === "ar" ? "الرئيسية" : "Home"} href={`/${locale}`}>
-						<Image src="/logo.png" width={160} height={48} alt="Green Line Store" className="h-12 w-auto" />
+						<Image
+							src="/logo.png"
+							alt="Green Line Group"
+							width={140}
+							height={56}
+							className="h-10 w-auto object-contain"
+							priority
+						/>
 					</Link>
 					<a
 						href="https://wa.me/971558711442"

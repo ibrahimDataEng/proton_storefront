@@ -46,11 +46,14 @@ export async function findOrCreate({
 	channel: string;
 	locale: string;
 }) {
-	if (!checkoutId) {
-		return (await create({ channel, locale })).checkoutCreate?.checkout;
+	if (checkoutId) {
+		const checkout = await find(checkoutId, locale);
+		if (checkout) return checkout;
+		// Session 25: checkout was completed or expired — create fresh and update cookie
 	}
-	const checkout = await find(checkoutId, locale);
-	return checkout || (await create({ channel, locale })).checkoutCreate?.checkout;
+	const fresh = (await create({ channel, locale })).checkoutCreate?.checkout;
+	if (fresh?.id) await saveIdToCookie(channel, fresh.id);
+	return fresh;
 }
 
 export const create = ({ channel, locale }: { channel: string; locale: string }) => {

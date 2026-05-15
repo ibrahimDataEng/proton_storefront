@@ -11,13 +11,18 @@ export const OrderConfirmation = () => {
 	const locale = useLocale();
 
 	useEffect(() => {
-		// Session 25 patch: clear stale checkout data after order completes
+		// Session 25: clear stale checkout cookie + URL param after order completes
 		document.cookie.split(";").forEach((c) => {
 			const name = c.split("=")[0].trim();
 			if (name.startsWith("checkoutId-")) {
 				document.cookie = `${name}=; Max-Age=0; path=/`;
 			}
 		});
+		if (window.location.search.includes("checkout=")) {
+			const url = new URL(window.location.href);
+			url.searchParams.delete("checkout");
+			window.history.replaceState({}, "", url.toString());
+		}
 	}, []);
 
 	return (
