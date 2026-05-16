@@ -353,7 +353,7 @@
 		}
 	},
 	"checkout": {
-		"securePay": "Secure Checkout",
+		"securePay": "Secure Payment",
 		"freeReturns": "Free Returns",
 		"fastDelivery": "Fast UAE Delivery"
 	}

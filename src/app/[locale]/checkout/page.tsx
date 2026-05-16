@@ -5,6 +5,10 @@ import { invariant } from "ts-invariant";
 import { RootWrapper } from "./pageWrapper";
 import { CheckoutTrustBar } from "@/ui/components/checkout/CheckoutTrustBar";
 import { CheckoutWhatsApp } from "@/ui/components/checkout/CheckoutWhatsApp";
+import { CheckoutCountdown } from "@/ui/components/checkout/CheckoutCountdown";
+import { CheckoutShippingProgress } from "@/ui/components/checkout/CheckoutShippingProgress";
+import { CheckoutPaymentIcons } from "@/ui/components/checkout/CheckoutPaymentIcons";
+import * as Checkout from "@/lib/checkout";
 
 export async function generateMetadata() {
 	const locale = await getLocale();
@@ -24,6 +28,17 @@ export default async function CheckoutPage(props: {
 
 	if (!searchParams.checkout && !searchParams.order) {
 		return null;
+	}
+
+	// Fetch subtotal for the shipping progress bar (checkout step only)
+	let subtotalAed = 0;
+	if (searchParams.checkout) {
+		try {
+			const checkoutData = await Checkout.find(searchParams.checkout, locale);
+			subtotalAed = checkoutData?.totalPrice?.gross?.amount ?? 0;
+		} catch {
+			// silently ignore — progress bar will render at 0%
+		}
 	}
 
 	return (
@@ -50,13 +65,29 @@ export default async function CheckoutPage(props: {
 					</a>
 				</div>
 			</header>
+
+			{/* Delivery countdown — client component, mounts after hydration */}
+			<CheckoutCountdown />
+
+			{/* Trust bar */}
 			<CheckoutTrustBar />
+
+			{/* Main checkout section */}
 			<section className="mx-auto flex min-h-dvh max-w-7xl flex-col px-4 pb-8 pt-6 md:px-8">
 				<h1 className="mb-6 text-2xl font-bold text-neutral-800">{locale === "ar" ? "الدفع" : "Checkout"}</h1>
-				<section className="mb-12 flex-1 rounded-xl border border-neutral-100/80 bg-white p-4 shadow-sm md:p-8">
+				<section className="mb-6 flex-1 rounded-xl border border-neutral-100/80 bg-white p-4 shadow-sm md:p-8">
 					<RootWrapper saleorApiUrl={process.env.NEXT_PUBLIC_SALEOR_API_URL} />
 				</section>
+
+				{/* Shipping progress + payment icons — right-aligned on desktop, full width on mobile */}
+				{searchParams.checkout && (
+					<div className="mb-8 ml-auto w-full max-w-full space-y-3 md:max-w-[420px]">
+						<CheckoutShippingProgress subtotal={subtotalAed} locale={locale} />
+						<CheckoutPaymentIcons locale={locale} />
+					</div>
+				)}
 			</section>
+
 			<CheckoutWhatsApp />
 		</div>
 	);

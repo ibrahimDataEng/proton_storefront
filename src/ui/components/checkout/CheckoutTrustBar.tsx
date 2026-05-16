@@ -5,9 +5,17 @@ export const CheckoutTrustBar = async () => {
 
 	const items = [
 		{
+			key: "securePay",
 			label: t("securePay"),
 			icon: (
-				<svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="#2d6a4f" strokeWidth={1.8}>
+				<svg
+					className="h-4 w-4 flex-shrink-0"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="#2d6a4f"
+					strokeWidth={1.8}
+					aria-hidden="true"
+				>
 					<path
 						strokeLinecap="round"
 						strokeLinejoin="round"
@@ -17,21 +25,17 @@ export const CheckoutTrustBar = async () => {
 			),
 		},
 		{
-			label: t("freeReturns"),
-			icon: (
-				<svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="#2d6a4f" strokeWidth={1.8}>
-					<path
-						strokeLinecap="round"
-						strokeLinejoin="round"
-						d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
-					/>
-				</svg>
-			),
-		},
-		{
+			key: "fastDelivery",
 			label: t("fastDelivery"),
 			icon: (
-				<svg className="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke="#2d6a4f" strokeWidth={1.8}>
+				<svg
+					className="h-4 w-4 flex-shrink-0"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="#2d6a4f"
+					strokeWidth={1.8}
+					aria-hidden="true"
+				>
 					<path
 						strokeLinecap="round"
 						strokeLinejoin="round"
@@ -40,15 +44,35 @@ export const CheckoutTrustBar = async () => {
 				</svg>
 			),
 		},
+		{
+			key: "freeReturns",
+			label: t("freeReturns"),
+			icon: (
+				<svg
+					className="h-4 w-4 flex-shrink-0"
+					fill="none"
+					viewBox="0 0 24 24"
+					stroke="#2d6a4f"
+					strokeWidth={1.8}
+					aria-hidden="true"
+				>
+					<path
+						strokeLinecap="round"
+						strokeLinejoin="round"
+						d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99"
+					/>
+				</svg>
+			),
+		},
 	];
 
 	return (
-		<div className="w-full border-b border-neutral-100 bg-white py-3">
-			<div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-6 px-8 md:gap-10">
-				{items.map(({ label, icon }) => (
-					<div key={label} className="flex items-center gap-2">
+		<div className="w-full border-b border-[#d4e8de] bg-[#f0f7f4] py-2.5">
+			<div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-4 px-4 md:gap-12 md:px-8">
+				{items.map(({ key, label, icon }) => (
+					<div key={key} className="flex items-center gap-2">
 						{icon}
-						<span className="text-sm text-neutral-600">{label}</span>
+						<span className="text-sm font-medium text-[#2d6a4f]">{label}</span>
 					</div>
 				))}
 			</div>

@@ -379,6 +379,14 @@ runs next-intl first, then silently refreshes expiring tokens (<5 min) via
 - Wizard strings added to `checkoutMessages.ts` under `wizard` key (EN + AR)
 - `"checkout"` namespace added to `en.json` + `ar.json`: securePay, freeReturns, fastDelivery
 
+Session 26 additions (all in `src/ui/components/checkout/`):
+
+- `CheckoutCountdown.tsx` — "use client"; cutoff 17:00 UAE (UTC+4 = 13:00 UTC); setInterval 1s; mounted flag prevents hydration mismatch; hidden at/after cutoff (returns null); bilingual hardcoded text; timer digits with label rows
+- `CheckoutTrustBar.tsx` — restyled: bg-[#f0f7f4] border-[#d4e8de], text-[#2d6a4f] font-medium; reordered to Shield→Truck→Arrow; icon size 16px; gap-4/gap-12
+- `CheckoutShippingProgress.tsx` — server component; props: subtotal, threshold (default 100 AED), locale; gradient progress bar; checkmark badge when free; bilingual labels
+- `CheckoutPaymentIcons.tsx` — server component; Visa/MC (nested clipPath SVG)/ApplePay/Amex/Cash; SSL lock note; bilingual title + cash label
+- checkout/page.tsx: CheckoutCountdown between header and TrustBar; ShippingProgress + PaymentIcons below RootWrapper (ml-auto max-w-[420px]); fetches subtotal via Checkout.find(searchParams.checkout, locale)
+
 **NEVER touch:**
 
 - `src/checkout/hooks/` (any file)
