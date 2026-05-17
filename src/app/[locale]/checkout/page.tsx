@@ -30,39 +30,87 @@ export default async function CheckoutPage(props: {
 		return null;
 	}
 
-	// Fetch subtotal for the shipping progress bar (checkout step only)
+	// Fetch checkout data for shipping progress bar + channel slug (checkout step only)
 	let subtotalAed = 0;
+	let checkoutChannel = "";
 	if (searchParams.checkout) {
 		try {
 			const checkoutData = await Checkout.find(searchParams.checkout, locale);
 			subtotalAed = checkoutData?.totalPrice?.gross?.amount ?? 0;
+			checkoutChannel = checkoutData?.channel?.slug ?? "";
 		} catch {
 			// silently ignore — progress bar will render at 0%
 		}
 	}
 
+	// Back-to-cart URL: use channel from checkout data, fall back to locale home
+	const cartHref = checkoutChannel ? `/${locale}/${checkoutChannel}/cart` : `/${locale}`;
+
 	return (
 		<div className="min-h-dvh bg-[#FAF7F2]" dir={locale === "ar" ? "rtl" : "ltr"}>
 			<header className="border-b border-neutral-100 bg-white">
-				<div className="mx-auto flex min-h-[64px] max-w-7xl items-center justify-between px-8 py-2">
-					<Link aria-label={locale === "ar" ? "الرئيسية" : "Home"} href={`/${locale}`}>
-						<Image
-							src="/logo.png"
-							alt="Green Line Group"
-							width={56}
-							height={56}
-							className="h-14 w-14 object-contain"
-							priority
-						/>
-					</Link>
-					<a
-						href="https://wa.me/971558711442"
-						target="_blank"
-						rel="noopener noreferrer"
-						className="text-sm text-[#2d6a4f] hover:underline"
-					>
-						{locale === "ar" ? "تحتاج مساعدة؟" : "Need help?"}
-					</a>
+				<div className="mx-auto flex min-h-[64px] max-w-7xl items-center px-6 md:px-8">
+					{/* Left: Back to cart */}
+					<div className="flex flex-1 items-center">
+						<Link
+							href={cartHref}
+							aria-label={locale === "ar" ? "العودة للسلة" : "Back to cart"}
+							className="group flex items-center gap-2 text-sm text-neutral-500 transition-colors hover:text-neutral-800"
+						>
+							<svg
+								width="20"
+								height="20"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth={1.5}
+								className="transition-transform group-hover:-translate-x-0.5"
+								aria-hidden="true"
+							>
+								<path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
+								<line x1="3" y1="6" x2="21" y2="6" />
+								<path d="M16 10a4 4 0 01-8 0" />
+							</svg>
+							<span className="hidden sm:inline">{locale === "ar" ? "العودة للسلة" : "Back to cart"}</span>
+						</Link>
+					</div>
+
+					{/* Center: Logo */}
+					<div className="flex justify-center">
+						<Link href={`/${locale}`} aria-label={locale === "ar" ? "الرئيسية" : "Home"}>
+							<Image
+								src="/logo.png"
+								alt="Green Line Group"
+								width={56}
+								height={56}
+								className="h-10 w-10 object-contain"
+								priority
+							/>
+						</Link>
+					</div>
+
+					{/* Right: Need help (WhatsApp) */}
+					<div className="flex flex-1 items-center justify-end">
+						<a
+							href="https://wa.me/971558711442"
+							target="_blank"
+							rel="noopener noreferrer"
+							className="flex items-center gap-2 text-sm text-[#2d6a4f] transition-colors hover:text-[#235c43]"
+						>
+							<svg
+								width="18"
+								height="18"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								strokeWidth={1.5}
+								aria-hidden="true"
+							>
+								<path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+							</svg>
+							<span className="hidden sm:inline">{locale === "ar" ? "تحتاج مساعدة؟" : "Need help?"}</span>
+						</a>
+					</div>
 				</div>
 			</header>
 
@@ -72,6 +120,15 @@ export default async function CheckoutPage(props: {
 			{/* Trust bar */}
 			<CheckoutTrustBar />
 
+			{/* Desktop: shipping progress right-aligned above checkout form */}
+			{searchParams.checkout && (
+				<div className="mx-auto hidden max-w-7xl px-4 pb-0 pt-4 md:px-8 lg:flex lg:justify-end">
+					<div className="w-[400px]">
+						<CheckoutShippingProgress subtotal={subtotalAed} threshold={200} locale={locale} />
+					</div>
+				</div>
+			)}
+
 			{/* Main checkout section */}
 			<section className="mx-auto flex min-h-dvh max-w-7xl flex-col px-4 pb-8 pt-6 md:px-8">
 				<h1 className="mb-6 text-2xl font-bold text-neutral-800">{locale === "ar" ? "الدفع" : "Checkout"}</h1>
@@ -79,10 +136,13 @@ export default async function CheckoutPage(props: {
 					<RootWrapper saleorApiUrl={process.env.NEXT_PUBLIC_SALEOR_API_URL} />
 				</section>
 
-				{/* Shipping progress + payment icons — right-aligned on desktop, full width on mobile */}
+				{/* Below-form block: mobile shipping progress + payment icons */}
 				{searchParams.checkout && (
 					<div className="mb-8 ml-auto w-full max-w-full space-y-3 md:max-w-[420px]">
-						<CheckoutShippingProgress subtotal={subtotalAed} locale={locale} />
+						{/* Mobile only — desktop version shown above the form */}
+						<div className="lg:hidden">
+							<CheckoutShippingProgress subtotal={subtotalAed} threshold={200} locale={locale} />
+						</div>
 						<CheckoutPaymentIcons locale={locale} />
 					</div>
 				)}

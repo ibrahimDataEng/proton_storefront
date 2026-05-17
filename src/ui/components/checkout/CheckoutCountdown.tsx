@@ -3,30 +3,42 @@
 import { useState, useEffect } from "react";
 import { useLocale } from "next-intl";
 
-/** Returns the next 17:00 UAE time (UTC+4 = 13:00 UTC) as a UTC Date. */
-function getNextCutoffUTC(): Date {
+type DeliveryLabel = "tomorrow" | "dayAfterTomorrow";
+
+interface DeliveryInfo {
+	label: DeliveryLabel;
+	targetMs: number;
+}
+
+/**
+ * UAE time = UTC+4 (no DST).
+ * Window 13:00–21:59 UAE → deliver TOMORROW  (count to 22:00 UAE = 18:00 UTC)
+ * Window 22:00–12:59 UAE → deliver DAY AFTER (count to next 13:00 UAE = 09:00 UTC)
+ */
+function getDeliveryInfo(): DeliveryInfo {
 	const now = new Date();
-	// Today's 17:00 UAE = 13:00 UTC
-	const todayCutoff = new Date(
-		Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 13, 0, 0, 0),
-	);
-	if (now < todayCutoff) return todayCutoff;
-	// Already past today's cutoff — use tomorrow
-	const tomorrowCutoff = new Date(todayCutoff);
-	tomorrowCutoff.setUTCDate(tomorrowCutoff.getUTCDate() + 1);
-	return tomorrowCutoff;
+	const uaeHour = (now.getUTCHours() + 4) % 24;
+
+	if (uaeHour >= 13 && uaeHour < 22) {
+		// Inside same-day window → count down to 22:00 UAE (18:00 UTC)
+		const target = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 18, 0, 0, 0));
+		if (target <= now) target.setUTCDate(target.getUTCDate() + 1);
+		return { label: "tomorrow", targetMs: target.getTime() };
+	} else {
+		// Outside window → count down to next 13:00 UAE (09:00 UTC)
+		const target = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 9, 0, 0, 0));
+		if (target <= now) target.setUTCDate(target.getUTCDate() + 1);
+		return { label: "dayAfterTomorrow", targetMs: target.getTime() };
+	}
 }
 
-function getRemainingSeconds(): number {
-	return Math.max(0, Math.floor((getNextCutoffUTC().getTime() - Date.now()) / 1000));
+interface TimeDisplay {
+	h: string;
+	m: string;
+	s: string;
 }
 
-interface TimeUnit {
-	value: string;
-	label: string;
-}
-
-function Unit({ value, label }: TimeUnit) {
+function Unit({ value, label }: { value: string; label: string }) {
 	return (
 		<span className="flex flex-col items-center">
 			<span className="text-base font-bold tabular-nums text-white">{value}</span>
@@ -39,26 +51,36 @@ export const CheckoutCountdown = () => {
 	const locale = useLocale();
 	// mounted flag prevents hydration mismatch — timer only starts client-side
 	const [mounted, setMounted] = useState(false);
-	const [remaining, setRemaining] = useState(0);
+	const [timeLeft, setTimeLeft] = useState<TimeDisplay>({ h: "00", m: "00", s: "00" });
+	const [deliveryLabel, setDeliveryLabel] = useState<DeliveryLabel>("tomorrow");
 
 	useEffect(() => {
 		setMounted(true);
-		setRemaining(getRemainingSeconds());
-		const id = setInterval(() => {
-			const secs = getRemainingSeconds();
-			setRemaining(secs);
-		}, 1000);
+
+		function tick() {
+			const { label, targetMs } = getDeliveryInfo();
+			setDeliveryLabel(label);
+			const diff = Math.max(0, targetMs - Date.now());
+			const h = Math.floor(diff / 3600000);
+			const m = Math.floor((diff % 3600000) / 60000);
+			const s = Math.floor((diff % 60000) / 1000);
+			setTimeLeft({
+				h: String(h).padStart(2, "0"),
+				m: String(m).padStart(2, "0"),
+				s: String(s).padStart(2, "0"),
+			});
+		}
+
+		tick();
+		const id = setInterval(tick, 1000);
 		return () => clearInterval(id);
 	}, []);
 
-	// Return null on server / before hydration / when countdown expires
-	if (!mounted || remaining === 0) return null;
+	// Return null on server / before hydration
+	if (!mounted) return null;
 
-	const h = String(Math.floor(remaining / 3600)).padStart(2, "0");
-	const m = String(Math.floor((remaining % 3600) / 60)).padStart(2, "0");
-	const s = String(remaining % 60).padStart(2, "0");
-
-	const labels = locale === "ar" ? { h: "س", m: "د", s: "ث" } : { h: "hrs", m: "min", s: "sec" };
+	const isAr = locale === "ar";
+	const labels = isAr ? { h: "س", m: "د", s: "ث" } : { h: "hrs", m: "min", s: "sec" };
 
 	return (
 		<div className="w-full bg-[#1a3c2a] px-4 py-2.5">
@@ -81,30 +103,43 @@ export const CheckoutCountdown = () => {
 
 				{/* Long text — hidden on small phones */}
 				<span className="hidden text-sm text-white sm:inline">
-					{locale === "ar" ? (
+					{isAr ? (
 						<>
-							اطلب الآن وسيصلك <span className="font-semibold text-[#c9e8d8]">غداً</span> إذا أكملت طلبك خلال
+							اطلب الآن وسيصلك{" "}
+							<span className="font-semibold text-[#c9e8d8]">
+								{deliveryLabel === "tomorrow" ? "غداً" : "بعد غد"}
+							</span>{" "}
+							إذا أكملت خلال
 						</>
 					) : (
 						<>
-							Order now and get it <span className="font-semibold text-[#c9e8d8]">tomorrow</span> if you
-							complete within
+							Order now for{" "}
+							<span className="font-semibold text-[#c9e8d8]">
+								{deliveryLabel === "tomorrow" ? "tomorrow's" : "day-after-tomorrow's"}
+							</span>{" "}
+							delivery if you complete within
 						</>
 					)}
 				</span>
 
-				{/* Timer */}
+				{/* Timer pill */}
 				<div className="inline-flex items-center gap-1 rounded-md bg-[#2d6a4f] px-3 py-0.5">
-					<Unit value={h} label={labels.h} />
+					<Unit value={timeLeft.h} label={labels.h} />
 					<span className="text-base font-bold text-[#9fcfb8]">:</span>
-					<Unit value={m} label={labels.m} />
+					<Unit value={timeLeft.m} label={labels.m} />
 					<span className="text-base font-bold text-[#9fcfb8]">:</span>
-					<Unit value={s} label={labels.s} />
+					<Unit value={timeLeft.s} label={labels.s} />
 				</div>
 
 				{/* Abbreviated text — shown only on very small screens */}
 				<span className="text-xs text-white sm:hidden">
-					{locale === "ar" ? "للتوصيل غداً" : "for tomorrow"}
+					{isAr
+						? deliveryLabel === "tomorrow"
+							? "للتوصيل غداً"
+							: "للتوصيل بعد غد"
+						: deliveryLabel === "tomorrow"
+							? "for tomorrow"
+							: "for day after tomorrow"}
 				</span>
 			</div>
 		</div>

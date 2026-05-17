@@ -1,5 +1,6 @@
 // components/Footer.tsx
 import { Suspense } from "react";
+import Link from "next/link";
 import { Instagram, Twitter, Linkedin } from "lucide-react";
 
 import { LinkWithChannel } from "../atoms/LinkWithChannel";
@@ -97,8 +98,12 @@ async function FooterContent({ channel, locale }: { channel: string; locale: str
 	const legalTitle = isAr ? "قانوني" : "Legal";
 	const followTitle = isAr ? "تابعنا" : "Follow Us";
 	const copyright = isAr
-		? `© ${currentYear} متجرك. جميع الحقوق محفوظة.`
-		: `© ${currentYear} Your Store. All rights reserved.`;
+		? `حقوق الطبع والنشر © لعام ${currentYear} محفوظة لشركة Green Line Group`
+		: `© ${currentYear} Green Line Group. All rights reserved.`;
+
+	const alternateLocale = locale === "ar" ? "en" : "ar";
+	const alternateLocaleLabel = locale === "ar" ? "English" : "العربية";
+	const alternateLocaleHref = `/${alternateLocale}/${channel}`;
 
 	const legalLinks = [
 		{ href: "/pages/privacy-policy", label: isAr ? "سياسة الخصوصية" : "Privacy Policy" },
@@ -222,8 +227,75 @@ async function FooterContent({ channel, locale }: { channel: string; locale: str
 				</div>
 
 				{/* Bottom bar */}
-				<div className="mt-16 flex flex-col items-center justify-between gap-4 border-t border-content-inverse/10 pt-6 md:flex-row">
-					<p className="text-xs text-content-inverse/50">{copyright}</p>
+				<div className="mt-16 border-t border-content-inverse/10 pt-6">
+					{/* Language switcher */}
+					<div className="mb-5 flex items-center justify-center gap-2">
+						<svg
+							width="14"
+							height="14"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							strokeWidth={1.8}
+							className="text-neutral-500"
+							aria-hidden="true"
+						>
+							<circle cx="12" cy="12" r="10" />
+							<line x1="2" y1="12" x2="22" y2="12" />
+							<path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z" />
+						</svg>
+						<Link
+							href={alternateLocaleHref}
+							className="text-sm text-neutral-500 transition-colors hover:text-content-inverse"
+						>
+							{alternateLocaleLabel}
+						</Link>
+					</div>
+
+					{/* Payment icons */}
+					<div className="mb-4 flex flex-wrap items-center justify-center gap-2">
+						{/* VISA */}
+						<div className="flex h-6 items-center justify-center rounded border border-white/20 bg-white/10 px-2.5 text-[11px] font-bold tracking-wider text-white">
+							VISA
+						</div>
+						{/* Mastercard */}
+						<div className="flex h-6 items-center justify-center rounded border border-white/20 bg-white/10 px-2">
+							<svg width="30" height="18" viewBox="0 0 38 24" aria-label="Mastercard" role="img">
+								<circle cx="14" cy="12" r="9" fill="#EB001B" opacity="0.9" />
+								<circle cx="24" cy="12" r="9" fill="#F79E1B" opacity="0.9" />
+								<path d="M19 5.5a9 9 0 010 13A9 9 0 0119 5.5z" fill="#FF5F00" opacity="0.9" />
+							</svg>
+						</div>
+						{/* Apple Pay */}
+						<div className="flex h-6 items-center justify-center rounded border border-white/20 bg-white/10 px-2.5 text-[11px] text-white">
+							🍎 Pay
+						</div>
+						{/* AMEX */}
+						<div className="flex h-6 items-center justify-center rounded border border-white/20 bg-white/10 px-2.5 text-[10px] font-bold text-[#60b8e8]">
+							AMEX
+						</div>
+						{/* Cash */}
+						<div className="flex h-6 items-center justify-center rounded border border-white/20 bg-white/10 px-2.5 text-[10px] text-white/80">
+							{isAr ? "💵 كاش" : "💵 Cash"}
+						</div>
+					</div>
+
+					{/* Legal links */}
+					<div className="mb-3 flex flex-wrap items-center justify-center gap-4 text-[11px] text-neutral-500">
+						<LinkWithChannel href="/pages/terms" className="transition-colors hover:text-neutral-300">
+							{isAr ? "شروط الاستخدام" : "Terms of Use"}
+						</LinkWithChannel>
+						<span className="text-neutral-700">·</span>
+						<LinkWithChannel
+							href="/pages/privacy-policy"
+							className="transition-colors hover:text-neutral-300"
+						>
+							{isAr ? "إشعار الخصوصية" : "Privacy Notice"}
+						</LinkWithChannel>
+					</div>
+
+					{/* Copyright */}
+					<p className="text-center text-[11px] text-neutral-600">{copyright}</p>
 				</div>
 			</div>
 		</footer>

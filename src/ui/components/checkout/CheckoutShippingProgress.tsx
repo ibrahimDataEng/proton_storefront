@@ -6,7 +6,7 @@ interface CheckoutShippingProgressProps {
 
 export const CheckoutShippingProgress = ({
 	subtotal,
-	threshold = 100,
+	threshold = 200,
 	locale,
 }: CheckoutShippingProgressProps) => {
 	const pct = Math.min((subtotal / threshold) * 100, 100);
@@ -21,11 +21,11 @@ export const CheckoutShippingProgress = ({
 				<p className={isFree ? "flex-1 text-sm font-medium text-[#1a3c2a]" : "flex-1 text-sm text-[#5c5c5c]"}>
 					{isFree
 						? locale === "ar"
-							? "أحسنت! حصلت على توصيل مجاني 🎉"
-							: "You've unlocked free shipping! 🎉"
+							? "🎉 أحسنت! حصلت على توصيل مجاني"
+							: "🎉 Free shipping unlocked on your order!"
 						: locale === "ar"
-							? `أضف د.إ ${Math.ceil(remaining)} للحصول على توصيل مجاني`
-							: `Add د.إ ${Math.ceil(remaining)} more for free shipping`}
+							? `أضف د.إ ${Math.ceil(remaining)} للحصول على توصيل مجاني (للطلبات فوق 200 درهم)`
+							: `Add د.إ ${Math.ceil(remaining)} more for free shipping (orders over د.إ 200)`}
 				</p>
 				{isFree && (
 					<span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-[#2d6a4f]">
