@@ -73,16 +73,6 @@ export const CheckoutPaymentIcons = ({ locale }: CheckoutPaymentIconsProps) => {
 					<MastercardIcon />
 				</div>
 
-				{/* Apple Pay */}
-				<div className="flex h-7 items-center justify-center rounded border border-[#e8ddd0] bg-white px-3">
-					<span className="text-[11px] font-bold text-black">🍎 Pay</span>
-				</div>
-
-				{/* AMEX */}
-				<div className="flex h-7 items-center justify-center rounded border border-[#e8ddd0] bg-white px-3">
-					<span className="text-[10px] font-bold text-[#007bc1]">AMEX</span>
-				</div>
-
 				{/* Cash on Delivery */}
 				<div className="flex h-7 items-center justify-center rounded border border-[#d4e8de] bg-[#f0f7f4] px-3">
 					<span className="text-[10px] font-medium text-[#2d6a4f]">

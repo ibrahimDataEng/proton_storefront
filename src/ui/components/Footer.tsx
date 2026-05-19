@@ -266,14 +266,6 @@ async function FooterContent({ channel, locale }: { channel: string; locale: str
 								<path d="M19 5.5a9 9 0 010 13A9 9 0 0119 5.5z" fill="#FF5F00" opacity="0.9" />
 							</svg>
 						</div>
-						{/* Apple Pay */}
-						<div className="flex h-6 items-center justify-center rounded border border-white/20 bg-white/10 px-2.5 text-[11px] text-white">
-							🍎 Pay
-						</div>
-						{/* AMEX */}
-						<div className="flex h-6 items-center justify-center rounded border border-white/20 bg-white/10 px-2.5 text-[10px] font-bold text-[#60b8e8]">
-							AMEX
-						</div>
 						{/* Cash */}
 						<div className="flex h-6 items-center justify-center rounded border border-white/20 bg-white/10 px-2.5 text-[10px] text-white/80">
 							{isAr ? "💵 كاش" : "💵 Cash"}

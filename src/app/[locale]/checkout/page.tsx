@@ -6,7 +6,6 @@ import { RootWrapper } from "./pageWrapper";
 import { CheckoutTrustBar } from "@/ui/components/checkout/CheckoutTrustBar";
 import { CheckoutWhatsApp } from "@/ui/components/checkout/CheckoutWhatsApp";
 import { CheckoutCountdown } from "@/ui/components/checkout/CheckoutCountdown";
-import { CheckoutShippingProgress } from "@/ui/components/checkout/CheckoutShippingProgress";
 import { CheckoutPaymentIcons } from "@/ui/components/checkout/CheckoutPaymentIcons";
 import * as Checkout from "@/lib/checkout";
 
@@ -30,16 +29,14 @@ export default async function CheckoutPage(props: {
 		return null;
 	}
 
-	// Fetch checkout data for shipping progress bar + channel slug (checkout step only)
-	let subtotalAed = 0;
+	// Fetch checkout channel slug for back-to-cart URL
 	let checkoutChannel = "";
 	if (searchParams.checkout) {
 		try {
 			const checkoutData = await Checkout.find(searchParams.checkout, locale);
-			subtotalAed = checkoutData?.totalPrice?.gross?.amount ?? 0;
 			checkoutChannel = checkoutData?.channel?.slug ?? "";
 		} catch {
-			// silently ignore — progress bar will render at 0%
+			// silently ignore
 		}
 	}
 
@@ -120,15 +117,6 @@ export default async function CheckoutPage(props: {
 			{/* Trust bar */}
 			<CheckoutTrustBar />
 
-			{/* Desktop: shipping progress right-aligned above checkout form */}
-			{searchParams.checkout && (
-				<div className="mx-auto hidden max-w-7xl px-4 pb-0 pt-4 md:px-8 lg:flex lg:justify-end">
-					<div className="w-[400px]">
-						<CheckoutShippingProgress subtotal={subtotalAed} threshold={200} locale={locale} />
-					</div>
-				</div>
-			)}
-
 			{/* Main checkout section */}
 			<section className="mx-auto flex min-h-dvh max-w-7xl flex-col px-4 pb-8 pt-6 md:px-8">
 				<h1 className="mb-6 text-2xl font-bold text-neutral-800">{locale === "ar" ? "الدفع" : "Checkout"}</h1>
@@ -136,13 +124,9 @@ export default async function CheckoutPage(props: {
 					<RootWrapper saleorApiUrl={process.env.NEXT_PUBLIC_SALEOR_API_URL} />
 				</section>
 
-				{/* Below-form block: mobile shipping progress + payment icons */}
+				{/* Payment icons below form */}
 				{searchParams.checkout && (
-					<div className="mb-8 ml-auto w-full max-w-full space-y-3 md:max-w-[420px]">
-						{/* Mobile only — desktop version shown above the form */}
-						<div className="lg:hidden">
-							<CheckoutShippingProgress subtotal={subtotalAed} threshold={200} locale={locale} />
-						</div>
+					<div className="mb-8 ml-auto w-full max-w-full md:max-w-[420px]">
 						<CheckoutPaymentIcons locale={locale} />
 					</div>
 				)}
