@@ -98,8 +98,8 @@ async function FooterContent({ channel, locale }: { channel: string; locale: str
 	const legalTitle = isAr ? "قانوني" : "Legal";
 	const followTitle = isAr ? "تابعنا" : "Follow Us";
 	const copyright = isAr
-		? `حقوق الطبع والنشر © لعام ${currentYear} محفوظة لشركة Green Line Group`
-		: `© ${currentYear} Green Line Group. All rights reserved.`;
+		? `جميع الحقوق محفوظة © ${currentYear} PROTON`
+		: `© ${currentYear} PROTON. All rights reserved.`;
 
 	const alternateLocale = locale === "ar" ? "en" : "ar";
 	const alternateLocaleLabel = locale === "ar" ? "English" : "العربية";

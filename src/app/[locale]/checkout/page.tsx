@@ -6,7 +6,6 @@ import { RootWrapper } from "./pageWrapper";
 import { CheckoutTrustBar } from "@/ui/components/checkout/CheckoutTrustBar";
 import { CheckoutWhatsApp } from "@/ui/components/checkout/CheckoutWhatsApp";
 import { CheckoutCountdown } from "@/ui/components/checkout/CheckoutCountdown";
-import { CheckoutPaymentIcons } from "@/ui/components/checkout/CheckoutPaymentIcons";
 import { CheckoutFooter } from "@/ui/components/checkout/CheckoutFooter";
 import * as Checkout from "@/lib/checkout";
 
@@ -124,13 +123,6 @@ export default async function CheckoutPage(props: {
 				<section className="mb-6 flex-1 rounded-xl border border-neutral-100/80 bg-white p-4 shadow-sm md:p-8">
 					<RootWrapper saleorApiUrl={process.env.NEXT_PUBLIC_SALEOR_API_URL} />
 				</section>
-
-				{/* Payment icons below form */}
-				{searchParams.checkout && (
-					<div className="mb-8 ml-auto w-full max-w-full md:max-w-[420px]">
-						<CheckoutPaymentIcons locale={locale} />
-					</div>
-				)}
 			</section>
 
 			<CheckoutWhatsApp />
