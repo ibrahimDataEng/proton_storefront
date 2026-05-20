@@ -387,6 +387,8 @@ Session 26 additions (all in `src/ui/components/checkout/`):
 - `CheckoutPaymentIcons.tsx` — server component; Visa/MC (nested clipPath SVG)/ApplePay/Amex/Cash; SSL lock note; bilingual title + cash label
 - checkout/page.tsx: CheckoutCountdown between header and TrustBar; ShippingProgress + PaymentIcons below RootWrapper (ml-auto max-w-[420px]); fetches subtotal via Checkout.find(searchParams.checkout, locale)
 
+- `CheckoutFooter.tsx` — server component; Visa + Mastercard + Cash on Delivery icons; SSL 256-bit note; rendered at very bottom of checkout/page.tsx after CheckoutWhatsApp
+
 Session 27 updates:
 
 - `CheckoutCountdown.tsx` — window logic: 13:00–21:59 UAE → "tomorrow", countdown to 22:00 UAE (18:00 UTC); 22:00–12:59 UAE → "day after tomorrow", countdown to 13:00 UAE (09:00 UTC); bilingual delivery label in timer bar; abbreviated mobile text updated

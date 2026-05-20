@@ -7,6 +7,7 @@ import { CheckoutTrustBar } from "@/ui/components/checkout/CheckoutTrustBar";
 import { CheckoutWhatsApp } from "@/ui/components/checkout/CheckoutWhatsApp";
 import { CheckoutCountdown } from "@/ui/components/checkout/CheckoutCountdown";
 import { CheckoutPaymentIcons } from "@/ui/components/checkout/CheckoutPaymentIcons";
+import { CheckoutFooter } from "@/ui/components/checkout/CheckoutFooter";
 import * as Checkout from "@/lib/checkout";
 
 export async function generateMetadata() {
@@ -133,6 +134,7 @@ export default async function CheckoutPage(props: {
 			</section>
 
 			<CheckoutWhatsApp />
+			<CheckoutFooter locale={locale} />
 		</div>
 	);
 }
