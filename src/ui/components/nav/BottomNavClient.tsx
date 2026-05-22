@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { Home, LayoutGrid, ShoppingBag, User, ShoppingCart } from "lucide-react";
 import clsx from "clsx";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
+import { useAuth } from "@/ui/context/AuthContext";
 
 type NavPage = "home" | "categories" | "products" | "account" | "cart";
 
@@ -24,6 +25,7 @@ export function BottomNavClient() {
 	const t = useTranslations("bottomNav");
 	const pathname = usePathname();
 	const { channel } = useParams<{ channel: string }>();
+	const { isLoggedIn, openAuthModal } = useAuth();
 
 	const activePage = getActivePage(pathname, channel ?? "default-channel");
 
@@ -63,10 +65,17 @@ export function BottomNavClient() {
 			</LinkWithChannel>
 
 			{/* Account */}
-			<LinkWithChannel href="/account" className={itemCls}>
-				<User className={iconCls(activePage === "account")} />
-				<span className={labelCls(activePage === "account")}>{t("account")}</span>
-			</LinkWithChannel>
+			{isLoggedIn ? (
+				<LinkWithChannel href="/account" className={itemCls}>
+					<User className={iconCls(activePage === "account")} />
+					<span className={labelCls(activePage === "account")}>{t("account")}</span>
+				</LinkWithChannel>
+			) : (
+				<button type="button" onClick={() => openAuthModal("login")} className={itemCls}>
+					<User className={iconCls(false)} />
+					<span className={labelCls(false)}>{t("account")}</span>
+				</button>
+			)}
 
 			{/* Cart */}
 			<LinkWithChannel href="/cart" className={itemCls}>
