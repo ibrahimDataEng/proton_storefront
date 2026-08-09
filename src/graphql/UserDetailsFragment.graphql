@@ -3,8 +3,27 @@ fragment UserDetails on User {
 	email
 	firstName
 	lastName
+	dateJoined
 	avatar {
 		url
 		alt
+	}
+	addresses {
+		id
+		firstName
+		lastName
+		streetAddress1
+		streetAddress2
+		city
+		cityArea
+		postalCode
+		country {
+			country
+			code
+		}
+		countryArea
+		phone
+		isDefaultShippingAddress
+		isDefaultBillingAddress
 	}
 }

@@ -52,5 +52,11 @@ query CheckoutFind($id: ID!, $language: LanguageCodeEnum!) {
 				currency
 			}
 		}
+		discount {
+			amount
+			currency
+		}
+		discountName
+		voucherCode
 	}
 }

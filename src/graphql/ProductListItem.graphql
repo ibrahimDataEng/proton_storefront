@@ -5,6 +5,7 @@ fragment ProductListItem on Product {
 		name
 	}
 	slug
+	isAvailable
 	pricing {
 		priceRange {
 			start {
@@ -14,6 +15,30 @@ fragment ProductListItem on Product {
 				}
 			}
 			stop {
+				gross {
+					amount
+					currency
+				}
+			}
+		}
+		discount {
+			gross {
+				amount
+				currency
+			}
+		}
+	}
+	variants {
+		id
+		name
+		pricing {
+			price {
+				gross {
+					amount
+					currency
+				}
+			}
+			priceUndiscounted {
 				gross {
 					amount
 					currency

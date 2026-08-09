@@ -33,7 +33,7 @@ export async function LoginForm() {
 						type="email"
 						name="email"
 						placeholder="Email"
-						className="w-full rounded border bg-neutral-50 px-4 py-2"
+						className="w-full rounded border border-line-default bg-surface-sunken px-4 py-2"
 					/>
 				</div>
 				<div className="mb-4">
@@ -46,12 +46,12 @@ export async function LoginForm() {
 						placeholder="Password"
 						autoCapitalize="off"
 						autoComplete="off"
-						className="w-full rounded border bg-neutral-50 px-4 py-2"
+						className="w-full rounded border border-line-default bg-surface-sunken px-4 py-2"
 					/>
 				</div>
 
 				<button
-					className="rounded bg-neutral-800 px-4 py-2 text-neutral-200 hover:bg-neutral-700"
+					className="rounded bg-brand-primary px-4 py-2 text-content-inverse hover:bg-brand-muted"
 					type="submit"
 				>
 					Log In

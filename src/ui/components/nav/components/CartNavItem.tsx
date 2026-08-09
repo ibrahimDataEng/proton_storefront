@@ -15,7 +15,7 @@ export const CartNavItem = async ({ channel, locale }: { channel: string; locale
 			{lineCount > 0 ? (
 				<div
 					className={clsx(
-						"absolute bottom-0 right-0 -mb-2 -mr-2 flex h-4 flex-col items-center justify-center rounded bg-neutral-900 text-xs font-medium text-white",
+						"absolute bottom-0 right-0 -mb-2 -mr-2 flex h-4 flex-col items-center justify-center rounded bg-content-primary text-xs font-medium text-content-inverse",
 						lineCount > 9 ? "w-[3ch]" : "w-[2ch]",
 					)}
 				>

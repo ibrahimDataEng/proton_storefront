@@ -6,7 +6,7 @@ export const ProductList = ({ products }: { products: readonly ProductListItemFr
 		<ul
 			role="list"
 			data-testid="ProductList"
-			className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3"
+			className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5 lg:grid-cols-4 lg:gap-6"
 		>
 			{products.map((product, index) => (
 				<ProductElement

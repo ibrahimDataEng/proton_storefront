@@ -3,6 +3,7 @@ import { type ResolvingMetadata, type Metadata } from "next";
 import { ProductListByCollectionDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 import { getSaleorLanguage } from "@/lib/saleor-language";
+import { Container } from "@/ui/components/Container";
 import { ProductList } from "@/ui/components/ProductList";
 
 export const generateMetadata = async (
@@ -42,9 +43,9 @@ export default async function Page(props: {
 	const { name, products } = collection;
 
 	return (
-		<div className="mx-auto max-w-7xl p-8 pb-16">
-			<h1 className="pb-8 text-xl font-semibold">{name}</h1>
+		<Container className="pb-16 pt-8">
+			<h1 className="pb-8 text-xl font-semibold text-content-primary">{name}</h1>
 			<ProductList products={products.edges.map((e) => e.node)} />
-		</div>
+		</Container>
 	);
 }

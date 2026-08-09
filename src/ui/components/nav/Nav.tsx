@@ -4,6 +4,7 @@ import { CartNavItem } from "./components/CartNavItem";
 import { NavLinks } from "./components/NavLinks";
 import { MobileMenu } from "./components/MobileMenu";
 import { SearchBar } from "./components/SearchBar";
+import { MobileSearchTrigger } from "./components/MobileSearchTrigger";
 import { LanguageSwitcher } from "./components/LanguageSwitcher";
 
 export const Nav = ({ channel, locale }: { channel: string; locale: string }) => {
@@ -13,9 +14,16 @@ export const Nav = ({ channel, locale }: { channel: string; locale: string }) =>
 				<NavLinks channel={channel} locale={locale} />
 			</ul>
 			<div className="ml-auto flex items-center justify-center gap-4 whitespace-nowrap lg:gap-8">
-				<div className="hidden lg:flex">
-					<SearchBar channel={channel} />
+				{/* Desktop search — hidden on mobile */}
+				<div className="hidden lg:flex lg:w-80">
+					<SearchBar channel={channel} locale={locale} />
 				</div>
+
+				{/* Mobile search icon trigger — hidden on desktop */}
+				<div className="flex lg:hidden">
+					<MobileSearchTrigger channel={channel} locale={locale} />
+				</div>
+
 				<div>
 					<LanguageSwitcher />
 				</div>
@@ -30,7 +38,6 @@ export const Nav = ({ channel, locale }: { channel: string; locale: string }) =>
 			</div>
 			<Suspense>
 				<MobileMenu>
-					<SearchBar channel={channel} />
 					<NavLinks channel={channel} locale={locale} />
 				</MobileMenu>
 			</Suspense>

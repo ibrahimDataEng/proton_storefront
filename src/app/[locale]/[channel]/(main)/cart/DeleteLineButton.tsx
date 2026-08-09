@@ -1,7 +1,8 @@
 "use client";
 
 import { useTransition } from "react";
-import { useLocale } from "next-intl";
+import { useTranslations } from "next-intl";
+import { Trash2 } from "lucide-react";
 import { deleteLineFromCheckout } from "./actions";
 
 type Props = {
@@ -11,20 +12,26 @@ type Props = {
 
 export const DeleteLineButton = ({ lineId, checkoutId }: Props) => {
 	const [isPending, startTransition] = useTransition();
-	const locale = useLocale();
+	const t = useTranslations("cart");
 
 	return (
 		<button
 			type="button"
-			className="text-sm text-neutral-500 hover:text-neutral-900"
+			title={isPending ? t("removing") : t("remove")}
+			aria-label={isPending ? t("removing") : t("remove")}
+			aria-disabled={isPending}
+			className="flex h-8 w-8 items-center justify-center text-content-secondary transition-colors hover:text-status-danger disabled:cursor-not-allowed"
 			onClick={() => {
 				if (isPending) return;
 				startTransition(() => deleteLineFromCheckout({ lineId, checkoutId }));
 			}}
-			aria-disabled={isPending}
 		>
-			{isPending ? (locale === "ar" ? "جار الإزالة" : "Removing") : locale === "ar" ? "إزالة" : "Remove"}
-			<span className="sr-only">line from cart</span>
+			{isPending ? (
+				<span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+			) : (
+				<Trash2 size={18} aria-hidden="true" />
+			)}
+			<span className="sr-only">{isPending ? t("removing") : t("remove")}</span>
 		</button>
 	);
 };
