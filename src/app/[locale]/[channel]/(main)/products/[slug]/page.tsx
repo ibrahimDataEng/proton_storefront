@@ -2,11 +2,13 @@ import { notFound } from "next/navigation";
 import { type ResolvingMetadata, type Metadata } from "next";
 import { type WithContext, type Product } from "schema-dts";
 import { executeGraphQL } from "@/lib/graphql";
-import { LanguageCodeEnum, ProductDetailsDocument, ProductListDocument } from "@/gql/graphql";
+import { LanguageCodeEnum, ProductDetailsDocument } from "@/gql/graphql";
 import { Container } from "@/ui/components/Container";
 import { ProductGallery } from "@/ui/components/pdp/ProductGallery";
 import { ProductInfo } from "@/ui/components/pdp/ProductInfo";
 import { RelatedProducts } from "@/ui/components/pdp/RelatedProducts";
+
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata(
 	props: {
@@ -43,16 +45,6 @@ export async function generateMetadata(
 	};
 }
 
-export async function generateStaticParams({ params }: { params: { channel: string; locale: string } }) {
-	const { channel, locale } = params;
-	const language = locale === "ar" ? LanguageCodeEnum.Ar : LanguageCodeEnum.EnUs;
-	const { products } = await executeGraphQL(ProductListDocument, {
-		revalidate: 1,
-		variables: { first: 20, channel, language },
-		withAuth: false,
-	});
-	return products?.edges.map(({ node: { slug } }) => ({ slug })) ?? [];
-}
 
 export default async function Page(props: {
 	params: Promise<{ slug: string; channel: string; locale: string }>;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence, useInView } from "framer-motion";
+import { m, AnimatePresence, useInView } from "framer-motion";
 import { useTranslations, useLocale } from "next-intl";
 import { Container } from "@/ui/components/Container";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
@@ -149,41 +149,41 @@ function HeroSection() {
 			/>
 
 			<Container className="relative z-10">
-				<motion.div
+				<m.div
 					variants={containerStagger}
 					initial="hidden"
 					animate={inView ? "visible" : "hidden"}
 					className="text-center"
 				>
 					{/* Word-by-word headline */}
-					<motion.div variants={fadeUp}>
-						<motion.h1
+					<m.div variants={fadeUp}>
+						<m.h1
 							variants={wordStagger}
 							className="text-4xl font-extrabold leading-tight tracking-tight text-white sm:text-5xl md:text-6xl lg:text-7xl"
 						>
 							{words.map((word, i) => (
-								<motion.span key={i} variants={wordFade} className="me-[0.22em] inline-block last:me-0">
+								<m.span key={i} variants={wordFade} className="me-[0.22em] inline-block last:me-0">
 									{word}
-								</motion.span>
+								</m.span>
 							))}
-						</motion.h1>
-					</motion.div>
+						</m.h1>
+					</m.div>
 
 					{/* Subtitle */}
-					<motion.p
+					<m.p
 						variants={fadeUp}
 						className="mx-auto mt-6 max-w-2xl text-lg leading-relaxed text-white/80 md:text-xl"
 					>
 						{t("hero.subtitle")}
-					</motion.p>
+					</m.p>
 
 					{/* Animated stat counters */}
-					<motion.div
+					<m.div
 						variants={fastStagger}
 						className="mx-auto mt-14 grid max-w-3xl grid-cols-2 gap-4 md:grid-cols-4 md:gap-5"
 					>
 						{stats.map((stat, i) => (
-							<motion.div
+							<m.div
 								key={i}
 								variants={fadeUp}
 								className="rounded-2xl bg-white/10 px-4 py-6 ring-1 ring-white/10 backdrop-blur-sm"
@@ -192,12 +192,12 @@ function HeroSection() {
 									<AnimatedCounter target={stat.target} suffix={stat.suffix} />
 								</p>
 								<p className="mt-2 text-sm font-medium text-white/70 md:text-base">{stat.label}</p>
-							</motion.div>
+							</m.div>
 						))}
-					</motion.div>
+					</m.div>
 
 					{/* CTAs */}
-					<motion.div
+					<m.div
 						variants={fadeUp}
 						className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row"
 					>
@@ -220,8 +220,8 @@ function HeroSection() {
 						>
 							{t("hero.ctaBrowse")}
 						</LinkWithChannel>
-					</motion.div>
-				</motion.div>
+					</m.div>
+				</m.div>
 			</Container>
 		</section>
 	);
@@ -250,7 +250,7 @@ function SupplySection() {
 		<section className="py-16 md:py-24">
 			<Container>
 				{/* Section header */}
-				<motion.div
+				<m.div
 					initial={{ opacity: 0, y: 20 }}
 					animate={inView ? { opacity: 1, y: 0 } : {}}
 					transition={{ duration: 0.5, ease: "easeOut" }}
@@ -258,10 +258,10 @@ function SupplySection() {
 				>
 					<h2 className="text-3xl font-bold text-content-primary md:text-4xl">{t("supply.sectionTitle")}</h2>
 					<p className="mt-3 text-content-secondary">{t("supply.sectionSubtitle")}</p>
-				</motion.div>
+				</m.div>
 
 				{/* Cards — horizontal scroll on mobile, 4-col grid on desktop */}
-				<motion.div
+				<m.div
 					ref={ref}
 					variants={fastStagger}
 					initial="hidden"
@@ -270,7 +270,7 @@ function SupplySection() {
 					style={{ scrollbarWidth: "none" }}
 				>
 					{products.map((product, i) => (
-						<motion.div
+						<m.div
 							key={i}
 							variants={fadeUp}
 							className="flex w-[148px] flex-shrink-0 flex-col items-center rounded-2xl border border-line-subtle bg-surface-raised p-5 shadow-soft transition-shadow hover:shadow-raised md:w-auto"
@@ -285,9 +285,9 @@ function SupplySection() {
 							<span className="mt-1.5 rounded-full bg-brand-primary/10 px-2.5 py-0.5 text-[11px] font-medium text-brand-primary">
 								{t("supply.bulkBadge")}
 							</span>
-						</motion.div>
+						</m.div>
 					))}
-				</motion.div>
+				</m.div>
 			</Container>
 		</section>
 	);
@@ -310,24 +310,19 @@ function TargetsSection() {
 	return (
 		<section className="bg-surface-raised py-16 md:py-24">
 			<Container>
-				<motion.div
-					ref={ref}
-					variants={containerStagger}
-					initial="hidden"
-					animate={inView ? "visible" : "hidden"}
-				>
+				<m.div ref={ref} variants={containerStagger} initial="hidden" animate={inView ? "visible" : "hidden"}>
 					{/* Section header */}
-					<motion.div variants={fadeUp} className="mb-12 text-center">
+					<m.div variants={fadeUp} className="mb-12 text-center">
 						<h2 className="text-3xl font-bold text-content-primary md:text-4xl">
 							{t("targets.sectionTitle")}
 						</h2>
 						<p className="mt-3 text-content-secondary">{t("targets.sectionSubtitle")}</p>
-					</motion.div>
+					</m.div>
 
 					{/* 2×2 grid */}
 					<div className="grid gap-5 sm:grid-cols-2">
 						{cards.map((card, i) => (
-							<motion.div
+							<m.div
 								key={i}
 								variants={fadeUp}
 								whileHover={{ y: -6, transition: { type: "spring", stiffness: 400, damping: 25 } }}
@@ -342,10 +337,10 @@ function TargetsSection() {
 									<h3 className="mt-4 text-xl font-semibold text-content-primary">{card.title}</h3>
 									<p className="mt-1.5 text-sm text-content-secondary">{card.subtitle}</p>
 								</div>
-							</motion.div>
+							</m.div>
 						))}
 					</div>
-				</motion.div>
+				</m.div>
 			</Container>
 		</section>
 	);
@@ -368,7 +363,7 @@ function BenefitRow({ emoji, title, subtitle, index }: BenefitRowProps) {
 	return (
 		<div ref={ref} className="grid items-center gap-8 md:grid-cols-2">
 			{/* Image placeholder — alternates column position */}
-			<motion.div
+			<m.div
 				variants={isEven ? slideLeft : slideRight}
 				initial="hidden"
 				animate={inView ? "visible" : "hidden"}
@@ -389,10 +384,10 @@ function BenefitRow({ emoji, title, subtitle, index }: BenefitRowProps) {
 				<span className="relative text-8xl" role="img" aria-hidden="true">
 					{emoji}
 				</span>
-			</motion.div>
+			</m.div>
 
 			{/* Text */}
-			<motion.div
+			<m.div
 				variants={isEven ? slideRight : slideLeft}
 				initial="hidden"
 				animate={inView ? "visible" : "hidden"}
@@ -401,7 +396,7 @@ function BenefitRow({ emoji, title, subtitle, index }: BenefitRowProps) {
 				<h3 className="text-2xl font-bold text-content-primary md:text-3xl">{title}</h3>
 				<p className="mt-3 text-base leading-relaxed text-content-secondary md:text-lg">{subtitle}</p>
 				<div className="mt-5 h-1 w-14 rounded-full bg-brand-primary" />
-			</motion.div>
+			</m.div>
 		</div>
 	);
 }
@@ -454,7 +449,7 @@ function StepsSection() {
 				</h2>
 
 				{/* Mobile: vertical stepper */}
-				<motion.ol
+				<m.ol
 					ref={ref}
 					variants={containerStagger}
 					initial="hidden"
@@ -462,7 +457,7 @@ function StepsSection() {
 					className="relative flex flex-col gap-0 md:hidden"
 				>
 					{steps.map((step, i) => (
-						<motion.li key={step.num} variants={fadeUp} className="relative flex gap-5 pb-10 last:pb-0">
+						<m.li key={step.num} variants={fadeUp} className="relative flex gap-5 pb-10 last:pb-0">
 							{/* Connector line */}
 							{i < steps.length - 1 && (
 								<div className="absolute start-5 top-11 h-full w-0.5 -translate-x-1/2 bg-line-default rtl:translate-x-0 rtl:translate-x-1/2" />
@@ -474,12 +469,12 @@ function StepsSection() {
 								<h3 className="font-semibold text-content-primary">{step.title}</h3>
 								<p className="mt-1 text-sm text-content-secondary">{step.subtitle}</p>
 							</div>
-						</motion.li>
+						</m.li>
 					))}
-				</motion.ol>
+				</m.ol>
 
 				{/* Desktop: horizontal timeline */}
-				<motion.ol
+				<m.ol
 					variants={containerStagger}
 					initial="hidden"
 					animate={inView ? "visible" : "hidden"}
@@ -489,7 +484,7 @@ function StepsSection() {
 					<div className="absolute end-0 start-0 top-5 h-0.5 bg-line-default" />
 
 					{steps.map((step) => (
-						<motion.li
+						<m.li
 							key={step.num}
 							variants={fadeUp}
 							className="relative flex flex-1 flex-col items-center px-3 text-center"
@@ -499,9 +494,9 @@ function StepsSection() {
 							</div>
 							<h3 className="text-sm font-semibold text-content-primary md:text-base">{step.title}</h3>
 							<p className="mt-1 text-xs text-content-secondary md:text-sm">{step.subtitle}</p>
-						</motion.li>
+						</m.li>
 					))}
-				</motion.ol>
+				</m.ol>
 			</Container>
 		</section>
 	);
@@ -517,23 +512,18 @@ function CertificatesSection() {
 	return (
 		<section className="py-16 md:py-24">
 			<Container>
-				<motion.div
-					ref={ref}
-					variants={containerStagger}
-					initial="hidden"
-					animate={inView ? "visible" : "hidden"}
-				>
-					<motion.div variants={fadeUp} className="mb-12 text-center">
+				<m.div ref={ref} variants={containerStagger} initial="hidden" animate={inView ? "visible" : "hidden"}>
+					<m.div variants={fadeUp} className="mb-12 text-center">
 						<h2 className="text-3xl font-bold text-content-primary md:text-4xl">
 							{t("certificates.sectionTitle")}
 						</h2>
 						<p className="mt-3 text-content-secondary">{t("certificates.sectionSubtitle")}</p>
-					</motion.div>
+					</m.div>
 
 					{/* TODO: add real certificates (ISO, Halal, etc.) */}
-					<motion.div variants={fastStagger} className="grid gap-5 sm:grid-cols-3">
+					<m.div variants={fastStagger} className="grid gap-5 sm:grid-cols-3">
 						{[0, 1, 2].map((i) => (
-							<motion.div
+							<m.div
 								key={i}
 								variants={fadeUp}
 								className="flex flex-col items-center gap-4 rounded-2xl border-2 border-dashed border-line-default bg-surface-sunken px-6 py-10"
@@ -546,10 +536,10 @@ function CertificatesSection() {
 								<span className="mt-1 rounded-full bg-surface-base px-3 py-1 text-xs font-medium text-content-secondary">
 									{t("certificates.placeholder")}
 								</span>
-							</motion.div>
+							</m.div>
 						))}
-					</motion.div>
-				</motion.div>
+					</m.div>
+				</m.div>
 			</Container>
 		</section>
 	);
@@ -565,22 +555,17 @@ function TestimonialsSection() {
 	return (
 		<section className="bg-surface-raised py-16 md:py-24">
 			<Container>
-				<motion.div
-					ref={ref}
-					variants={containerStagger}
-					initial="hidden"
-					animate={inView ? "visible" : "hidden"}
-				>
-					<motion.div variants={fadeUp} className="mb-12 text-center">
+				<m.div ref={ref} variants={containerStagger} initial="hidden" animate={inView ? "visible" : "hidden"}>
+					<m.div variants={fadeUp} className="mb-12 text-center">
 						<h2 className="text-3xl font-bold text-content-primary md:text-4xl">
 							{t("testimonials.sectionTitle")}
 						</h2>
-					</motion.div>
+					</m.div>
 
 					{/* TODO: add real client testimonials */}
-					<motion.div variants={fastStagger} className="grid gap-5 md:grid-cols-3">
+					<m.div variants={fastStagger} className="grid gap-5 md:grid-cols-3">
 						{[0, 1, 2].map((i) => (
-							<motion.div
+							<m.div
 								key={i}
 								variants={fadeUp}
 								className="rounded-2xl border border-line-subtle bg-surface-base p-6"
@@ -602,10 +587,10 @@ function TestimonialsSection() {
 								<p className="mt-4 text-center text-xs text-content-secondary">
 									{t("testimonials.placeholder")}
 								</p>
-							</motion.div>
+							</m.div>
 						))}
-					</motion.div>
-				</motion.div>
+					</m.div>
+				</m.div>
 			</Container>
 		</section>
 	);
@@ -634,7 +619,7 @@ function FaqSection() {
 					{t("faq.sectionTitle")}
 				</h2>
 
-				<motion.div
+				<m.div
 					ref={ref}
 					variants={containerStagger}
 					initial="hidden"
@@ -642,26 +627,26 @@ function FaqSection() {
 					className="mx-auto max-w-2xl divide-y divide-line-subtle"
 				>
 					{faqs.map((faq, i) => (
-						<motion.div key={i} variants={fadeUp}>
+						<m.div key={i} variants={fadeUp}>
 							<button
 								onClick={() => setOpenIndex(openIndex === i ? null : i)}
 								aria-expanded={openIndex === i}
 								className="flex w-full items-center justify-between gap-4 py-5 text-start"
 							>
 								<span className="font-medium text-content-primary">{faq.q}</span>
-								<motion.span
+								<m.span
 									animate={{ rotate: openIndex === i ? 45 : 0 }}
 									transition={{ type: "spring", stiffness: 320, damping: 22 }}
 									className="shrink-0 text-2xl font-light leading-none text-brand-primary"
 									aria-hidden="true"
 								>
 									+
-								</motion.span>
+								</m.span>
 							</button>
 
 							<AnimatePresence initial={false}>
 								{openIndex === i && (
-									<motion.div
+									<m.div
 										key="answer"
 										initial={{ height: 0, opacity: 0 }}
 										animate={{ height: "auto", opacity: 1 }}
@@ -670,12 +655,12 @@ function FaqSection() {
 										className="overflow-hidden"
 									>
 										<p className="pb-5 leading-relaxed text-content-secondary">{faq.a}</p>
-									</motion.div>
+									</m.div>
 								)}
 							</AnimatePresence>
-						</motion.div>
+						</m.div>
 					))}
-				</motion.div>
+				</m.div>
 			</Container>
 		</section>
 	);
@@ -703,7 +688,7 @@ function CtaSection() {
 
 			<Container className="relative z-10">
 				<div className="text-center">
-					<motion.h2
+					<m.h2
 						initial={{ opacity: 0, y: 24 }}
 						whileInView={{ opacity: 1, y: 0 }}
 						viewport={{ once: true }}
@@ -711,9 +696,9 @@ function CtaSection() {
 						className="text-4xl font-extrabold text-white md:text-5xl"
 					>
 						{t("cta.headline")}
-					</motion.h2>
+					</m.h2>
 
-					<motion.p
+					<m.p
 						initial={{ opacity: 0, y: 16 }}
 						whileInView={{ opacity: 1, y: 0 }}
 						viewport={{ once: true }}
@@ -721,10 +706,10 @@ function CtaSection() {
 						className="mt-4 text-lg text-white/80"
 					>
 						{t("cta.subtitle")}
-					</motion.p>
+					</m.p>
 
 					{/* WhatsApp button with pulse glow */}
-					<motion.div
+					<m.div
 						initial={{ opacity: 0, scale: 0.88 }}
 						whileInView={{ opacity: 1, scale: 1 }}
 						viewport={{ once: true }}
@@ -748,9 +733,9 @@ function CtaSection() {
 								aria-hidden="true"
 							/>
 						</a>
-					</motion.div>
+					</m.div>
 
-					<motion.p
+					<m.p
 						initial={{ opacity: 0 }}
 						whileInView={{ opacity: 1 }}
 						viewport={{ once: true }}
@@ -758,7 +743,7 @@ function CtaSection() {
 						className="mt-5 text-sm text-white/55"
 					>
 						{t("cta.hours")}
-					</motion.p>
+					</m.p>
 				</div>
 			</Container>
 		</section>

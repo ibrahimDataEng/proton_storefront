@@ -11,11 +11,11 @@
 ## Architecture
 
 - Storefront: src/app/ (App Router, /[locale]/[channel]/...)
-- Checkout sub-app: src/checkout/ — SEPARATE, DO NOT TOUCH
+- Checkout sub-app: src/checkout/ — separate sub-app; see "Checkout Wizard (Session 24)" section for permitted changes
 - Components: src/ui/components/ (NOT src/components/ — that doesn't exist)
 - Atoms: src/ui/atoms/
 - Theme tokens: src/ui/theme/tokens.ts
-- GraphQL source: src/graphql/ (19 .graphql files)
+- GraphQL source: src/graphql/ (20 .graphql files)
 - Generated types: src/gql/
 
 ## Hooks (Session 7)
@@ -78,6 +78,12 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   CMS menu logic + ChannelSelect + Skeleton preserved
 - Nav: NavLink uses brand-primary (active) / content-secondary (default),
   console.log + revalidate:1 fixed in NavLinks.tsx
+- NavLinks (Session 23): replaced CMS-driven items with 4 fixed items:
+  Home → /, Shop → MegaMenu + /products, Wholesale → /pages/wholesale,
+  Contact → /pages/contact-us; fetches CategoriesWithChildren (not navbar menu);
+  accepts mobile prop — passes to ShopNavItem for accordion vs hover mode
+- HeaderWrapper (Session 23): top now reads var(--topbar-height, 0px) instead
+  of fixed top-0; TopBar sets that variable client-side
 - SearchBar (Session 7): live autocomplete dropdown with 300ms debounce,
   request-id race-condition guard, full token theming, ARIA combobox attrs,
   keyboard nav (ArrowDown/Up/Enter/Escape/Tab), spinner, skeleton rows,
@@ -133,6 +139,18 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   relative/z-10 content structure
 - FilterBar (Session 21): activeCountry prop + dismissible country pill above filter row
   (desktop + mobile sheet); hasActiveFilters includes activeCountry; clear-all works
+- TopBar (Session 23): src/ui/components/nav/TopBar.tsx — "use client"; fixed top-0
+  z-[51]; visible on /, /products, /pages/wholesale only (isTopBarPath util);
+  sets --topbar-height CSS variable (0px or 36px) used by HeaderWrapper + layout;
+  left: 🚚 free-shipping static text; right: rotating ticker (4 messages, 4s
+  interval, AnimatePresence fade); full i18n via "topbar" namespace
+- ShopNavItem / MegaMenu (Session 23): src/ui/components/nav/ShopNavItem.tsx —
+  "use client"; dual-mode: desktop (hover panel, fixed full-width, left category
+  column + right subcategory grid 3-4 cols, scaleY animation) / mobile (accordion
+  in existing MobileMenu, AnimatePresence height transition); RTL-aware chevrons +
+  arrow directions; useClickOutside for desktop close-on-outside-click;
+  categories fetched via CategoriesWithChildren GraphQL query (level=0, 8 root
+  cats, 10 children each); passes through NavLinks server component
 - ContactPageClient (Session 22): src/ui/components/contact/ContactPageClient.tsx —
   "use client"; two-column layout (info cards + form); 4 info cards (email/phone/address/hours)
   with spring lift + brand-primary accent bar on hover; form (name/email/subject/message)
@@ -191,12 +209,13 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   - i18n: "wholesale" namespace in en.json + ar.json; all text via useTranslations, zero hardcoded strings
   - RTL: word-stagger works in both directions, zigzag CSS-grid reversal works naturally
 
-## Health status (post-Session 22)
+## Health status (post-Session 25)
 
 - TS errors: 0 (verified via `pnpm tsc --noEmit`)
-- Lint warnings: 7 (baseline — 6 in src/checkout/, 1 in Logo.tsx)
+- Lint warnings: 7 (baseline — 6 in src/checkout/ + 1 Logo.tsx warning restored)
 - Brand-primary updated: #2D3B2E → #2D6A4F (richer, more vibrant green); dark mode #4A5D4A → #4D8C6B
-- Working tree: clean on feature/ui-redesign-session-22
+- Checkout brand applied: all checkout primitives now use #2d6a4f (Button, inputs, SelectBox, icons, AppConfigProvider)
+- Working tree: clean on feature/ui-redesign-session-25
 - framer-motion@12.38.0 added as dependency (session 16)
 - .eslintrc.json override updated: global-error.tsx now in no-default-export exclusion list
 - console.log("jjj", locale) removed from products/[slug]/page.tsx (session 18)
@@ -211,6 +230,17 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
 - WholesalePageClient rebuilt (session 22 XL): 9 sections, brand-primary #2D6A4F, word-stagger hero,
   supply cards, 3 placeholder sections (benefits photos, certificates, testimonials)
 - brand-primary color: #2D3B2E → #2D6A4F in globals.css + tokens.ts (session 22)
+- TopBar added above HeaderWrapper in (main)/layout.tsx (session 23); CSS var
+  --topbar-height drives layout offset; no hard-coded padding
+- CategoriesWithChildren.graphql added + codegen run (session 23); fetches
+  level=0 categories + 10 children each for mega menu
+- Nav items replaced: Home / Shop (mega menu) / Wholesale / Contact (session 23)
+- topbar + nav i18n namespaces added to en.json + ar.json (session 23)
+- Checkout wizard built (session 24): 3-step Contact→Shipping→Payment with AnimatePresence transitions, CheckoutStepper, brand theming, trust bar, WhatsApp button
+- CheckoutErrorBanner added (session 25): toast.onChange interception, inline red alert with dismiss + WhatsApp help
+- ToastContainer moved to bottom-center (session 25)
+- HTML5 native form validation on wizard step advance (session 25)
+- CheckoutDiscovery hidden (session 25); checkout page wrapped in card; logo uses Image directly
 
 ## Button-as-link pattern (important)
 
@@ -261,6 +291,9 @@ SearchBar.tsx, SearchOverlay.tsx (session 7).
 - `notFound` — title, subtitle, goHome, browse, checkUrl (session 17)
 - `home` — header, description, aboutLink, contactLink,
   shopByCountry (session 21)
+- `topbar` — freeShipping, invoices, wholesale, countries, quality (session 23)
+- `nav` — home, shop, wholesale, contact, viewAll, allCategories (session 23)
+- `checkout` — securePay, freeReturns, fastDelivery (session 24 — used by CheckoutTrustBar)
 - `error`, `button`, `welcome`, `goodbye` — misc
   (`error` extended in session 17: +title, +description, +tryAgain, +goHome, +code)
 
@@ -321,9 +354,61 @@ runs next-intl first, then silently refreshes expiring tokens (<5 min) via
 - flagcdn.com — country flag images in CountrySection (no API key, free, https:\*\* wildcard covers it)
 - images.unsplash.com — BrandStorySection nuts background (replace with own photo when ready)
 
+## Checkout UX Polish (Session 25)
+
+- **Form validation**: `goNext()` in CheckoutForm.tsx runs `document.querySelector("form")?.checkValidity()` before advancing — HTML5 native validation (no hooks/state touched); reports validity inline if form is invalid
+- **Inline error banner**: `src/checkout/components/CheckoutErrorBanner.tsx` — intercepts toast errors via `toast.onChange` in a useEffect; renders red alert with dismiss + WhatsApp help link; auto-clears on step change
+- **ToastContainer**: `src/checkout/Root.tsx` — now `position="bottom-center"`, `autoClose={5000}`, `hideProgressBar={false}`, `style={{ fontSize: "14px" }}` (spread after `alertsContainerProps`)
+- **CheckoutStepper**: added `py-6 border-b border-neutral-100` for breathing room
+- **Checkout page card**: form content wrapped in `bg-white shadow-sm border border-neutral-100/80 rounded-xl p-4 md:p-8`
+- **Logo swap**: checkout header now uses `<Image src="/logo.png" width={140} height={32} />` (NOT Logo.tsx — that uses LinkWithChannel which generates channel URLs incompatible with checkout)
+- **Contact spacing**: SignInFormContainer "already have an account?" row now has `border-t border-neutral-100 pt-4 mt-4`
+- **CheckoutDiscovery**: hidden via `<div className="hidden">` wrapper in Checkout.tsx (component too complex to safely modify)
+- **checkoutId persistence**: URL-param only (`?checkout=CHECKOUT_ID`) — NO localStorage/sessionStorage involved. "Previous order data" is Saleor server behavior, not client storage. No code fix needed.
+
+## Checkout Wizard (Session 24)
+
+- 3-step wizard: Contact → Shipping → Review & Pay
+- Step controller: `src/checkout/sections/CheckoutForm/CheckoutForm.tsx` (useState for currentStep + direction, no hook changes)
+- Stepper UI: `src/checkout/components/CheckoutStepper.tsx` (pure CSS transitions, step labels from checkoutMessages.ts `wizard` key)
+- Step transition: framer-motion AnimatePresence mode="wait" + motion.div slide left/right based on direction
+- CollapseSection.tsx simplified to passthrough wrapper
+- Trust components: `src/ui/components/checkout/CheckoutTrustBar.tsx` (server, i18n "checkout" namespace) + `CheckoutWhatsApp.tsx` (client, floating WhatsApp button)
+- Brand color `#2d6a4f` applied throughout all checkout primitives (Button, inputs, SelectBox, icons, AppConfigProvider)
+- All SVG icons updated: `#394052` → `#2d6a4f`, `#B65757` → `#dc2626`, `#2C9B2A` → `#2d6a4f`
+- Wizard strings added to `checkoutMessages.ts` under `wizard` key (EN + AR)
+- `"checkout"` namespace added to `en.json` + `ar.json`: securePay, freeReturns, fastDelivery
+
+Session 26 additions (all in `src/ui/components/checkout/`):
+
+- `CheckoutCountdown.tsx` — "use client"; cutoff 17:00 UAE (UTC+4 = 13:00 UTC); setInterval 1s; mounted flag prevents hydration mismatch; hidden at/after cutoff (returns null); bilingual hardcoded text; timer digits with label rows
+- `CheckoutTrustBar.tsx` — restyled: bg-[#f0f7f4] border-[#d4e8de], text-[#2d6a4f] font-medium; reordered to Shield→Truck→Arrow; icon size 16px; gap-4/gap-12
+- `CheckoutShippingProgress.tsx` — server component; props: subtotal, threshold (default 100 AED), locale; gradient progress bar; checkmark badge when free; bilingual labels
+- `CheckoutPaymentIcons.tsx` — server component; Visa/MC (nested clipPath SVG)/ApplePay/Amex/Cash; SSL lock note; bilingual title + cash label
+- checkout/page.tsx: CheckoutCountdown between header and TrustBar; ShippingProgress + PaymentIcons below RootWrapper (ml-auto max-w-[420px]); fetches subtotal via Checkout.find(searchParams.checkout, locale)
+
+- `CheckoutFooter.tsx` — server component; Visa + Mastercard + Cash on Delivery icons; SSL 256-bit note; rendered at very bottom of checkout/page.tsx after CheckoutWhatsApp
+
+Session 27 updates:
+
+- `CheckoutCountdown.tsx` — window logic: 13:00–21:59 UAE → "tomorrow", countdown to 22:00 UAE (18:00 UTC); 22:00–12:59 UAE → "day after tomorrow", countdown to 13:00 UAE (09:00 UTC); bilingual delivery label in timer bar; abbreviated mobile text updated
+- `CheckoutShippingProgress.tsx` — threshold raised from 100 → 200 AED; text updated: "orders over د.إ 200"; free message updated; scale label still uses `{threshold}` variable
+- checkout/page.tsx — header redesigned: cart←logo(center)→help layout; Back-to-cart link uses `checkoutChannel` derived from `checkoutData?.channel?.slug`; ShippingProgress placed above RootWrapper (desktop, lg:flex justify-end w-[400px]) + inside lg:hidden wrapper below form (mobile); also fetches `checkoutChannel` from checkout data
+- Footer — language switcher (globe icon + alternate locale link) added to bottom bar; payment icons row (Visa/MC/ApplePay/Amex/Cash) added centered; legal links (Terms of Use + Privacy Notice) via LinkWithChannel; bilingual copyright updated to "Green Line Group"; `Link` import added
+
+**NEVER touch:**
+
+- `src/checkout/hooks/` (any file)
+- `src/checkout/state/` (any file)
+- `src/checkout/graphql/` (any file)
+- `src/checkout/sections/PaymentSection/AdyenDropIn/`
+- `src/checkout/sections/PaymentSection/StripeElements/`
+
+**CSS className changes and UI-only component rewrites in src/checkout/ are permitted with explicit session approval only.**
+
 ## Rules (ALWAYS follow)
 
-- DO NOT touch src/checkout/ under any circumstances
+- src/checkout/ — NEVER touch hooks/, state/, graphql/, AdyenDropIn/, StripeElements/. CSS className changes and UI-only component rewrites are permitted with explicit session approval only.
 - DO NOT touch src/gql/ or src/graphql/
 - DO NOT hardcode product/category data
 - Use LinkWithChannel (@/ui/atoms/LinkWithChannel) for ALL internal links

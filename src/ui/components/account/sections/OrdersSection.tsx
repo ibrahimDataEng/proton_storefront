@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { ChevronDown, ShoppingBag } from "lucide-react";
 import { clsx } from "clsx";
@@ -115,7 +115,7 @@ function OrderCard({ order, locale }: { order: OrderDetailsFragment; locale: str
 			{/* Accordion */}
 			<AnimatePresence initial={false}>
 				{expanded && (
-					<motion.div
+					<m.div
 						key="details"
 						initial={{ height: 0, opacity: 0 }}
 						animate={{ height: "auto", opacity: 1 }}
@@ -155,7 +155,7 @@ function OrderCard({ order, locale }: { order: OrderDetailsFragment; locale: str
 								);
 							})}
 						</ul>
-					</motion.div>
+					</m.div>
 				)}
 			</AnimatePresence>
 		</div>

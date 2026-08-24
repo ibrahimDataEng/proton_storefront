@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { X, ZoomIn } from "lucide-react";
 
 interface GalleryImage {
@@ -51,7 +51,7 @@ export function ProductGallery({ images, productName }: Props) {
 					onKeyDown={(e) => e.key === "Enter" && setLightboxOpen(true)}
 				>
 					<AnimatePresence mode="wait" initial={false}>
-						<motion.div
+						<m.div
 							key={selectedUrl}
 							initial={{ opacity: 0 }}
 							animate={{ opacity: 1 }}
@@ -67,7 +67,7 @@ export function ProductGallery({ images, productName }: Props) {
 								className="object-contain"
 								priority
 							/>
-						</motion.div>
+						</m.div>
 					</AnimatePresence>
 					<div className="absolute bottom-3 right-3 rounded-lg bg-surface-base/80 p-1.5 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
 						<ZoomIn className="h-4 w-4 text-content-secondary" aria-hidden="true" />
@@ -106,7 +106,7 @@ export function ProductGallery({ images, productName }: Props) {
 			{/* Lightbox */}
 			<AnimatePresence>
 				{lightboxOpen && (
-					<motion.div
+					<m.div
 						initial={{ opacity: 0 }}
 						animate={{ opacity: 1 }}
 						exit={{ opacity: 0 }}
@@ -117,7 +117,7 @@ export function ProductGallery({ images, productName }: Props) {
 						aria-modal="true"
 						aria-label="Image lightbox"
 					>
-						<motion.div
+						<m.div
 							initial={{ scale: 0.9, opacity: 0 }}
 							animate={{ scale: 1, opacity: 1 }}
 							exit={{ scale: 0.9, opacity: 0 }}
@@ -131,7 +131,7 @@ export function ProductGallery({ images, productName }: Props) {
 								alt={selectedAlt}
 								className="max-h-[90vh] max-w-[90vw] rounded-xl object-contain"
 							/>
-						</motion.div>
+						</m.div>
 						<button
 							type="button"
 							onClick={closeLightbox}
@@ -140,7 +140,7 @@ export function ProductGallery({ images, productName }: Props) {
 						>
 							<X className="h-5 w-5" aria-hidden="true" />
 						</button>
-					</motion.div>
+					</m.div>
 				)}
 			</AnimatePresence>
 		</>

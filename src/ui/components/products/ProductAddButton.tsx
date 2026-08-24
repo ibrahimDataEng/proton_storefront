@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import { ShoppingCart, Check, Tag } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
 import { addLineToCheckout } from "@/app/[locale]/[channel]/(main)/cart/actions";
 
@@ -31,6 +31,7 @@ export function ProductAddButton({
 	const t = useTranslations("products");
 	const params = useParams();
 	const channel = (params.channel as string) ?? "";
+	const locale = (params.locale as string) ?? "en";
 	const [state, setState] = useState<"idle" | "pending" | "added" | "error">("idle");
 
 	if (!isAvailable) {
@@ -62,7 +63,7 @@ export function ProductAddButton({
 	const handleClick = async () => {
 		if (!selectedVariantId || state === "pending" || state === "added") return;
 		setState("pending");
-		const result = await addLineToCheckout({ variantId: selectedVariantId, channel });
+		const result = await addLineToCheckout({ variantId: selectedVariantId, channel, locale });
 		if (!result.ok) {
 			setState("error");
 			setTimeout(() => setState("idle"), 2000);
@@ -73,7 +74,7 @@ export function ProductAddButton({
 	};
 
 	return (
-		<motion.button
+		<m.button
 			type="button"
 			disabled={state === "pending" || state === "added"}
 			onClick={() => void handleClick()}
@@ -91,7 +92,7 @@ export function ProductAddButton({
 		>
 			<AnimatePresence mode="wait" initial={false}>
 				{state === "pending" ? (
-					<motion.span
+					<m.span
 						key="spinner"
 						initial={{ opacity: 0, scale: 0.8 }}
 						animate={{ opacity: 1, scale: 1 }}
@@ -100,7 +101,7 @@ export function ProductAddButton({
 						className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
 					/>
 				) : state === "added" ? (
-					<motion.span
+					<m.span
 						key="check"
 						initial={{ opacity: 0, scale: 0.8 }}
 						animate={{ opacity: 1, scale: 1 }}
@@ -108,9 +109,9 @@ export function ProductAddButton({
 						transition={{ duration: 0.15 }}
 					>
 						<Check size={14} aria-hidden="true" />
-					</motion.span>
+					</m.span>
 				) : (
-					<motion.span
+					<m.span
 						key="cart"
 						initial={{ opacity: 0, scale: 0.8 }}
 						animate={{ opacity: 1, scale: 1 }}
@@ -118,12 +119,12 @@ export function ProductAddButton({
 						transition={{ duration: 0.15 }}
 					>
 						<ShoppingCart size={14} aria-hidden="true" />
-					</motion.span>
+					</m.span>
 				)}
 			</AnimatePresence>
 			<AnimatePresence mode="wait" initial={false}>
 				{state === "added" ? (
-					<motion.span
+					<m.span
 						key="added-text"
 						initial={{ opacity: 0, y: 4 }}
 						animate={{ opacity: 1, y: 0 }}
@@ -131,9 +132,9 @@ export function ProductAddButton({
 						transition={{ duration: 0.15 }}
 					>
 						{t("added")}
-					</motion.span>
+					</m.span>
 				) : (
-					<motion.span
+					<m.span
 						key="add-text"
 						initial={{ opacity: 0, y: 4 }}
 						animate={{ opacity: 1, y: 0 }}
@@ -141,9 +142,9 @@ export function ProductAddButton({
 						transition={{ duration: 0.15 }}
 					>
 						{t("addToCart")}
-					</motion.span>
+					</m.span>
 				)}
 			</AnimatePresence>
-		</motion.button>
+		</m.button>
 	);
 }

@@ -40,12 +40,13 @@ export function HeaderWrapper({ children }: HeaderWrapperProps) {
 	return (
 		<header
 			className={clsx(
-				"fixed inset-x-0 top-0 z-50 h-16",
+				"fixed inset-x-0 z-50 h-16",
 				"bg-surface-base/80 backdrop-blur-md",
 				"border-b border-line-subtle",
 				"transition-transform duration-300 ease-in-out",
 				visible ? "translate-y-0" : "-translate-y-full",
 			)}
+			style={{ top: "var(--topbar-height, 0px)" }}
 		>
 			{children}
 		</header>

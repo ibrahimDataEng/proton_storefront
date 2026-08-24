@@ -25,6 +25,7 @@ mutation CheckoutCreate($channel: String!, $language: LanguageCodeEnum!) {
 							alt
 						}
 						category {
+							slug
 							name
 							translation(languageCode: $language) {
 								name
@@ -49,6 +50,11 @@ mutation CheckoutCreate($channel: String!, $language: LanguageCodeEnum!) {
 					currency
 				}
 			}
+			discount {
+				amount
+				currency
+			}
+			voucherCode
 		}
 		errors {
 			field

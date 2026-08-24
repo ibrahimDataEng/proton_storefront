@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { LinkWithChannel } from "../atoms/LinkWithChannel";
 
-const companyName = "Green Line Group";
+const companyName = "PROTON";
 
 export const Logo = ({ className }: { className?: string }) => {
 	return (

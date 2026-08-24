@@ -3,6 +3,7 @@ import { IBM_Plex_Sans, IBM_Plex_Sans_Arabic } from "next/font/google";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
+import { MotionProvider } from "@/ui/components/MotionProvider";
 import { routing } from "@/i18n/routing";
 
 const plexSans = IBM_Plex_Sans({
@@ -48,7 +49,7 @@ export default async function RootLayout({
 		<html lang={locale} dir={isRTL ? "rtl" : "ltr"} className={`${plexSans.variable} ${plexArabic.variable}`}>
 			<body className="bg-surface-base font-sans text-content-primary">
 				<NextIntlClientProvider locale={locale} messages={messages}>
-					{children}
+					<MotionProvider>{children}</MotionProvider>
 				</NextIntlClientProvider>
 			</body>
 		</html>

@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { ShoppingBag, MapPin, Calendar, Package } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { type AccountSection } from "../AccountSidebar";
@@ -36,7 +36,7 @@ function CardItem({
 	delay: number;
 }) {
 	return (
-		<motion.div
+		<m.div
 			initial={{ opacity: 0, y: 12 }}
 			animate={{ opacity: 1, y: 0 }}
 			transition={{ duration: 0.3, delay }}
@@ -49,7 +49,7 @@ function CardItem({
 				<p className="text-xs text-content-secondary">{label}</p>
 				<p className="mt-0.5 truncate text-sm font-semibold text-content-primary">{value}</p>
 			</div>
-		</motion.div>
+		</m.div>
 	);
 }
 
@@ -59,11 +59,9 @@ export function OverviewSection({ user, orders, onNavigate, locale }: Props) {
 	const lastOrder = orders[0];
 	const defaultShipping = user.addresses?.find((a) => a.isDefaultShippingAddress);
 
-	const memberSince = user.dateJoined ? formatDate(user.dateJoined , locale) : "—";
+	const memberSince = user.dateJoined ? formatDate(user.dateJoined, locale) : "—";
 
-	const lastOrderValue = lastOrder
-		? `#${lastOrder.number} · ${formatDate(lastOrder.created , locale)}`
-		: "—";
+	const lastOrderValue = lastOrder ? `#${lastOrder.number} · ${formatDate(lastOrder.created, locale)}` : "—";
 
 	const defaultAddressValue = defaultShipping
 		? `${defaultShipping.streetAddress1}, ${defaultShipping.city}`
@@ -98,7 +96,7 @@ export function OverviewSection({ user, orders, onNavigate, locale }: Props) {
 				/>
 			</div>
 
-			<motion.div
+			<m.div
 				initial={{ opacity: 0, y: 8 }}
 				animate={{ opacity: 1, y: 0 }}
 				transition={{ delay: 0.4, duration: 0.3 }}
@@ -124,7 +122,7 @@ export function OverviewSection({ user, orders, onNavigate, locale }: Props) {
 				>
 					{t("shopNow")}
 				</LinkWithChannel>
-			</motion.div>
+			</m.div>
 		</div>
 	);
 }

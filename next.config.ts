@@ -32,7 +32,11 @@ const nextConfig: NextConfig = {
 		],
 	},
 	experimental: {
-		typedRoutes: false,
+		optimizePackageImports: ["lucide-react"],
+	},
+
+	compiler: {
+		removeConsole: process.env.NODE_ENV === "production",
 	},
 };
 

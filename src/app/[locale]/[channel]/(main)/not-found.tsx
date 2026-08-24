@@ -5,7 +5,7 @@
 // Renders inside full layout (header + footer visible). next-intl works here.
 
 import { useTranslations } from "next-intl";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 
 export default function MainNotFound() {
@@ -14,7 +14,7 @@ export default function MainNotFound() {
 	return (
 		<div className="flex min-h-[60vh] flex-col items-center justify-center px-8 py-16 text-center">
 			{/* Compass SVG — circle draws in, needle spins then settles off-course */}
-			<motion.svg
+			<m.svg
 				xmlns="http://www.w3.org/2000/svg"
 				viewBox="0 0 120 120"
 				className="mb-8 h-32 w-32 text-brand-muted"
@@ -24,7 +24,7 @@ export default function MainNotFound() {
 				transition={{ duration: 0.5, ease: "easeOut" }}
 			>
 				{/* Outer ring */}
-				<motion.circle
+				<m.circle
 					cx="60"
 					cy="60"
 					r="48"
@@ -38,7 +38,7 @@ export default function MainNotFound() {
 					transition={{ duration: 0.9, ease: "easeInOut" }}
 				/>
 				{/* Inner ring */}
-				<motion.circle
+				<m.circle
 					cx="60"
 					cy="60"
 					r="36"
@@ -59,7 +59,7 @@ export default function MainNotFound() {
 					const x2 = 60 + 36 * Math.cos(rad);
 					const y2 = 60 + 36 * Math.sin(rad);
 					return (
-						<motion.line
+						<m.line
 							key={angle}
 							x1={x1}
 							y1={y1}
@@ -78,7 +78,7 @@ export default function MainNotFound() {
 				{/* Center dot */}
 				<circle cx="60" cy="60" r="3.5" fill="currentColor" opacity={0.5} />
 				{/* Compass needle — spins and settles at a "wrong" diagonal angle */}
-				<motion.g
+				<m.g
 					style={{ transformBox: "fill-box", transformOrigin: "50% 50%" }}
 					animate={{ rotate: [0, 720, 840] }}
 					transition={{ duration: 2.8, ease: [0.22, 1, 0.36, 1], delay: 0.7 }}
@@ -87,10 +87,10 @@ export default function MainNotFound() {
 					<polygon points="60,18 55.5,58 64.5,58" fill="currentColor" opacity={0.85} />
 					{/* South half (light) */}
 					<polygon points="60,102 55.5,62 64.5,62" fill="currentColor" opacity={0.2} />
-				</motion.g>
-			</motion.svg>
+				</m.g>
+			</m.svg>
 
-			<motion.div
+			<m.div
 				initial={{ opacity: 0, y: 12 }}
 				animate={{ opacity: 1, y: 0 }}
 				transition={{ delay: 0.3, duration: 0.4 }}
@@ -98,9 +98,9 @@ export default function MainNotFound() {
 			>
 				<h1 className="text-2xl font-semibold text-content-primary">{t("title")}</h1>
 				<p className="max-w-sm text-content-secondary">{t("subtitle")}</p>
-			</motion.div>
+			</m.div>
 
-			<motion.div
+			<m.div
 				initial={{ opacity: 0 }}
 				animate={{ opacity: 1 }}
 				transition={{ delay: 0.6, duration: 0.4 }}
@@ -118,7 +118,7 @@ export default function MainNotFound() {
 				>
 					{t("browse")}
 				</LinkWithChannel>
-			</motion.div>
+			</m.div>
 		</div>
 	);
 }

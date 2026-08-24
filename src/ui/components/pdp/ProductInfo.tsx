@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useTranslations } from "next-intl";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { ChevronRight, ShoppingCart, Check, Minus, Plus } from "lucide-react";
 import { clsx } from "clsx";
 import xss from "xss";
@@ -92,7 +92,7 @@ export function ProductInfo({ product, locale, channel }: Props) {
 	const handleAddToCart = async () => {
 		if (!selectedVariantId || addStatus === "pending" || addStatus === "success") return;
 		setAddStatus("pending");
-		const result = await addLineWithQuantity({ variantId: selectedVariantId, channel, quantity });
+		const result = await addLineWithQuantity({ variantId: selectedVariantId, channel, quantity, locale });
 		if (!result.ok) {
 			setAddStatus("error");
 			setTimeout(() => setAddStatus("idle"), 2000);
@@ -183,7 +183,7 @@ export function ProductInfo({ product, locale, channel }: Props) {
 					{t("selectVariant")}
 				</button>
 			) : (
-				<motion.button
+				<m.button
 					type="button"
 					disabled={addStatus === "pending" || addStatus === "success" || !isAvailable}
 					onClick={() => void handleAddToCart()}
@@ -203,7 +203,7 @@ export function ProductInfo({ product, locale, channel }: Props) {
 				>
 					<AnimatePresence mode="wait" initial={false}>
 						{addStatus === "pending" ? (
-							<motion.span
+							<m.span
 								key="spinner"
 								initial={{ opacity: 0, scale: 0.8 }}
 								animate={{ opacity: 1, scale: 1 }}
@@ -212,7 +212,7 @@ export function ProductInfo({ product, locale, channel }: Props) {
 								className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent"
 							/>
 						) : addStatus === "success" ? (
-							<motion.span
+							<m.span
 								key="check"
 								initial={{ opacity: 0, scale: 0.8 }}
 								animate={{ opacity: 1, scale: 1 }}
@@ -220,9 +220,9 @@ export function ProductInfo({ product, locale, channel }: Props) {
 								transition={{ duration: 0.15 }}
 							>
 								<Check className="h-5 w-5" aria-hidden="true" />
-							</motion.span>
+							</m.span>
 						) : (
-							<motion.span
+							<m.span
 								key="cart"
 								initial={{ opacity: 0, scale: 0.8 }}
 								animate={{ opacity: 1, scale: 1 }}
@@ -230,12 +230,12 @@ export function ProductInfo({ product, locale, channel }: Props) {
 								transition={{ duration: 0.15 }}
 							>
 								<ShoppingCart className="h-5 w-5" aria-hidden="true" />
-							</motion.span>
+							</m.span>
 						)}
 					</AnimatePresence>
 					<AnimatePresence mode="wait" initial={false}>
 						{addStatus === "success" ? (
-							<motion.span
+							<m.span
 								key="added-text"
 								initial={{ opacity: 0, y: 4 }}
 								animate={{ opacity: 1, y: 0 }}
@@ -243,9 +243,9 @@ export function ProductInfo({ product, locale, channel }: Props) {
 								transition={{ duration: 0.15 }}
 							>
 								{t("added")}
-							</motion.span>
+							</m.span>
 						) : addStatus === "error" ? (
-							<motion.span
+							<m.span
 								key="error-text"
 								initial={{ opacity: 0, y: 4 }}
 								animate={{ opacity: 1, y: 0 }}
@@ -253,9 +253,9 @@ export function ProductInfo({ product, locale, channel }: Props) {
 								transition={{ duration: 0.15 }}
 							>
 								{t("addError")}
-							</motion.span>
+							</m.span>
 						) : !isAvailable ? (
-							<motion.span
+							<m.span
 								key="oos-text"
 								initial={{ opacity: 0, y: 4 }}
 								animate={{ opacity: 1, y: 0 }}
@@ -263,9 +263,9 @@ export function ProductInfo({ product, locale, channel }: Props) {
 								transition={{ duration: 0.15 }}
 							>
 								{t("outOfStock")}
-							</motion.span>
+							</m.span>
 						) : (
-							<motion.span
+							<m.span
 								key="add-text"
 								initial={{ opacity: 0, y: 4 }}
 								animate={{ opacity: 1, y: 0 }}
@@ -273,10 +273,10 @@ export function ProductInfo({ product, locale, channel }: Props) {
 								transition={{ duration: 0.15 }}
 							>
 								{t("addToCart")}
-							</motion.span>
+							</m.span>
 						)}
 					</AnimatePresence>
-				</motion.button>
+				</m.button>
 			)}
 
 			{/* Attributes / Specifications */}

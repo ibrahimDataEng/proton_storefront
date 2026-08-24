@@ -48,7 +48,8 @@
 	"categories": {
 		"allCategories": "All Categories",
 		"noProducts": "No products available in this category yet.",
-		"backToHome": "Back to home"
+		"backToHome": "Back to home",
+		"breadcrumbLabel": "Categories"
 	},
 	"cart": {
 		"title": "Your Cart",
@@ -117,7 +118,9 @@
 		"onlyLeft": "Only {count} left",
 		"quantity": "Quantity",
 		"filteredByCountry": "Country",
-		"clearCountry": "Clear"
+		"clearCountry": "Clear",
+		"home": "Home",
+		"allProducts": "Products"
 	},
 	"availability": {
 		"outofstock": "Out of stock"
@@ -191,7 +194,8 @@
 		"sent": "Message Sent!",
 		"sentSubtitle": "Thanks for reaching out — we'll be in touch shortly.",
 		"required": "This field is required",
-		"invalidEmail": "Please enter a valid email address"
+		"invalidEmail": "Please enter a valid email address",
+		"sendError": "Failed to send message. Please try again or email us directly."
 	},
 	"wholesale": {
 		"hero": {
@@ -280,6 +284,30 @@
 			"waMessageAr": "مرحبا، أود الاستفسار عن أسعار الجملة"
 		}
 	},
+	"topbar": {
+		"freeShipping": "Free shipping on orders over 200 AED",
+		"invoices": "Official UAE tax invoices available",
+		"wholesale": "Wholesale orders welcome — WhatsApp us",
+		"countries": "Sourced from 15+ countries",
+		"quality": "Premium quality, competitive prices"
+	},
+	"nav": {
+		"home": "Home",
+		"shop": "Shop",
+		"wholesale": "Wholesale",
+		"contact": "Contact Us",
+		"viewAll": "View all products",
+		"allCategories": "All Categories"
+	},
+	"bottomNav": {
+		"home": "Home",
+		"categories": "Categories",
+		"shop": "Shop",
+		"account": "Account",
+		"cart": "Cart",
+		"back": "Back",
+		"viewAll": "View all"
+	},
 	"auth": {
 		"login": "Sign In",
 		"register": "Create Account",
@@ -323,5 +351,10 @@
 			"INVALID_PASSWORD": "Current password is incorrect.",
 			"unknown": "Something went wrong. Please try again."
 		}
+	},
+	"checkout": {
+		"securePay": "Secure Payment",
+		"freeReturns": "Free Returns",
+		"fastDelivery": "Fast UAE Delivery"
 	}
 }

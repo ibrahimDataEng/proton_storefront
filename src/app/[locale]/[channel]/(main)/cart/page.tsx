@@ -20,7 +20,13 @@ export default async function Page(props: { params: Promise<{ channel: string; l
 	const t = await getTranslations("cart");
 
 	const checkoutId = await Checkout.getIdFromCookies(channel);
-	const checkout = await Checkout.find(checkoutId, locale);
+	// Session 25: use findOrCreate to handle stale/completed checkouts
+	const checkout = await Checkout.findOrCreate({
+		channel,
+		locale,
+		checkoutId: checkoutId || undefined,
+	});
+	const resolvedCheckoutId = checkout?.id ?? checkoutId;
 
 	if (!checkout || checkout.lines.length < 1) {
 		return (
@@ -40,7 +46,7 @@ export default async function Page(props: { params: Promise<{ channel: string; l
 						}
 					/>
 
-					<SavedForLater channel={channel} />
+					<SavedForLater channel={channel} locale={locale} />
 
 					<Suspense fallback={<CartRecommendationsSkeleton />}>
 						<CartRecommendations
@@ -75,7 +81,7 @@ export default async function Page(props: { params: Promise<{ channel: string; l
 					<div className="lg:col-span-8">
 						<div className="space-y-4" data-testid="CartProductList">
 							{checkout.lines.map((line) => (
-								<CartLineItem key={line.id} line={line} checkoutId={checkoutId} />
+								<CartLineItem key={line.id} line={line} checkoutId={resolvedCheckoutId} />
 							))}
 						</div>
 					</div>
@@ -85,14 +91,14 @@ export default async function Page(props: { params: Promise<{ channel: string; l
 						<OrderSummary
 							lines={checkout.lines}
 							totalPrice={checkout.totalPrice.gross}
-							checkoutId={checkoutId}
+							checkoutId={resolvedCheckoutId}
 							appliedVoucherCode={checkout.voucherCode}
 							discount={checkout.discount}
 						/>
 					</div>
 				</div>
 
-				<SavedForLater channel={channel} />
+				<SavedForLater channel={channel} locale={locale} />
 
 				<Suspense fallback={<CartRecommendationsSkeleton />}>
 					<CartRecommendations

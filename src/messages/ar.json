@@ -48,7 +48,8 @@
 	"categories": {
 		"allCategories": "جميع الفئات",
 		"noProducts": "لا توجد منتجات متاحة في هذه الفئة حالياً.",
-		"backToHome": "العودة للرئيسية"
+		"backToHome": "العودة للرئيسية",
+		"breadcrumbLabel": "الفئات"
 	},
 	"cart": {
 		"title": "سلة التسوق",
@@ -117,7 +118,9 @@
 		"onlyLeft": "{count} فقط متبقي",
 		"quantity": "الكمية",
 		"filteredByCountry": "البلد",
-		"clearCountry": "مسح"
+		"clearCountry": "مسح",
+		"home": "الرئيسية",
+		"allProducts": "المنتجات"
 	},
 	"availability": {
 		"outofstock": "غير متوفر"
@@ -191,7 +194,8 @@
 		"sent": "تم الإرسال!",
 		"sentSubtitle": "شكراً على تواصلك — سنرد عليك في أقرب وقت.",
 		"required": "هذا الحقل مطلوب",
-		"invalidEmail": "يرجى إدخال بريد إلكتروني صحيح"
+		"invalidEmail": "يرجى إدخال بريد إلكتروني صحيح",
+		"sendError": "فشل إرسال الرسالة. يرجى المحاولة مرة أخرى أو مراسلتنا مباشرةً."
 	},
 	"wholesale": {
 		"hero": {
@@ -280,6 +284,30 @@
 			"waMessageAr": "مرحبا، أود الاستفسار عن أسعار الجملة"
 		}
 	},
+	"topbar": {
+		"freeShipping": "شحن مجاني للطلبات فوق 200 درهم",
+		"invoices": "فواتير ضريبية رسمية متوفرة",
+		"wholesale": "طلبات الجملة مرحب بها — واتساب",
+		"countries": "مصادر من أكثر من 15 دولة",
+		"quality": "جودة عالية وأسعار تنافسية"
+	},
+	"nav": {
+		"home": "الرئيسية",
+		"shop": "المتجر",
+		"wholesale": "الجملة",
+		"contact": "تواصل معنا",
+		"viewAll": "عرض جميع المنتجات",
+		"allCategories": "جميع الفئات"
+	},
+	"bottomNav": {
+		"home": "الرئيسية",
+		"categories": "الفئات",
+		"shop": "المتجر",
+		"account": "حسابي",
+		"cart": "السلة",
+		"back": "رجوع",
+		"viewAll": "عرض الكل"
+	},
 	"auth": {
 		"login": "تسجيل الدخول",
 		"register": "إنشاء حساب",
@@ -323,5 +351,10 @@
 			"INVALID_PASSWORD": "كلمة المرور الحالية غير صحيحة.",
 			"unknown": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
 		}
+	},
+	"checkout": {
+		"securePay": "دفع آمن",
+		"freeReturns": "إرجاع مجاني",
+		"fastDelivery": "توصيل سريع للإمارات"
 	}
 }

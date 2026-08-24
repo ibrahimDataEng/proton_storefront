@@ -22,7 +22,7 @@ export const Checkbox = <TName extends string>({ name, label }: CheckboxProps<TN
 					handleChange({ ...event, target: { ...event.target, name, value: !value } });
 				}}
 				type="checkbox"
-				className="rounded border-neutral-300 text-neutral-600 shadow-sm focus:border-neutral-300 focus:ring focus:ring-neutral-200 focus:ring-opacity-50 focus:ring-offset-0"
+				className="rounded border-neutral-300 text-[#2d6a4f] shadow-sm focus:border-[#2d6a4f] focus:ring focus:ring-[#2d6a4f] focus:ring-opacity-30 focus:ring-offset-0"
 			/>
 			<span>{label}</span>
 		</label>

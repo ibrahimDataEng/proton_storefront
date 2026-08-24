@@ -38,7 +38,13 @@ export const Root = ({ saleorApiUrl }: { saleorApiUrl: string }) => {
 
 	return (
 		<UrqlProvider value={urqlClient}>
-			<ToastContainer {...alertsContainerProps} />
+			<ToastContainer
+				{...alertsContainerProps}
+				position="bottom-center"
+				autoClose={5000}
+				hideProgressBar={false}
+				style={{ fontSize: "14px" }}
+			/>
 			<ErrorBoundary FallbackComponent={PageNotFound}>
 				<RootViews />
 			</ErrorBoundary>

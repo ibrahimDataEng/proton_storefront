@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import { useTranslations } from "next-intl";
-import { motion } from "framer-motion";
+import { m } from "framer-motion";
 import { clsx } from "clsx";
 import { LinkWithChannel } from "../atoms/LinkWithChannel";
 import { ProductImageWrapper } from "@/ui/atoms/ProductImageWrapper";
@@ -54,7 +54,7 @@ export function ProductElement({
 	};
 
 	return (
-		<motion.li
+		<m.li
 			data-testid="ProductElement"
 			initial={{ opacity: 0, y: 20 }}
 			whileInView={{ opacity: 1, y: 0 }}
@@ -92,7 +92,7 @@ export function ProductElement({
 				{showVariantPills && (
 					<div ref={pillsRef} className="flex flex-wrap gap-1.5">
 						{variants.map((v) => (
-							<motion.button
+							<m.button
 								key={v.id}
 								whileTap={{ scale: 0.95 }}
 								type="button"
@@ -105,7 +105,7 @@ export function ProductElement({
 								)}
 							>
 								{v.name}
-							</motion.button>
+							</m.button>
 						))}
 					</div>
 				)}
@@ -129,6 +129,6 @@ export function ProductElement({
 					onSelectClick={handlePillsScroll}
 				/>
 			</div>
-		</motion.li>
+		</m.li>
 	);
 }

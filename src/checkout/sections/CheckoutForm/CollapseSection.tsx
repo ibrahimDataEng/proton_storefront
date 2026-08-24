@@ -1,13 +1,5 @@
-import { type Children } from "@/checkout/lib/globalTypes";
+import { type ReactNode } from "react";
 
-interface CollapseSectionProps extends Children {
-	collapse: boolean;
-}
-
-export const CollapseSection = ({ collapse, children }: CollapseSectionProps) => {
-	if (collapse) {
-		return null;
-	}
-
-	return <>{children}</>;
-};
+export const CollapseSection = ({ children }: { children: ReactNode }) => (
+	<div className="w-full">{children}</div>
+);

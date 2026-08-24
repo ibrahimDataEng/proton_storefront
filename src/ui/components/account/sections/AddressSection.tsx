@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { m, AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, Trash2, Check } from "lucide-react";
@@ -386,7 +386,7 @@ export function AddressSection({ addresses }: Props) {
 					<div key={addr.id}>
 						{editingId === addr.id ? (
 							<AnimatePresence initial={false}>
-								<motion.div
+								<m.div
 									key="edit-form"
 									initial={{ opacity: 0, height: 0 }}
 									animate={{ opacity: 1, height: "auto" }}
@@ -403,7 +403,7 @@ export function AddressSection({ addresses }: Props) {
 										saving={saving}
 										error={formError}
 									/>
-								</motion.div>
+								</m.div>
 							</AnimatePresence>
 						) : (
 							<AddressCard
@@ -440,7 +440,7 @@ export function AddressSection({ addresses }: Props) {
 			{/* Add form — spans full width */}
 			<AnimatePresence initial={false}>
 				{showAddForm && (
-					<motion.div
+					<m.div
 						key="add-form"
 						initial={{ opacity: 0, height: 0 }}
 						animate={{ opacity: 1, height: "auto" }}
@@ -458,7 +458,7 @@ export function AddressSection({ addresses }: Props) {
 							saving={saving}
 							error={formError}
 						/>
-					</motion.div>
+					</m.div>
 				)}
 			</AnimatePresence>
 		</div>

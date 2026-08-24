@@ -7,14 +7,13 @@ import { AccountDashboard } from "@/ui/components/account/AccountDashboard";
 import { COOKIE_ACCESS_TOKEN } from "@/lib/auth/cookies";
 
 export default async function AccountPage(props: { params: Promise<{ locale: string; channel: string }> }) {
+	const { locale, channel } = await props.params;
 	const cookieStore = await cookies();
 	const token = cookieStore.get(COOKIE_ACCESS_TOKEN)?.value;
 
 	if (!token) {
-		redirect("/login");
+		redirect(`/${locale}/${channel}/login`);
 	}
-
-	const { locale } = await props.params;
 
 	let user;
 	try {
@@ -24,11 +23,11 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
 		});
 		user = data.me;
 	} catch {
-		redirect("/login");
+		redirect(`/${locale}/${channel}/login`);
 	}
 
 	if (!user) {
-		redirect("/login");
+		redirect(`/${locale}/${channel}/login`);
 	}
 
 	return (
