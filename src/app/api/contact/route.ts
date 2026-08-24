@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import nodemailer from "nodemailer";
 
-const CONTACT_TO = process.env.CONTACT_TO_EMAIL ?? "greenlinegroup002@gmail.com";
+const CONTACT_TO = process.env.CONTACT_TO_EMAIL ?? "tawasiplus2026@gmail.com";
 
 const transporter = nodemailer.createTransport({
 	host: process.env.SMTP_HOST ?? "localhost",
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
 	try {
 		await transporter.sendMail({
-			from: `"Green Line Group Contact" <noreply@greenlinegroup.com>`,
+			from: `"Tawais Plus Contact" <info@tawasiplus.com>`,
 			to: CONTACT_TO,
 			replyTo: email,
 			subject: `New Contact Form Message: ${subject}`,
