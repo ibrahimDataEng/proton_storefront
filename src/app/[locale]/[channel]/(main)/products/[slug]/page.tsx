@@ -23,7 +23,7 @@ export async function generateMetadata(
 
 	const { product } = await executeGraphQL(ProductDetailsDocument, {
 		variables: { slug: decodeURIComponent(slug), channel, language },
-		revalidate: 1,
+		revalidate: 60,
 	});
 
 	if (!product) notFound();
@@ -45,7 +45,6 @@ export async function generateMetadata(
 	};
 }
 
-
 export default async function Page(props: {
 	params: Promise<{ slug: string; channel: string; locale: string }>;
 	searchParams: Promise<{ variant?: string }>;
@@ -56,7 +55,7 @@ export default async function Page(props: {
 
 	const { product } = await executeGraphQL(ProductDetailsDocument, {
 		variables: { slug: decodeURIComponent(slug), channel, language },
-		revalidate: 1,
+		revalidate: 60,
 	});
 
 	if (!product) notFound();
