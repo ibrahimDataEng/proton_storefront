@@ -1,0 +1,9 @@
+version: "3"
+
+services:
+  saleor-storefront:
+    ports:
+      - "3000:3000"
+    # Local dev reads .env automatically from project root via docker compose's
+    # built-in behavior — no env_file needed here. Add it explicitly if your
+    # .env lives in a non-default location.

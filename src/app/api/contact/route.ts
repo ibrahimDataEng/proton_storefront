@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
 	try {
 		await transporter.sendMail({
-			from: `"Tawais Plus Contact" <info@tawasiplus.com>`,
+			from: `"Tawasi Plus Contact" <info@tawasiplus.com>`,
 			to: CONTACT_TO,
 			replyTo: email,
 			subject: `New Contact Form Message: ${subject}`,

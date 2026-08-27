@@ -26,7 +26,7 @@ export const generateMetadata = async (props: {
 	if (params.slug === "contact-us") {
 		const t = await getTranslations({ locale: params.locale, namespace: "contact" });
 		return {
-			title: `${t("title")} · Green Line Group`,
+			title: `${t("title")} · Tawasi Plus`,
 			description: t("subtitle"),
 		};
 	}
@@ -34,7 +34,7 @@ export const generateMetadata = async (props: {
 	if (params.slug === "wholesale") {
 		const t = await getTranslations({ locale: params.locale, namespace: "wholesale" });
 		return {
-			title: `${t("hero.headline")} · Green Line Group`,
+			title: `${t("hero.headline")} · Tawasi Plus`,
 			description: t("hero.subtitle"),
 		};
 	}

@@ -13,7 +13,7 @@ export async function generateMetadata() {
 	const locale = await getLocale();
 
 	return {
-		title: locale === "ar" ? "الدفع · متجر Green Line" : "Checkout · Green Line Store",
+		title: locale === "ar" ? "الدفع · متجر Tawasi Plus" : "Checkout · Tawasi Plus",
 	};
 }
 
@@ -77,7 +77,7 @@ export default async function CheckoutPage(props: {
 						<Link href={`/${locale}`} aria-label={locale === "ar" ? "الرئيسية" : "Home"}>
 							<Image
 								src="/logo.png"
-								alt="Green Line Group"
+								alt="Tawasi Plus"
 								width={56}
 								height={56}
 								className="h-10 w-10 object-contain"

@@ -11,7 +11,7 @@ import { SavedForLater } from "@/ui/components/cart/SavedForLater";
 import { EmptyState } from "@/ui/components/EmptyState";
 
 export const metadata = {
-	title: "Shopping Cart · Green Line Storefront",
+	title: "Shopping Cart · Tawasi Plus",
 };
 
 export default async function Page(props: { params: Promise<{ channel: string; locale: string }> }) {

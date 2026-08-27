@@ -7,9 +7,9 @@ import { BrandStorySection } from "@/ui/components/home/BrandStorySection";
 export const revalidate = 60;
 
 export const metadata = {
-	title: "ACME Storefront, powered by Saleor & Next.js",
+	title: "Tawasi Plus Store",
 	description:
-		"Storefront Next.js Example for building performant e-commerce experiences with Saleor - the composable, headless commerce platform for global brands.",
+		"Tawasi Plus Store is a leading online retailer offering a wide range of products like nuts, dried fruits, coffee, spices and more at competitive prices. Shop with confidence and enjoy fast shipping and excellent customer service.",
 };
 
 export default async function Page(props: { params: Promise<{ locale: string; channel: string }> }) {
