@@ -37,6 +37,16 @@ export async function find(checkoutId: string, locale: string) {
 	}
 }
 
+/**
+ * Finds an existing checkout by ID, or creates a fresh one if it's missing,
+ * stale, or already associated with a completed order.
+ *
+ * This function performs GraphQL reads/writes only — it does NOT write any
+ * cookie. Callers in Server Action or Route Handler contexts are responsible
+ * for persisting the returned checkout ID to a cookie via saveIdToCookie().
+ * Do NOT call this from a plain Server Component render — cookies() can only
+ * be written in a Server Action or Route Handler, so use find() there instead.
+ */
 export async function findOrCreate({
 	channel,
 	checkoutId,
@@ -58,7 +68,6 @@ export async function findOrCreate({
 		// checkout is null/undefined or was completed — fall through to create fresh
 	}
 	const fresh = (await create({ channel, locale })).checkoutCreate?.checkout;
-	if (fresh?.id) await saveIdToCookie(channel, fresh.id);
 	return fresh;
 }
 

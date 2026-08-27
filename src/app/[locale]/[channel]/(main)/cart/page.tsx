@@ -20,12 +20,12 @@ export default async function Page(props: { params: Promise<{ channel: string; l
 	const t = await getTranslations("cart");
 
 	const checkoutId = await Checkout.getIdFromCookies(channel);
-	// Session 25: use findOrCreate to handle stale/completed checkouts
-	const checkout = await Checkout.findOrCreate({
-		channel,
-		locale,
-		checkoutId: checkoutId || undefined,
-	});
+	// Read-only: page.tsx renders as a Server Component and cannot write
+	// cookies, so we use find() (not findOrCreate()) — mirrors CartNavItem.tsx
+	const found = checkoutId ? await Checkout.find(checkoutId, locale) : null;
+	// A checkout with an associated order was completed — treat as stale/empty
+	const hasOrder = !!(found as unknown as { order?: { id: string } })?.order?.id;
+	const checkout = hasOrder ? null : found;
 	const resolvedCheckoutId = checkout?.id ?? checkoutId;
 
 	if (!checkout || checkout.lines.length < 1) {
