@@ -9,8 +9,6 @@ services:
         NEXT_PUBLIC_SALEOR_API_URL: ${NEXT_PUBLIC_SALEOR_API_URL}
         NEXT_PUBLIC_STOREFRONT_URL: ${NEXT_PUBLIC_STOREFRONT_URL}
     restart: always
-    ports:
-      - 3000:3000
     networks:
       - saleor_network
 

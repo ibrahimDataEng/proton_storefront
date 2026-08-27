@@ -47,8 +47,8 @@ export const CheckoutFooter = ({ locale }: CheckoutFooterProps) => {
 			{/* Copyright */}
 			<p className="mb-3 mt-4 text-center text-[11px] text-neutral-500">
 				{isAr
-					? `جميع الحقوق محفوظة © ${currentYear} PROTON`
-					: `© ${currentYear} PROTON. All rights reserved.`}
+					? `جميع الحقوق محفوظة © ${currentYear} Tawasi Plus`
+					: `© ${currentYear} Tawasi Plus. All rights reserved.`}
 			</p>
 
 			{/* SSL note */}

@@ -98,8 +98,8 @@ async function FooterContent({ channel, locale }: { channel: string; locale: str
 	const legalTitle = isAr ? "قانوني" : "Legal";
 	const followTitle = isAr ? "تابعنا" : "Follow Us";
 	const copyright = isAr
-		? `جميع الحقوق محفوظة © ${currentYear} PROTON`
-		: `© ${currentYear} PROTON. All rights reserved.`;
+		? `جميع الحقوق محفوظة © ${currentYear} Tawasi Plus`
+		: `© ${currentYear} Tawasi Plus. All rights reserved.`;
 
 	const alternateLocale = locale === "ar" ? "en" : "ar";
 	const alternateLocaleLabel = locale === "ar" ? "English" : "العربية";
