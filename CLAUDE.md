@@ -406,6 +406,30 @@ Session 27 updates:
 
 **CSS className changes and UI-only component rewrites in src/checkout/ are permitted with explicit session approval only.**
 
+## Deployment & Environment Workflow (Session 27)
+
+- **Docker Compose split:**
+  - `docker-compose.yml` — shared base (build args, service definition)
+  - `docker-compose.local.yml` — local dev override (open port 3000)
+  - `docker-compose.server.yml` — production override (127.0.0.1 binding, explicit env_file)
+  - Local run: `docker compose -f docker-compose.yml -f docker-compose.local.yml up -d`
+  - Server run: `docker compose -f docker-compose.yml -f docker-compose.server.yml up -d`
+- **Golden rule**: ALL code changes (including Dockerfile, next.config.ts, docker-compose.yml)
+  are made on LOCAL only, committed, pushed to GitHub, then pulled on the server. The server
+  NEVER pushes to GitHub and is never the source of truth for code — it only pulls and runs.
+- **Server git branch must always be `main`** — never a feature branch. Previously misconfigured
+  and caused a cascade of merge conflicts during Session 26/27; now fixed.
+- `.gitattributes` added (`* text=auto eol=lf`) to prevent CRLF/LF line-ending drift between
+  Windows local dev and the Linux server.
+- `next.config.ts` requires `output: "standalone"` for Docker builds; the Dockerfile's runner
+  stage requires explicit `COPY` of `public/` and `node_modules/nodemailer` because Next.js
+  standalone output doesn't auto-trace them. Losing these two lines causes a Docker build
+  failure (`'/app/.next/standalone': not found` or similar).
+- **Rebrand note**: storefront's consumer-facing brand is "Tawasi Plus" (not "Green Line" or
+  "PROTON" — those were legacy/incorrect labels, fixed in Session 26).
+- **Hotfix branch convention**: production-breaking bugs get their own `hotfix/<short-name>`
+  branch, merged to main directly — not bundled into a long-running feature/session branch.
+
 ## Rules (ALWAYS follow)
 
 - src/checkout/ — NEVER touch hooks/, state/, graphql/, AdyenDropIn/, StripeElements/. CSS className changes and UI-only component rewrites are permitted with explicit session approval only.
