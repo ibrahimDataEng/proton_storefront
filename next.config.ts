@@ -2,6 +2,7 @@ import { type NextConfig } from "next";
 import createNextIntlPlugin from "next-intl/plugin";
 
 const nextConfig: NextConfig = {
+	output: "standalone",
 	async redirects() {
 		return [
 			{
@@ -36,7 +37,8 @@ const nextConfig: NextConfig = {
 	},
 
 	compiler: {
-		removeConsole: process.env.NODE_ENV === "production",
+		//removeConsole: process.env.NODE_ENV === "production",
+		removeConsole: false,
 	},
 };
 
