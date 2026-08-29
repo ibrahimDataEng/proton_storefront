@@ -45,6 +45,10 @@
 		"changeCurrency": "تغيير العملة",
 		"loadingError": "فشل تحميل محتوى الفوتر"
 	},
+	"theme": {
+		"switchToDark": "التبديل إلى الوضع الليلي",
+		"switchToLight": "التبديل إلى الوضع النهاري"
+	},
 	"categories": {
 		"allCategories": "جميع الفئات",
 		"noProducts": "لا توجد منتجات متاحة في هذه الفئة حالياً.",

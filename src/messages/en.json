@@ -45,6 +45,10 @@
 		"changeCurrency": "Change currency",
 		"loadingError": "Failed to load footer content"
 	},
+	"theme": {
+		"switchToDark": "Switch to dark mode",
+		"switchToLight": "Switch to light mode"
+	},
 	"categories": {
 		"allCategories": "All Categories",
 		"noProducts": "No products available in this category yet.",

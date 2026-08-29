@@ -14,6 +14,7 @@ export const colors = {
 		primary: "#1A1F1A",
 		secondary: "#5C6158",
 		inverse: "#FAF7F2",
+		footer: "#FAF7F2",
 	},
 	line: {
 		subtle: "#E5E1DA",
@@ -42,6 +43,7 @@ export const colorsDark = {
 		primary: "#F5F2EC",
 		secondary: "#A8AAA3",
 		inverse: "#141613",
+		footer: "#FAF7F2",
 	},
 	line: {
 		subtle: "#282C26",

@@ -4,6 +4,7 @@ import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
 import { MotionProvider } from "@/ui/components/MotionProvider";
+import { ThemeInitializer } from "@/ui/components/ThemeInitializer";
 import { routing } from "@/i18n/routing";
 
 const plexSans = IBM_Plex_Sans({
@@ -46,8 +47,23 @@ export default async function RootLayout({
 		messages = {};
 	}
 	return (
-		<html lang={locale} dir={isRTL ? "rtl" : "ltr"} className={`${plexSans.variable} ${plexArabic.variable}`}>
+		<html
+			lang={locale}
+			dir={isRTL ? "rtl" : "ltr"}
+			className={`${plexSans.variable} ${plexArabic.variable}`}
+			suppressHydrationWarning
+		>
+			<head>
+				{/* Applies the persisted theme before first paint to avoid a light/dark flash.
+				    No prefers-color-scheme fallback — first-time visitors always default to light. */}
+				<script
+					dangerouslySetInnerHTML={{
+						__html: `(function(){try{if(localStorage.getItem("theme")==="dark"){document.documentElement.setAttribute("data-theme","dark");}}catch(e){}})();`,
+					}}
+				/>
+			</head>
 			<body className="bg-surface-base font-sans text-content-primary">
+				<ThemeInitializer />
 				<NextIntlClientProvider locale={locale} messages={messages}>
 					<MotionProvider>{children}</MotionProvider>
 				</NextIntlClientProvider>

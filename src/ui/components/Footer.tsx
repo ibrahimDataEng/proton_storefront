@@ -6,6 +6,7 @@ import { Instagram, Twitter, Linkedin } from "lucide-react";
 import { LinkWithChannel } from "../atoms/LinkWithChannel";
 import { ChannelSelect } from "./ChannelSelect";
 import { Logo } from "./Logo";
+import { ThemeToggle } from "./ThemeToggle";
 import { ChannelsListDocument, MenuGetBySlugDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 import { getSaleorLanguage } from "@/lib/saleor-language";
@@ -17,10 +18,10 @@ function FooterSkeleton() {
 				<div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
 					{[1, 2, 3, 4].map((i) => (
 						<div key={i}>
-							<div className="mb-4 h-4 w-1/2 rounded bg-content-inverse/10"></div>
+							<div className="mb-4 h-4 w-1/2 rounded bg-content-footer/10"></div>
 							<div className="space-y-2">
 								{[1, 2, 3, 4].map((j) => (
-									<div key={j} className="h-3 rounded bg-content-inverse/10"></div>
+									<div key={j} className="h-3 rounded bg-content-footer/10"></div>
 								))}
 							</div>
 						</div>
@@ -81,10 +82,10 @@ function getTranslatedText(
 	return original?.[field] || original?.name || original?.title || "";
 }
 
-const columnTitleClass = "text-content-inverse text-sm font-medium tracking-widest uppercase mb-4";
-const linkClass = "text-content-inverse/70 hover:text-content-inverse text-sm py-1 transition-colors block";
+const columnTitleClass = "text-content-footer text-sm font-medium tracking-widest uppercase mb-4";
+const linkClass = "text-content-footer/70 hover:text-content-footer text-sm py-1 transition-colors block";
 const socialLinkClass =
-	"flex items-center gap-2 text-content-inverse/70 hover:text-content-inverse text-sm py-1 transition-colors";
+	"flex items-center gap-2 text-content-footer/70 hover:text-content-footer text-sm py-1 transition-colors";
 
 async function FooterContent({ channel, locale }: { channel: string; locale: string }) {
 	const { footerLinks, channels } = await getFooterData(channel, locale);
@@ -113,13 +114,13 @@ async function FooterContent({ channel, locale }: { channel: string; locale: str
 	];
 
 	return (
-		<footer className="bg-surface-footer py-16 text-content-inverse md:py-20">
+		<footer className="bg-surface-footer py-16 text-content-footer md:py-20">
 			<div className="mx-auto max-w-7xl px-4 lg:px-8">
 				<div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
 					{/* Column 1 — Brand */}
 					<div>
 						<Logo className="brightness-0 invert" />
-						<p className="mb-6 mt-3 text-sm leading-relaxed text-content-inverse/60">{description}</p>
+						<p className="mb-6 mt-3 text-sm leading-relaxed text-content-footer/60">{description}</p>
 						{channels?.channels && <ChannelSelect channels={channels.channels} />}
 					</div>
 
@@ -227,7 +228,7 @@ async function FooterContent({ channel, locale }: { channel: string; locale: str
 				</div>
 
 				{/* Bottom bar */}
-				<div className="mt-16 border-t border-content-inverse/10 pt-6">
+				<div className="mt-16 border-t border-content-footer/10 pt-6">
 					{/* Language switcher */}
 					<div className="mb-5 flex items-center justify-center gap-2">
 						<svg
@@ -246,10 +247,14 @@ async function FooterContent({ channel, locale }: { channel: string; locale: str
 						</svg>
 						<Link
 							href={alternateLocaleHref}
-							className="text-sm text-neutral-500 transition-colors hover:text-content-inverse"
+							className="text-sm text-neutral-500 transition-colors hover:text-content-footer"
 						>
 							{alternateLocaleLabel}
 						</Link>
+						<span className="mx-1 text-content-footer/20" aria-hidden="true">
+							·
+						</span>
+						<ThemeToggle variant="inverse" />
 					</div>
 
 					{/* Payment icons */}
