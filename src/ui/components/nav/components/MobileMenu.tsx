@@ -3,6 +3,7 @@
 import { Fragment, type ReactNode } from "react";
 import { Dialog, Transition } from "@headlessui/react";
 import { Logo } from "../../Logo";
+import { ThemeToggle } from "../../ThemeToggle";
 import { useMobileMenu } from "./useMobileMenu";
 import { OpenButton } from "./OpenButton";
 import { CloseButton } from "./CloseButton";
@@ -30,7 +31,10 @@ export const MobileMenu = ({ children }: Props) => {
 							leaveTo="bg-transparent"
 						>
 							<Logo />
-							<CloseButton onClick={closeMenu} aria-controls="mobile-menu" />
+							<div className="ml-auto flex items-center gap-2">
+								<ThemeToggle />
+								<CloseButton onClick={closeMenu} aria-controls="mobile-menu" />
+							</div>
 						</Transition.Child>
 						<Transition.Child
 							as={Fragment}

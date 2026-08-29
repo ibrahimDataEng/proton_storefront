@@ -14,6 +14,8 @@
 	--color-text-primary: 26 31 26;
 	--color-text-secondary: 92 97 88;
 	--color-text-inverse: 250 247 242;
+	/* Theme-invariant (matches --color-surface-footer): footer bg never changes with theme, so its text can't either */
+	--color-text-footer: 250 247 242; /* #FAF7F2 */
 
 	/* Border */
 	--color-border-subtle: 229 225 218;
@@ -38,6 +40,7 @@
 	--color-text-primary: 245 242 236;
 	--color-text-secondary: 168 170 163;
 	--color-text-inverse: 20 22 19;
+	--color-text-footer: 250 247 242; /* #FAF7F2 — same fixed value as :root, intentionally not overridden */
 
 	--color-border-subtle: 40 44 38;
 	--color-border-default: 55 60 52;

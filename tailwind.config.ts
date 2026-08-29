@@ -24,6 +24,7 @@ const config: Config = {
 					primary: "rgb(var(--color-text-primary) / <alpha-value>)",
 					secondary: "rgb(var(--color-text-secondary) / <alpha-value>)",
 					inverse: "rgb(var(--color-text-inverse) / <alpha-value>)",
+					footer: "rgb(var(--color-text-footer) / <alpha-value>)",
 				},
 				line: {
 					subtle: "rgb(var(--color-border-subtle) / <alpha-value>)",
