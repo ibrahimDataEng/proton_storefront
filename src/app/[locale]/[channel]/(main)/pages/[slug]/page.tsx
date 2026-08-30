@@ -7,6 +7,7 @@ import dynamic from "next/dynamic";
 import { PageGetBySlugDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 import { getSaleorLanguage } from "@/lib/saleor-language";
+import { parseAboutContent } from "@/lib/parseAboutContent";
 import { Container } from "@/ui/components/Container";
 
 const ContactPageClient = dynamic(() =>
@@ -14,6 +15,9 @@ const ContactPageClient = dynamic(() =>
 );
 const WholesalePageClient = dynamic(() =>
 	import("@/ui/components/wholesale/WholesalePageClient").then((m) => m.WholesalePageClient),
+);
+const AboutPageClient = dynamic(() =>
+	import("@/ui/components/about/AboutPageClient").then((m) => m.AboutPageClient),
 );
 
 const parser = edjsHTML();
@@ -52,6 +56,14 @@ export const generateMetadata = async (props: {
 
 	const localizedPage = params.locale === "ar" && page.translation ? page.translation : page;
 
+	if (params.slug === "about") {
+		const title = localizedPage?.title || (params.locale === "ar" ? "نحن" : "About Us");
+		return {
+			title: `${title} · Tawasi Plus`,
+			description: localizedPage?.seoDescription || undefined,
+		};
+	}
+
 	return {
 		title: `${localizedPage?.seoTitle || localizedPage?.title || "Page"} · Saleor Storefront example`,
 		description: localizedPage?.seoDescription || localizedPage?.title,
@@ -80,6 +92,17 @@ export default async function Page(props: { params: Promise<{ slug: string; loca
 
 	const localizedPage = params.locale === "ar" && page.translation ? page.translation : page;
 	const title = localizedPage?.title || "Page";
+
+	if (params.slug === "about") {
+		const parsed = parseAboutContent(localizedPage?.content);
+		if (parsed) {
+			return <AboutPageClient data={parsed} />;
+		}
+		// Unexpected content structure (e.g. edited in the Dashboard in a way
+		// that breaks the 4-header-section assumption) — fall through to the
+		// generic prose renderer below instead of crashing the page.
+	}
+
 	const contentJson = localizedPage?.content ? JSON.parse(localizedPage.content) : null;
 	const contentHtml = contentJson ? parser.parse(contentJson) : null;
 
