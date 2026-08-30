@@ -254,13 +254,21 @@ export function SupplierApplicationForm() {
 		}
 	};
 
-	const inputClass = (hasError: boolean) =>
+	// No width/horizontal-padding here on purpose — those vary per field (full-width
+	// vs. the phone row's fixed-width code select + flexible number input), and mixing
+	// a width utility here with a different one at the call site is a cascade footgun:
+	// both target the same CSS property with equal specificity, so whichever wins is
+	// decided by Tailwind's internal generation order, not by the order classes are
+	// listed on the element. Each caller supplies its own width and horizontal padding.
+	const inputBaseClass = (hasError: boolean) =>
 		clsx(
-			"w-full rounded-lg border px-4 py-3 text-content-primary placeholder:text-content-secondary/50",
+			"rounded-lg border py-3 text-content-primary placeholder:text-content-secondary/50",
 			"bg-surface-base outline-none transition-colors",
 			"focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20",
 			hasError ? "border-red-400" : "border-line-default",
 		);
+
+	const inputClass = (hasError: boolean) => clsx(inputBaseClass(hasError), "w-full px-4");
 
 	const fieldError = (name: FieldName) => (touched[name] ? errors[name] : undefined);
 
@@ -386,7 +394,7 @@ export function SupplierApplicationForm() {
 								value={values.phoneCode}
 								onChange={(e) => setValue("phoneCode", e.target.value)}
 								onBlur={handleBlur("phoneNumber")}
-								className={clsx(inputClass(false), "w-28 shrink-0")}
+								className={clsx(inputBaseClass(false), "w-28 shrink-0 px-3")}
 								aria-label={t("phoneCodeLabel")}
 							>
 								{PHONE_CODES.map((code) => (
@@ -403,7 +411,7 @@ export function SupplierApplicationForm() {
 									onChange={(e) => setValue("phoneCodeOther", e.target.value)}
 									onBlur={handleBlur("phoneNumber")}
 									placeholder={t("phoneCodeOtherPlaceholder")}
-									className={clsx(inputClass(!!fieldError("phoneNumber")), "w-24 shrink-0")}
+									className={clsx(inputBaseClass(!!fieldError("phoneNumber")), "w-24 shrink-0 px-3")}
 								/>
 							)}
 							<input
@@ -413,7 +421,7 @@ export function SupplierApplicationForm() {
 								onChange={(e) => setValue("phoneNumber", e.target.value)}
 								onBlur={handleBlur("phoneNumber")}
 								placeholder={t("phoneNumberPlaceholder")}
-								className={inputClass(!!fieldError("phoneNumber"))}
+								className={clsx(inputBaseClass(!!fieldError("phoneNumber")), "min-w-0 flex-1 px-4")}
 							/>
 						</div>
 						{fieldError("phoneNumber") && (
