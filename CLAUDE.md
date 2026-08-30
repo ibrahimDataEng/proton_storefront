@@ -58,7 +58,14 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
 
 - 7 lint warnings: 6 in src/checkout/ + 1 in Logo.tsx
   (next/image suggestion — Logo is raw <img>)
-- /pages/about may not exist in Saleor backend
+- ~~/pages/about may not exist in Saleor backend~~ — confirmed working in
+  Session 31 (navigated + rendered live); backed by a real Saleor Page record
+  (slug "about") via PageGetBySlugDocument, with special parsing
+  (parseAboutContent.ts → AboutPageClient) for its 4-header-section content
+- MobileDrawer.tsx / MobileNavClient.tsx / MobileDrawerWrapper.tsx /
+  MobileMenu.tsx / useMobileMenu.ts are confirmed dead code (not imported by
+  any live route) — flagged in Session 30/31, cleanup deferred to a future
+  session (beads: see "cleanup: remove dead MobileDrawer/MobileMenu" issue)
 - Order detail page not built (accordion in account/OrdersSection covers basic needs)
 - Quantity stepper: CheckoutLinesUpdate added in session 14 via codegen
 - "Add to cart" on recommendations navigates to product page —
@@ -78,10 +85,13 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   CMS menu logic + ChannelSelect + Skeleton preserved
 - Nav: NavLink uses brand-primary (active) / content-secondary (default),
   console.log + revalidate:1 fixed in NavLinks.tsx
-- NavLinks (Session 23): replaced CMS-driven items with 4 fixed items:
-  Home → /, Shop → MegaMenu + /products, Wholesale → /pages/wholesale,
-  Contact → /pages/contact-us; fetches CategoriesWithChildren (not navbar menu);
-  accepts mobile prop — passes to ShopNavItem for accordion vs hover mode
+- NavLinks (Session 23, corrected Session 31): replaced CMS-driven items with
+  fixed items: Home → /, Shop → MegaMenu + /products, Wholesale →
+  /pages/wholesale, Contact → /pages/contact-us; fetches CategoriesWithChildren
+  (not navbar menu). Desktop-only — never rendered on mobile (no `mobile` prop
+  exists on ShopNavItem; that Session-23 note was stale). "Become a Supplier"
+  removed from here in Session 31 (still in Footer's Legal column); mobile
+  reaches it via the new MobileLinksMenu popup instead.
 - HeaderWrapper (Session 23): top now reads var(--topbar-height, 0px) instead
   of fixed top-0; TopBar sets that variable client-side
 - SearchBar (Session 7): live autocomplete dropdown with 300ms debounce,
@@ -144,13 +154,38 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   sets --topbar-height CSS variable (0px or 36px) used by HeaderWrapper + layout;
   left: 🚚 free-shipping static text; right: rotating ticker (4 messages, 4s
   interval, AnimatePresence fade); full i18n via "topbar" namespace
-- ShopNavItem / MegaMenu (Session 23): src/ui/components/nav/ShopNavItem.tsx —
-  "use client"; dual-mode: desktop (hover panel, fixed full-width, left category
-  column + right subcategory grid 3-4 cols, scaleY animation) / mobile (accordion
-  in existing MobileMenu, AnimatePresence height transition); RTL-aware chevrons +
-  arrow directions; useClickOutside for desktop close-on-outside-click;
-  categories fetched via CategoriesWithChildren GraphQL query (level=0, 8 root
-  cats, 10 children each); passes through NavLinks server component
+- ShopNavItem / MegaMenu (Session 23, corrected Session 31): src/ui/components/
+  nav/ShopNavItem.tsx — "use client"; desktop-only hover panel (fixed
+  full-width, left category column + right subcategory grid 3-4 cols, scaleY
+  animation), hidden on mobile via `md:` classes — no `mobile` mode/prop
+  exists (the MobileMenu accordion mode described here in Session 23 was never
+  actually wired up — see MobileLinksMenu (Session 31) below for what mobile
+  actually uses); RTL-aware chevrons + arrow directions; useClickOutside for
+  desktop close-on-outside-click; categories fetched via CategoriesWithChildren
+  GraphQL query (level=0, 8 root cats, 10 children each); rendered by NavLinks
+  server component
+- MobileLinksMenu (Session 31): src/ui/components/nav/components/
+  MobileLinksMenu.tsx — "use client"; small popup (NOT the category mega
+  menu — separate concern) triggered by a new h-9 w-9 hamburger icon button
+  inserted into Header.tsx's mobile row (md:hidden), after LanguageSwitcher;
+  lists the 4 static pages unreachable from BottomNavClient: Wholesale,
+  Become a Supplier, Contact Us, About (/pages/about — confirmed working,
+  backed by a real Saleor Page record, not a stub); local useState +
+  useClickOutside + framer-motion AnimatePresence (ShopNavItem's pattern, not
+  headlessui); closes on outside click, Escape (document-level listener while
+  open — a button-only keydown handler is NOT enough, since focus can be on a
+  link inside the popup), and link click; positioned via logical `end-0` +
+  `max-w-[calc(100vw-1.5rem)]` so it never clips off either edge in RTL or
+  LTR without special-casing direction. Labels via new "nav" namespace keys:
+  supplier, about, openMenu (all bilingual, Arabic reuses Footer's exact
+  "كن مورّداً لنا" string for consistency).
+  Fixed in the same session: Header.tsx's mobile row was missing `min-w-0` on
+  the search bar's flex-1 wrapper — without it the row silently overflowed
+  the viewport (clipped by `overflow-x: hidden` on body, no visible
+  scrollbar) once a 4th item was added, because a flex item's default
+  min-width:auto blocks shrinking below its content's intrinsic width even
+  with `truncate` on a descendant. Add `min-w-0` to any flex-1 wrapper in this
+  row if it grows further.
 - ContactPageClient (Session 22): src/ui/components/contact/ContactPageClient.tsx —
   "use client"; two-column layout (info cards + form); 4 info cards (email/phone/address/hours)
   with spring lift + brand-primary accent bar on hover; form (name/email/subject/message)
@@ -268,8 +303,7 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
     (2) `@tailwindcss/forms` draws every `<select>`'s dropdown chevron with a hardcoded
     `background-position: right ...`, which is a physical value that never flips for
     RTL — in Arabic the chevron and the select's own (right-aligned) text land on the
-    same side and overlap. Fixed with `rtl:bg-[left_...]` overriding the default
-    `bg-[right_...]`, plus `ps-_/pe-_`(not`px-_`) so the chevron always has clearance
+    same side and overlap. Fixed with `rtl:bg-[left_...]`overriding the default`bg-[right_...]`, plus `ps-_/pe-_`(not`px-\_`) so the chevron always has clearance
     on whichever side it lands
 
 ## Health status (post-Session 25)
@@ -355,7 +389,8 @@ SearchBar.tsx, SearchOverlay.tsx (session 7).
 - `home` — header, description, aboutLink, contactLink,
   shopByCountry (session 21)
 - `topbar` — freeShipping, invoices, wholesale, countries, quality (session 23)
-- `nav` — home, shop, wholesale, contact, viewAll, allCategories (session 23)
+- `nav` — home, shop, wholesale, contact, viewAll, allCategories (session 23);
+  +supplier, about, openMenu (session 31 — used by MobileLinksMenu popup)
 - `checkout` — securePay, freeReturns, fastDelivery (session 24 — used by CheckoutTrustBar)
 - `supplier` — meta.{title,description}; hero.{eyebrow,headline,subtitle,ctaApply,ctaWhatsApp,
   stat1-3Value,stat1-3Label}; categories.{sectionTitle,sectionSubtitle,nuts,driedFruits,seeds,
