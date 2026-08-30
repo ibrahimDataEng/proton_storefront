@@ -58,7 +58,14 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
 
 - 7 lint warnings: 6 in src/checkout/ + 1 in Logo.tsx
   (next/image suggestion — Logo is raw <img>)
-- /pages/about may not exist in Saleor backend
+- ~~/pages/about may not exist in Saleor backend~~ — confirmed working in
+  Session 31 (navigated + rendered live); backed by a real Saleor Page record
+  (slug "about") via PageGetBySlugDocument, with special parsing
+  (parseAboutContent.ts → AboutPageClient) for its 4-header-section content
+- MobileDrawer.tsx / MobileNavClient.tsx / MobileDrawerWrapper.tsx /
+  MobileMenu.tsx / useMobileMenu.ts are confirmed dead code (not imported by
+  any live route) — flagged in Session 30/31, cleanup deferred to a future
+  session (beads: see "cleanup: remove dead MobileDrawer/MobileMenu" issue)
 - Order detail page not built (accordion in account/OrdersSection covers basic needs)
 - Quantity stepper: CheckoutLinesUpdate added in session 14 via codegen
 - "Add to cart" on recommendations navigates to product page —
@@ -78,10 +85,13 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   CMS menu logic + ChannelSelect + Skeleton preserved
 - Nav: NavLink uses brand-primary (active) / content-secondary (default),
   console.log + revalidate:1 fixed in NavLinks.tsx
-- NavLinks (Session 23): replaced CMS-driven items with 4 fixed items:
-  Home → /, Shop → MegaMenu + /products, Wholesale → /pages/wholesale,
-  Contact → /pages/contact-us; fetches CategoriesWithChildren (not navbar menu);
-  accepts mobile prop — passes to ShopNavItem for accordion vs hover mode
+- NavLinks (Session 23, corrected Session 31): replaced CMS-driven items with
+  fixed items: Home → /, Shop → MegaMenu + /products, Wholesale →
+  /pages/wholesale, Contact → /pages/contact-us; fetches CategoriesWithChildren
+  (not navbar menu). Desktop-only — never rendered on mobile (no `mobile` prop
+  exists on ShopNavItem; that Session-23 note was stale). "Become a Supplier"
+  removed from here in Session 31 (still in Footer's Legal column); mobile
+  reaches it via the new MobileLinksMenu popup instead.
 - HeaderWrapper (Session 23): top now reads var(--topbar-height, 0px) instead
   of fixed top-0; TopBar sets that variable client-side
 - SearchBar (Session 7): live autocomplete dropdown with 300ms debounce,
@@ -144,13 +154,38 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   sets --topbar-height CSS variable (0px or 36px) used by HeaderWrapper + layout;
   left: 🚚 free-shipping static text; right: rotating ticker (4 messages, 4s
   interval, AnimatePresence fade); full i18n via "topbar" namespace
-- ShopNavItem / MegaMenu (Session 23): src/ui/components/nav/ShopNavItem.tsx —
-  "use client"; dual-mode: desktop (hover panel, fixed full-width, left category
-  column + right subcategory grid 3-4 cols, scaleY animation) / mobile (accordion
-  in existing MobileMenu, AnimatePresence height transition); RTL-aware chevrons +
-  arrow directions; useClickOutside for desktop close-on-outside-click;
-  categories fetched via CategoriesWithChildren GraphQL query (level=0, 8 root
-  cats, 10 children each); passes through NavLinks server component
+- ShopNavItem / MegaMenu (Session 23, corrected Session 31): src/ui/components/
+  nav/ShopNavItem.tsx — "use client"; desktop-only hover panel (fixed
+  full-width, left category column + right subcategory grid 3-4 cols, scaleY
+  animation), hidden on mobile via `md:` classes — no `mobile` mode/prop
+  exists (the MobileMenu accordion mode described here in Session 23 was never
+  actually wired up — see MobileLinksMenu (Session 31) below for what mobile
+  actually uses); RTL-aware chevrons + arrow directions; useClickOutside for
+  desktop close-on-outside-click; categories fetched via CategoriesWithChildren
+  GraphQL query (level=0, 8 root cats, 10 children each); rendered by NavLinks
+  server component
+- MobileLinksMenu (Session 31): src/ui/components/nav/components/
+  MobileLinksMenu.tsx — "use client"; small popup (NOT the category mega
+  menu — separate concern) triggered by a new h-9 w-9 hamburger icon button
+  inserted into Header.tsx's mobile row (md:hidden), after LanguageSwitcher;
+  lists the 4 static pages unreachable from BottomNavClient: Wholesale,
+  Become a Supplier, Contact Us, About (/pages/about — confirmed working,
+  backed by a real Saleor Page record, not a stub); local useState +
+  useClickOutside + framer-motion AnimatePresence (ShopNavItem's pattern, not
+  headlessui); closes on outside click, Escape (document-level listener while
+  open — a button-only keydown handler is NOT enough, since focus can be on a
+  link inside the popup), and link click; positioned via logical `end-0` +
+  `max-w-[calc(100vw-1.5rem)]` so it never clips off either edge in RTL or
+  LTR without special-casing direction. Labels via new "nav" namespace keys:
+  supplier, about, openMenu (all bilingual, Arabic reuses Footer's exact
+  "كن مورّداً لنا" string for consistency).
+  Fixed in the same session: Header.tsx's mobile row was missing `min-w-0` on
+  the search bar's flex-1 wrapper — without it the row silently overflowed
+  the viewport (clipped by `overflow-x: hidden` on body, no visible
+  scrollbar) once a 4th item was added, because a flex item's default
+  min-width:auto blocks shrinking below its content's intrinsic width even
+  with `truncate` on a descendant. Add `min-w-0` to any flex-1 wrapper in this
+  row if it grows further.
 - ContactPageClient (Session 22): src/ui/components/contact/ContactPageClient.tsx —
   "use client"; two-column layout (info cards + form); 4 info cards (email/phone/address/hours)
   with spring lift + brand-primary accent bar on hover; form (name/email/subject/message)
@@ -208,6 +243,68 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   - CTA: brand-primary bg, WhatsApp (#25D366) pulse-glow button, locale-aware wa.me message
   - i18n: "wholesale" namespace in en.json + ar.json; all text via useTranslations, zero hardcoded strings
   - RTL: word-stagger works in both directions, zigzag CSS-grid reversal works naturally
+- /pages/become-supplier — full Become a Supplier page (session 26):
+  - SupplierPageClient: src/ui/components/supplier/SupplierPageClient.tsx — Server Component
+    orchestrator (deliberately NOT "use client" — it composes async Server Component sections
+    directly; a Client Component parent cannot import/render `next-intl/server`-based async
+    Server Components, so the orchestrator must stay server-side)
+  - SupplierHero, SupplierCategoriesSection, SupplierRequirementsSection, SupplierStepsSection,
+    SupplierCtaSection: all Server Components (async, `getTranslations`/`getLocale` from
+    "next-intl/server"), no framer-motion — static Tailwind-only styling per the
+    "Server Components by default" rule
+  - SupplierApplicationForm ("use client"): full application form — company/country/contact/
+    website/email/phone(+country-code select incl. "other" free text)/business-type/category
+    (multi-select chips, min 1)/products/nature-of-business (2000-char hard limit + live counter)/
+    certifications (checkboxes)/file upload/Turnstile/terms; on-blur validation with re-validation
+    of untouched fields on submit; submit state machine (idle→sending→sent/error, AnimatePresence)
+    mirrors ContactPageClient's pattern; honeypot field "website_url_2" (visually hidden, not
+    type="hidden", so bot autofill still catches it); "Country of Operation" select reuses the
+    exported `COUNTRIES` array from `@/ui/components/home/CountrySection`
+  - SupplierFileUpload ("use client"): drag-and-drop + click-to-browse, single file, accepts
+    pdf/doc/docx/xls/xlsx/zip/jpg/jpeg/png, 10MB client-side cap (mirrors server-side cap) —
+    bad selections are rejected inline and never reach `onChange`
+  - SupplierFaqSection ("use client"): 4-item accordion, same AnimatePresence height-transition
+    pattern as WholesalePageClient's FaqSection
+  - TurnstileWidget (src/ui/components/supplier/TurnstileWidget.tsx, "use client"): reusable
+    Cloudflare Turnstile wrapper — loads challenges.cloudflare.com/turnstile/v0/api.js via a
+    plain `<script>` tag in useEffect (no npm dependency), renders into a ref'd div, exposes
+    `onVerify(token)` / `onExpire()` props; reads site key from
+    `NEXT_PUBLIC_TURNSTILE_SITE_KEY`. Reuse this component for any future form that needs
+    bot protection — don't reimplement the script-loading dance.
+  - src/app/api/supplier/route.ts: parses `request.formData()` (multipart, NOT JSON like
+    /api/contact); validates all required fields server-side; honeypot check (silent fake
+    success if "website_url_2" is filled); verifies the Turnstile token server-side via POST to
+    challenges.cloudflare.com/turnstile/v0/siteverify using `TURNSTILE_SECRET_KEY`; attaches the
+    uploaded file directly to the outgoing nodemailer email (buffer from FormData) with NO disk/
+    persistent storage; same nodemailer transport env vars as /api/contact
+    (SMTP_HOST/PORT/SECURE/USER/PASS); from "Tawasi Plus Suppliers", to CONTACT_TO_EMAIL; error
+    codes: MISSING_FIELDS, INVALID_EMAIL, INVALID_URL, FILE_TOO_LARGE, INVALID_FILE_TYPE,
+    TURNSTILE_FAILED, SEND_FAILED
+  - "become-supplier" slug special-cased in pages/[slug]/page.tsx (generateMetadata + default
+    export), before the Saleor fetch — identical pattern to contact-us/wholesale; no Saleor
+    Page record needed
+  - Nav link added in NavLinks.tsx (between Wholesale and Contact); static link added to
+    Footer.tsx's `legalLinks` array (not the CMS-driven Explore column)
+  - i18n: "supplier" namespace in en.json + ar.json (meta/hero/categories/requirements/steps/
+    form/faq/cta) — Arabic copy is formal Modern Standard Arabic (الفصحى) throughout, not
+    dialect
+  - RTL phone/select fixes (session 29): two real bugs only showed up on manual visual
+    review in Arabic, not from HTML-string inspection — use logical Tailwind properties
+    (ps-_/pe-_/ms-_/me-_/start-_/end-_, gap-_ on flex containers), not physical ones
+    (pl-_/pr-_/ml-_/mr-_/left-_/right-_), in any future form work in this codebase:
+    (1) a shared `inputClass()` helper baked in `w-full`, then a caller appended a
+    separate `w-28`/`w-24` alongside it — both are width utilities with equal
+    specificity, so the winner depends on Tailwind's internal generation order, not on
+    which class is listed first/last in JSX. This stretched the phone row's country-code
+    select to full width and pushed the phone number input out of the form. Fixed by
+    splitting into a width-free `inputBaseClass()` + per-field width (w-full px-4 for
+    normal fields; w-28 shrink-0 / w-24 shrink-0 / min-w-0 flex-1 for the phone row) —
+    never combine two width utilities on one element, even via a shared base + override.
+    (2) `@tailwindcss/forms` draws every `<select>`'s dropdown chevron with a hardcoded
+    `background-position: right ...`, which is a physical value that never flips for
+    RTL — in Arabic the chevron and the select's own (right-aligned) text land on the
+    same side and overlap. Fixed with `rtl:bg-[left_...]`overriding the default`bg-[right_...]`, plus `ps-_/pe-_`(not`px-\_`) so the chevron always has clearance
+    on whichever side it lands
 
 ## Health status (post-Session 25)
 
@@ -292,8 +389,23 @@ SearchBar.tsx, SearchOverlay.tsx (session 7).
 - `home` — header, description, aboutLink, contactLink,
   shopByCountry (session 21)
 - `topbar` — freeShipping, invoices, wholesale, countries, quality (session 23)
-- `nav` — home, shop, wholesale, contact, viewAll, allCategories (session 23)
+- `nav` — home, shop, wholesale, contact, viewAll, allCategories (session 23);
+  +supplier, about, openMenu (session 31 — used by MobileLinksMenu popup)
 - `checkout` — securePay, freeReturns, fastDelivery (session 24 — used by CheckoutTrustBar)
+- `supplier` — meta.{title,description}; hero.{eyebrow,headline,subtitle,ctaApply,ctaWhatsApp,
+  stat1-3Value,stat1-3Label}; categories.{sectionTitle,sectionSubtitle,nuts,driedFruits,seeds,
+  coffee,snacks,spices,staples,herbs}; requirements.{sectionTitle,sectionSubtitle,card1-4Title,
+  card1-4Subtitle}; steps.{sectionTitle,step1-4Title,step1-4Subtitle}; form.{sectionTitle,
+  sectionSubtitle,companyNameLabel/Placeholder,countryLabel/Placeholder,contactNameLabel/
+  Placeholder,websiteLabel/Placeholder,emailLabel/Placeholder,phoneLabel,phoneCodeLabel,
+  phoneNumberPlaceholder,phoneCodeOther,phoneCodeOtherPlaceholder,businessTypeLabel/Placeholder,
+  businessType{Manufacturer,Farmer,Distributor,Importer,Broker},categoryLabel,categoryHelp,
+  productLabel/Placeholder,natureLabel/Placeholder,natureCounter,certificationsLabel,
+  cert{Iso,Haccp,Halal,Other},uploadLabel,uploadHint,uploadDragText,uploadOr,uploadBrowseText,
+  uploadRemove,uploadErrorType,uploadErrorSize,termsLabel,turnstileError,submit,sending,sent,
+  sentSubtitle,sendError,required,invalidEmail,invalidUrl,invalidPhone,selectAtLeastOne};
+  faq.{sectionTitle,q1-4,a1-4}; cta.{headline,subtitle,button,hours,waMessageEn,waMessageAr}
+  (session 26 — Arabic copy is formal MSA throughout, not dialect)
 - `error`, `button`, `welcome`, `goodbye` — misc
   (`error` extended in session 17: +title, +description, +tryAgain, +goHome, +code)
 

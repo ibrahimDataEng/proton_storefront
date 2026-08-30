@@ -16,6 +16,9 @@ const ContactPageClient = dynamic(() =>
 const WholesalePageClient = dynamic(() =>
 	import("@/ui/components/wholesale/WholesalePageClient").then((m) => m.WholesalePageClient),
 );
+const SupplierPageClient = dynamic(() =>
+	import("@/ui/components/supplier/SupplierPageClient").then((m) => m.SupplierPageClient),
+);
 const AboutPageClient = dynamic(() =>
 	import("@/ui/components/about/AboutPageClient").then((m) => m.AboutPageClient),
 );
@@ -40,6 +43,14 @@ export const generateMetadata = async (props: {
 		return {
 			title: `${t("hero.headline")} · Tawasi Plus`,
 			description: t("hero.subtitle"),
+		};
+	}
+
+	if (params.slug === "become-supplier") {
+		const t = await getTranslations({ locale: params.locale, namespace: "supplier" });
+		return {
+			title: `${t("meta.title")} · Tawasi Plus`,
+			description: t("meta.description"),
 		};
 	}
 
@@ -79,6 +90,10 @@ export default async function Page(props: { params: Promise<{ slug: string; loca
 
 	if (params.slug === "wholesale") {
 		return <WholesalePageClient />;
+	}
+
+	if (params.slug === "become-supplier") {
+		return <SupplierPageClient />;
 	}
 
 	const language = getSaleorLanguage(params.locale);

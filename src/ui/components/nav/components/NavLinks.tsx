@@ -18,7 +18,7 @@ function getLabel(key: string, locale: string): string {
 	return labels[key]?.[locale] ?? labels[key]?.["en"] ?? key;
 }
 
-/** Desktop nav items only. Mobile nav is handled by MobileDrawer. */
+/** Desktop nav items only. Mobile static pages are handled by MobileLinksMenu. */
 export const NavLinks = async ({ locale }: NavLinksProps) => {
 	const language = getSaleorLanguage(locale);
 
