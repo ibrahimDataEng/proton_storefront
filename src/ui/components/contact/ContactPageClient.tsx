@@ -2,7 +2,7 @@
 
 import { type FormEvent, type ReactNode, useRef, useState } from "react";
 import { m, AnimatePresence, useInView } from "framer-motion";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Mail, Phone, MapPin, Clock, Send, CheckCircle, Loader2, AlertCircle } from "lucide-react";
 import { clsx } from "clsx";
 import { Container } from "@/ui/components/Container";
@@ -45,9 +45,12 @@ interface ContactCardProps {
 	label: string;
 	value: string;
 	href: string | null;
+	/** Set to "ltr" for values that are LTR-by-nature (e.g. phone numbers) so
+	 * they don't get bidi-reordered when rendered inside RTL (Arabic) context. */
+	valueDir?: "ltr";
 }
 
-function ContactCard({ icon, label, value, href }: ContactCardProps) {
+function ContactCard({ icon, label, value, href, valueDir }: ContactCardProps) {
 	return (
 		<m.div
 			variants={itemVariants}
@@ -64,12 +67,15 @@ function ContactCard({ icon, label, value, href }: ContactCardProps) {
 					{href ? (
 						<a
 							href={href}
+							dir={valueDir}
 							className="break-all font-medium text-content-primary transition-colors hover:text-brand-primary"
 						>
 							{value}
 						</a>
 					) : (
-						<p className="font-medium text-content-primary">{value}</p>
+						<p dir={valueDir} className="font-medium text-content-primary">
+							{value}
+						</p>
 					)}
 				</div>
 			</div>
@@ -79,6 +85,7 @@ function ContactCard({ icon, label, value, href }: ContactCardProps) {
 
 export function ContactPageClient() {
 	const t = useTranslations("contact");
+	const locale = useLocale();
 	const [form, setForm] = useState<FormState>({ name: "", email: "", subject: "", message: "" });
 	const [status, setStatus] = useState<FormStatus>("idle");
 	const [errors, setErrors] = useState<Partial<FormState>>({});
@@ -105,6 +112,7 @@ export function ContactPageClient() {
 			label: t("phoneLabel"),
 			value: t("phoneValue"),
 			href: `tel:${t("phoneValue").replace(/\s/g, "")}`,
+			valueDir: "ltr" as const,
 		},
 		{
 			id: "address",
@@ -282,8 +290,13 @@ export function ContactPageClient() {
 								<label className="mb-1.5 block text-sm font-medium text-content-primary">
 									{t("messageLabel")}
 								</label>
+								{/* dir="auto" resolves to computed direction:ltr while the field is empty
+								    (browsers evaluate the VALUE, not the placeholder), which detaches the
+								    Arabic placeholder's trailing "…" and renders it on the wrong side.
+								    Forcing rtl for the ar locale fixes the placeholder without losing
+								    auto-detection for typed content in the en locale. */}
 								<textarea
-									dir="auto"
+									dir={locale === "ar" ? "rtl" : "auto"}
 									rows={5}
 									value={form.message}
 									onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}

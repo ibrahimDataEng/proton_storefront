@@ -66,6 +66,31 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   MobileMenu.tsx / useMobileMenu.ts are confirmed dead code (not imported by
   any live route) — flagged in Session 30/31, cleanup deferred to a future
   session (beads: see "cleanup: remove dead MobileDrawer/MobileMenu" issue)
+- Bidi (Unicode bidirectional text) pattern (Session 32): any digit-containing
+  or otherwise LTR-by-nature value rendered inside Arabic-context (RTL) markup
+  must be wrapped in `dir="ltr"` to avoid bidi reordering — see
+  ContactPageClient.tsx's phone number ContactCard for the pattern (a
+  `valueDir?: "ltr"` prop passed only on the phone card). Not every
+  LTR/mixed-content string needs this: verify with the browser first — e.g.
+  a single unbroken run (an email address) or digits individually anchored
+  between strong-Arabic words (the Hours value, "9:00 صباحاً") already
+  bidi-resolve correctly and don't need it; only isolated multi-token
+  runs (a phone number's space-separated groups) get reordered. Separately,
+  `dir="auto"` on an empty `<input>`/`<textarea>` resolves to computed
+  `direction:ltr` (not `rtl`, even inside an RTL document) since browsers
+  evaluate the field's VALUE, not its `placeholder` — this detaches trailing
+  neutral punctuation (e.g. "…") from an Arabic placeholder. Fix: force
+  `dir="rtl"` conditionally on locale (`locale === "ar" ? "rtl" : "auto"`)
+  only on fields actually confirmed affected (test empirically — an Arabic
+  "؟" question mark does NOT exhibit this, only certain neutral characters
+  like "…" do); don't blanket-apply to every field.
+- Pre-existing hydration-mismatch console warning (found during Session 32,
+  not fixed, out of scope): Footer.tsx's Mastercard SVG `<circle>`/`<path>`
+  elements get a client-only `style={{transition-behavior:...}}` injected
+  that the server-rendered HTML doesn't have — likely a global CSS
+  transition rule unintentionally matching footer SVG children. Cosmetic
+  only (no visible symptom found), but worth root-causing in a future
+  session.
 - Order detail page not built (accordion in account/OrdersSection covers basic needs)
 - Quantity stepper: CheckoutLinesUpdate added in session 14 via codegen
 - "Add to cart" on recommendations navigates to product page —
@@ -186,12 +211,18 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   min-width:auto blocks shrinking below its content's intrinsic width even
   with `truncate` on a descendant. Add `min-w-0` to any flex-1 wrapper in this
   row if it grows further.
-- ContactPageClient (Session 22): src/ui/components/contact/ContactPageClient.tsx —
-  "use client"; two-column layout (info cards + form); 4 info cards (email/phone/address/hours)
-  with spring lift + brand-primary accent bar on hover; form (name/email/subject/message)
-  with inline validation; submit AnimatePresence: idle→sending→sent (green) auto-reset 5s;
-  useInView scroll-triggered stagger; full RTL (dir="auto", mirrored accent bar);
-  rendered via pages/[slug]/page.tsx when slug === "contact-us" (NOT a standalone route)
+- ContactPageClient (Session 22, bidi fixes Session 32): src/ui/components/contact/
+  ContactPageClient.tsx — "use client"; two-column layout (info cards + form); 4 info
+  cards (email/phone/address/hours) with spring lift + brand-primary accent bar on
+  hover; form (name/email/subject/message) with inline validation; submit
+  AnimatePresence: idle→sending→sent (green) auto-reset 5s; useInView scroll-triggered
+  stagger; full RTL (dir="auto", mirrored accent bar); rendered via pages/[slug]/page.tsx
+  when slug === "contact-us" (NOT a standalone route). Session 32: ContactCard gained a
+  `valueDir?: "ltr"` prop (applied only to the phone card) to fix the phone number
+  rendering reversed in Arabic; Message textarea's `dir` changed from unconditional
+  `"auto"` to `locale === "ar" ? "rtl" : "auto"` to fix its Arabic placeholder's
+  trailing "…" rendering on the wrong side — see "Bidi ... pattern (Session 32)" under
+  Known issues for the general rule and why Subject/Name were left unchanged.
 
 ## Pages completed
 
