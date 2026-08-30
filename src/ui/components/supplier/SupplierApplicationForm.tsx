@@ -270,6 +270,26 @@ export function SupplierApplicationForm() {
 
 	const inputClass = (hasError: boolean) => clsx(inputBaseClass(hasError), "w-full px-4");
 
+	// @tailwindcss/forms draws its <select> chevron with a hardcoded
+	// `background-position: right ...` — a physical value that never flips for RTL, so
+	// in Arabic the chevron and the (now right-aligned) select text land on the same
+	// side and overlap. ps-*/pe-* (padding-inline-start/end) already flip automatically;
+	// the background-position itself has no logical Tailwind utility, so it's flipped
+	// explicitly via the rtl: variant instead.
+	const selectClass = (hasError: boolean) =>
+		clsx(
+			inputBaseClass(hasError),
+			"w-full bg-no-repeat ps-4 pe-10",
+			"bg-[length:1.25em_1.25em] bg-[right_0.75rem_center] rtl:bg-[left_0.75rem_center]",
+		);
+
+	const compactSelectClass = () =>
+		clsx(
+			inputBaseClass(false),
+			"w-28 shrink-0 bg-no-repeat ps-3 pe-8",
+			"bg-[length:1.1em_1.1em] bg-[right_0.5rem_center] rtl:bg-[left_0.5rem_center]",
+		);
+
 	const fieldError = (name: FieldName) => (touched[name] ? errors[name] : undefined);
 
 	return (
@@ -323,7 +343,7 @@ export function SupplierApplicationForm() {
 							value={values.country}
 							onChange={(e) => setValue("country", e.target.value)}
 							onBlur={handleBlur("country")}
-							className={inputClass(!!fieldError("country"))}
+							className={selectClass(!!fieldError("country"))}
 						>
 							<option value="">{t("countryPlaceholder")}</option>
 							{COUNTRIES.map((c) => (
@@ -394,7 +414,7 @@ export function SupplierApplicationForm() {
 								value={values.phoneCode}
 								onChange={(e) => setValue("phoneCode", e.target.value)}
 								onBlur={handleBlur("phoneNumber")}
-								className={clsx(inputBaseClass(false), "w-28 shrink-0 px-3")}
+								className={compactSelectClass()}
 								aria-label={t("phoneCodeLabel")}
 							>
 								{PHONE_CODES.map((code) => (
@@ -438,7 +458,7 @@ export function SupplierApplicationForm() {
 							value={values.businessType}
 							onChange={(e) => setValue("businessType", e.target.value)}
 							onBlur={handleBlur("businessType")}
-							className={inputClass(!!fieldError("businessType"))}
+							className={selectClass(!!fieldError("businessType"))}
 						>
 							<option value="">{t("businessTypePlaceholder")}</option>
 							{BUSINESS_TYPE_OPTIONS.map((opt) => (
