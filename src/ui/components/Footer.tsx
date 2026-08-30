@@ -108,6 +108,7 @@ async function FooterContent({ channel, locale }: { channel: string; locale: str
 	const alternateLocaleHref = `/${alternateLocale}/${channel}`;
 
 	const legalLinks = [
+		{ href: "/pages/become-supplier", label: isAr ? "كن مورّداً لنا" : "Become a Supplier" },
 		{ href: "/pages/privacy-policy", label: isAr ? "سياسة الخصوصية" : "Privacy Policy" },
 		{ href: "/pages/terms", label: isAr ? "شروط الخدمة" : "Terms of Service" },
 		{ href: "/pages/cookies", label: isAr ? "سياسة ملفات الارتباط" : "Cookie Policy" },

@@ -13,6 +13,7 @@ function getLabel(key: string, locale: string): string {
 	const labels: Record<string, Record<string, string>> = {
 		home: { en: "Home", ar: "الرئيسية" },
 		wholesale: { en: "Wholesale", ar: "الجملة" },
+		supplier: { en: "Become a Supplier", ar: "كن مورّداً لنا" },
 		contact: { en: "Contact Us", ar: "تواصل معنا" },
 	};
 	return labels[key]?.[locale] ?? labels[key]?.["en"] ?? key;
@@ -36,6 +37,8 @@ export const NavLinks = async ({ locale }: NavLinksProps) => {
 			<ShopNavItem categories={categories} />
 
 			<NavLink href="/pages/wholesale">{getLabel("wholesale", locale)}</NavLink>
+
+			<NavLink href="/pages/become-supplier">{getLabel("supplier", locale)}</NavLink>
 
 			<NavLink href="/pages/contact-us">{getLabel("contact", locale)}</NavLink>
 		</>
