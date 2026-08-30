@@ -208,6 +208,51 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   - CTA: brand-primary bg, WhatsApp (#25D366) pulse-glow button, locale-aware wa.me message
   - i18n: "wholesale" namespace in en.json + ar.json; all text via useTranslations, zero hardcoded strings
   - RTL: word-stagger works in both directions, zigzag CSS-grid reversal works naturally
+- /pages/become-supplier — full Become a Supplier page (session 26):
+  - SupplierPageClient: src/ui/components/supplier/SupplierPageClient.tsx — Server Component
+    orchestrator (deliberately NOT "use client" — it composes async Server Component sections
+    directly; a Client Component parent cannot import/render `next-intl/server`-based async
+    Server Components, so the orchestrator must stay server-side)
+  - SupplierHero, SupplierCategoriesSection, SupplierRequirementsSection, SupplierStepsSection,
+    SupplierCtaSection: all Server Components (async, `getTranslations`/`getLocale` from
+    "next-intl/server"), no framer-motion — static Tailwind-only styling per the
+    "Server Components by default" rule
+  - SupplierApplicationForm ("use client"): full application form — company/country/contact/
+    website/email/phone(+country-code select incl. "other" free text)/business-type/category
+    (multi-select chips, min 1)/products/nature-of-business (2000-char hard limit + live counter)/
+    certifications (checkboxes)/file upload/Turnstile/terms; on-blur validation with re-validation
+    of untouched fields on submit; submit state machine (idle→sending→sent/error, AnimatePresence)
+    mirrors ContactPageClient's pattern; honeypot field "website_url_2" (visually hidden, not
+    type="hidden", so bot autofill still catches it); "Country of Operation" select reuses the
+    exported `COUNTRIES` array from `@/ui/components/home/CountrySection`
+  - SupplierFileUpload ("use client"): drag-and-drop + click-to-browse, single file, accepts
+    pdf/doc/docx/xls/xlsx/zip/jpg/jpeg/png, 10MB client-side cap (mirrors server-side cap) —
+    bad selections are rejected inline and never reach `onChange`
+  - SupplierFaqSection ("use client"): 4-item accordion, same AnimatePresence height-transition
+    pattern as WholesalePageClient's FaqSection
+  - TurnstileWidget (src/ui/components/supplier/TurnstileWidget.tsx, "use client"): reusable
+    Cloudflare Turnstile wrapper — loads challenges.cloudflare.com/turnstile/v0/api.js via a
+    plain `<script>` tag in useEffect (no npm dependency), renders into a ref'd div, exposes
+    `onVerify(token)` / `onExpire()` props; reads site key from
+    `NEXT_PUBLIC_TURNSTILE_SITE_KEY`. Reuse this component for any future form that needs
+    bot protection — don't reimplement the script-loading dance.
+  - src/app/api/supplier/route.ts: parses `request.formData()` (multipart, NOT JSON like
+    /api/contact); validates all required fields server-side; honeypot check (silent fake
+    success if "website_url_2" is filled); verifies the Turnstile token server-side via POST to
+    challenges.cloudflare.com/turnstile/v0/siteverify using `TURNSTILE_SECRET_KEY`; attaches the
+    uploaded file directly to the outgoing nodemailer email (buffer from FormData) with NO disk/
+    persistent storage; same nodemailer transport env vars as /api/contact
+    (SMTP_HOST/PORT/SECURE/USER/PASS); from "Tawasi Plus Suppliers", to CONTACT_TO_EMAIL; error
+    codes: MISSING_FIELDS, INVALID_EMAIL, INVALID_URL, FILE_TOO_LARGE, INVALID_FILE_TYPE,
+    TURNSTILE_FAILED, SEND_FAILED
+  - "become-supplier" slug special-cased in pages/[slug]/page.tsx (generateMetadata + default
+    export), before the Saleor fetch — identical pattern to contact-us/wholesale; no Saleor
+    Page record needed
+  - Nav link added in NavLinks.tsx (between Wholesale and Contact); static link added to
+    Footer.tsx's `legalLinks` array (not the CMS-driven Explore column)
+  - i18n: "supplier" namespace in en.json + ar.json (meta/hero/categories/requirements/steps/
+    form/faq/cta) — Arabic copy is formal Modern Standard Arabic (الفصحى) throughout, not
+    dialect
 
 ## Health status (post-Session 25)
 
@@ -294,6 +339,20 @@ SearchBar.tsx, SearchOverlay.tsx (session 7).
 - `topbar` — freeShipping, invoices, wholesale, countries, quality (session 23)
 - `nav` — home, shop, wholesale, contact, viewAll, allCategories (session 23)
 - `checkout` — securePay, freeReturns, fastDelivery (session 24 — used by CheckoutTrustBar)
+- `supplier` — meta.{title,description}; hero.{eyebrow,headline,subtitle,ctaApply,ctaWhatsApp,
+  stat1-3Value,stat1-3Label}; categories.{sectionTitle,sectionSubtitle,nuts,driedFruits,seeds,
+  coffee,snacks,spices,staples,herbs}; requirements.{sectionTitle,sectionSubtitle,card1-4Title,
+  card1-4Subtitle}; steps.{sectionTitle,step1-4Title,step1-4Subtitle}; form.{sectionTitle,
+  sectionSubtitle,companyNameLabel/Placeholder,countryLabel/Placeholder,contactNameLabel/
+  Placeholder,websiteLabel/Placeholder,emailLabel/Placeholder,phoneLabel,phoneCodeLabel,
+  phoneNumberPlaceholder,phoneCodeOther,phoneCodeOtherPlaceholder,businessTypeLabel/Placeholder,
+  businessType{Manufacturer,Farmer,Distributor,Importer,Broker},categoryLabel,categoryHelp,
+  productLabel/Placeholder,natureLabel/Placeholder,natureCounter,certificationsLabel,
+  cert{Iso,Haccp,Halal,Other},uploadLabel,uploadHint,uploadDragText,uploadOr,uploadBrowseText,
+  uploadRemove,uploadErrorType,uploadErrorSize,termsLabel,turnstileError,submit,sending,sent,
+  sentSubtitle,sendError,required,invalidEmail,invalidUrl,invalidPhone,selectAtLeastOne};
+  faq.{sectionTitle,q1-4,a1-4}; cta.{headline,subtitle,button,hours,waMessageEn,waMessageAr}
+  (session 26 — Arabic copy is formal MSA throughout, not dialect)
 - `error`, `button`, `welcome`, `goodbye` — misc
   (`error` extended in session 17: +title, +description, +tryAgain, +goHome, +code)
 
