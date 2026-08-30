@@ -62,7 +62,7 @@ export function ProductElement({
 			transition={{ duration: 0.3, ease: "easeOut" }}
 			className="overflow-hidden rounded-2xl border border-line-subtle bg-surface-base shadow-sm transition-shadow duration-200 hover:shadow-md"
 		>
-			<div className="flex flex-col gap-3 p-3">
+			<div className="flex h-full flex-col gap-3 p-3">
 				{/* Image + name — linked to product page */}
 				<LinkWithChannel href={`/products/${product.slug}`} key={product.id}>
 					<div className="relative overflow-hidden rounded-xl">
@@ -110,24 +110,28 @@ export function ProductElement({
 					</div>
 				)}
 
-				{/* Price */}
-				<div className="flex flex-col">
-					{originalPrice && (
-						<span className="text-xs text-content-secondary line-through">{originalPrice}</span>
-					)}
-					<p className="text-base font-semibold text-content-primary" data-testid="ProductElement_PriceRange">
-						{displayPrice}
-					</p>
-				</div>
+				{/* Price + Add to cart — pinned to card bottom regardless of name wrap */}
+				<div className="mt-auto flex flex-col gap-3">
+					<div className="flex flex-col">
+						{originalPrice && (
+							<span className="text-xs text-content-secondary line-through">{originalPrice}</span>
+						)}
+						<p
+							className="text-base font-semibold text-content-primary"
+							data-testid="ProductElement_PriceRange"
+						>
+							{displayPrice}
+						</p>
+					</div>
 
-				{/* Add to cart */}
-				<ProductAddButton
-					selectedVariantId={selectedVariantId}
-					productSlug={product.slug}
-					isAvailable={isAvailable}
-					hasMultipleVariants={showVariantPills}
-					onSelectClick={handlePillsScroll}
-				/>
+					<ProductAddButton
+						selectedVariantId={selectedVariantId}
+						productSlug={product.slug}
+						isAvailable={isAvailable}
+						hasMultipleVariants={showVariantPills}
+						onSelectClick={handlePillsScroll}
+					/>
+				</div>
 			</div>
 		</m.li>
 	);

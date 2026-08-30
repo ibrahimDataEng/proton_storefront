@@ -66,6 +66,31 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   MobileMenu.tsx / useMobileMenu.ts are confirmed dead code (not imported by
   any live route) — flagged in Session 30/31, cleanup deferred to a future
   session (beads: see "cleanup: remove dead MobileDrawer/MobileMenu" issue)
+- Bidi (Unicode bidirectional text) pattern (Session 32): any digit-containing
+  or otherwise LTR-by-nature value rendered inside Arabic-context (RTL) markup
+  must be wrapped in `dir="ltr"` to avoid bidi reordering — see
+  ContactPageClient.tsx's phone number ContactCard for the pattern (a
+  `valueDir?: "ltr"` prop passed only on the phone card). Not every
+  LTR/mixed-content string needs this: verify with the browser first — e.g.
+  a single unbroken run (an email address) or digits individually anchored
+  between strong-Arabic words (the Hours value, "9:00 صباحاً") already
+  bidi-resolve correctly and don't need it; only isolated multi-token
+  runs (a phone number's space-separated groups) get reordered. Separately,
+  `dir="auto"` on an empty `<input>`/`<textarea>` resolves to computed
+  `direction:ltr` (not `rtl`, even inside an RTL document) since browsers
+  evaluate the field's VALUE, not its `placeholder` — this detaches trailing
+  neutral punctuation (e.g. "…") from an Arabic placeholder. Fix: force
+  `dir="rtl"` conditionally on locale (`locale === "ar" ? "rtl" : "auto"`)
+  only on fields actually confirmed affected (test empirically — an Arabic
+  "؟" question mark does NOT exhibit this, only certain neutral characters
+  like "…" do); don't blanket-apply to every field.
+- Pre-existing hydration-mismatch console warning (found during Session 32,
+  not fixed, out of scope): Footer.tsx's Mastercard SVG `<circle>`/`<path>`
+  elements get a client-only `style={{transition-behavior:...}}` injected
+  that the server-rendered HTML doesn't have — likely a global CSS
+  transition rule unintentionally matching footer SVG children. Cosmetic
+  only (no visible symptom found), but worth root-causing in a future
+  session.
 - Order detail page not built (accordion in account/OrdersSection covers basic needs)
 - Quantity stepper: CheckoutLinesUpdate added in session 14 via codegen
 - "Add to cart" on recommendations navigates to product page —
@@ -113,11 +138,57 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
 - FilterBar (Session 15): sort + category + price range + in-stock toggle;
   four custom dropdowns; URL-param driven (pushes to router); active-filter
   dot indicators; mobile bottom-sheet drawer (role=dialog, max-h-85vh);
-  useClickOutside hook; clear-all button
-- ProductElement (Sessions 15-16): "use client", selectedVariantId state
-  (first variant pre-selected), interactive pills with whileTap, whileInView
-  entrance animation, exact per-variant price, struck-through undiscounted
-  price when discounted, OOS badge; 4-col grid (2/3/4 mobile/tablet/desktop)
+  useClickOutside hook; clear-all button — confirmed in Session 33 diagnostic
+  that mobile is already a compact single row (count + "Filters" button,
+  ~64px) that only opens the bottom-sheet on demand; NOT a persistent tall
+  bar, no change was needed here
+- CategorySidebar (Session 33): mobile-only fixed icon rail (`fixed right-0
+... w-16`) removed entirely — it was reserving 64px of mobile viewport
+  width via a `mr-16` margin on products/page.tsx's content section, which
+  was the real cause of cramped 2-col product cards on mobile (not the
+  column count, which was already correct). CategorySidebar.tsx now
+  renders desktop-only (`hidden ... md:block` sticky left sidebar, `<md`
+  literally renders nothing) — desktop behavior/markup unchanged. Mobile
+  category nav is now `CategoryChips.tsx` (new file, "use client",
+  `md:hidden`) — a horizontal `overflow-x-auto` scrollable chip row
+  (scrollbar hidden via `[scrollbar-width:none]` +
+  `[&::-webkit-scrollbar]:hidden`) rendered above the product grid in
+  products/page.tsx, one pill per root category (`bg-brand-primary
+text-content-inverse` when active, same convention as FilterBar's
+  filled-pill active state), links to `/categories/{slug}` (same target as
+  the old rail — not `/products?category=`). Data-driven via a new
+  `CategoryChipsWrapper.tsx` (Server Component) fetching the same
+  `CategoriesWithChildrenDocument` query CategorySidebarWrapper already
+  used — no hardcoded categories. RTL verified live (Arabic /ar/): the
+  chip row and its overflow-scroll direction correctly follow `dir="rtl"`
+  from the document with zero manual reversal needed — did not assume,
+  confirmed with a real screenshot per Session 27's RTL-bug history.
+  products/page.tsx content section padding changed from flat `p-8` to
+  `px-4 py-6 md:p-8` to reclaim further mobile width alongside the rail
+  removal.
+- ProductElement (Sessions 15-16, height fix Session 33): "use client",
+  selectedVariantId state (first variant pre-selected), interactive pills
+  with whileTap, whileInView entrance animation, exact per-variant price,
+  struck-through undiscounted price when discounted, OOS badge; 4-col grid
+  (2/3/4 mobile/tablet/desktop). Session 33: the `<li>` is a direct CSS
+  Grid item, so Grid's default `align-items: stretch` stretched the `<li>`
+  to full row height, but the inner `<div className="flex flex-col ...">`
+  had no `h-full` and never actually filled that stretched height — content
+  just top-aligned, leaving dead space below on shorter cards. Combined
+  with no `mt-auto` on the price/button block, two cards in the same row
+  with different product-name wrap-line counts (1 line vs 2) showed their
+  "Add to Cart" buttons at different vertical positions. Fixed by adding
+  `h-full` to the inner wrapper and moving price + ProductAddButton into a
+  `mt-auto` sub-container so they always pin to the card's bottom
+  regardless of name length — verified against real catalog data
+  ("Syrian Watermelon Seeds" vs "Special Mix Nuts", and the original
+  "خلطة مكسرات سبيشل" vs "بزر بطيخ سوري" pair, both /en/ and /ar/, both
+  buttons landing at the same y-position in each case. **Standard pattern
+  for any future card component with variable-length content**: give the
+  grid-item's content wrapper `h-full`, and wrap whatever should stay
+  bottom-pinned (price, CTA, meta row) in an `mt-auto` container — CSS
+  Grid's row-stretch alone does not propagate down through a non-`h-full`
+  child.
 - ProductAddButton (Sessions 15-16): select→add flow; "Select Option" outline
   button scrolls to pills; AnimatePresence icon/text swap; shake on error;
   success green for 2s then reset
@@ -186,12 +257,18 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   min-width:auto blocks shrinking below its content's intrinsic width even
   with `truncate` on a descendant. Add `min-w-0` to any flex-1 wrapper in this
   row if it grows further.
-- ContactPageClient (Session 22): src/ui/components/contact/ContactPageClient.tsx —
-  "use client"; two-column layout (info cards + form); 4 info cards (email/phone/address/hours)
-  with spring lift + brand-primary accent bar on hover; form (name/email/subject/message)
-  with inline validation; submit AnimatePresence: idle→sending→sent (green) auto-reset 5s;
-  useInView scroll-triggered stagger; full RTL (dir="auto", mirrored accent bar);
-  rendered via pages/[slug]/page.tsx when slug === "contact-us" (NOT a standalone route)
+- ContactPageClient (Session 22, bidi fixes Session 32): src/ui/components/contact/
+  ContactPageClient.tsx — "use client"; two-column layout (info cards + form); 4 info
+  cards (email/phone/address/hours) with spring lift + brand-primary accent bar on
+  hover; form (name/email/subject/message) with inline validation; submit
+  AnimatePresence: idle→sending→sent (green) auto-reset 5s; useInView scroll-triggered
+  stagger; full RTL (dir="auto", mirrored accent bar); rendered via pages/[slug]/page.tsx
+  when slug === "contact-us" (NOT a standalone route). Session 32: ContactCard gained a
+  `valueDir?: "ltr"` prop (applied only to the phone card) to fix the phone number
+  rendering reversed in Arabic; Message textarea's `dir` changed from unconditional
+  `"auto"` to `locale === "ar" ? "rtl" : "auto"` to fix its Arabic placeholder's
+  trailing "…" rendering on the wrong side — see "Bidi ... pattern (Session 32)" under
+  Known issues for the general rule and why Subject/Name were left unchanged.
 
 ## Pages completed
 

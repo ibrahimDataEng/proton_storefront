@@ -15,6 +15,7 @@ import { ProductList } from "@/ui/components/ProductList";
 import { FilterBar } from "@/ui/components/products/FilterBar";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 import { CategorySidebarWrapper } from "@/ui/components/CategorySidebarWrapper";
+import { CategoryChipsWrapper } from "@/ui/components/CategoryChipsWrapper";
 import { Breadcrumb } from "@/ui/components/products/Breadcrumb";
 import { ProductsPerPage } from "@/app/[locale]/config";
 
@@ -144,7 +145,7 @@ export default async function Page(props: {
 	return (
 		<div className="mx-auto flex max-w-7xl">
 			<CategorySidebarWrapper locale={locale} activeSlug={activeCategory} />
-			<section className="mr-16 min-w-0 flex-1 p-8 pb-16 md:mr-0">
+			<section className="min-w-0 flex-1 px-4 py-6 pb-16 md:p-8">
 				<Breadcrumb categorySlug={activeCategory ?? null} locale={locale} channel={channel} />
 				<h1 className="mb-6 text-2xl font-semibold text-content-primary">{t("title")}</h1>
 				<FilterBar
@@ -152,6 +153,7 @@ export default async function Page(props: {
 					categories={categories}
 					activeCountry={country}
 				/>
+				<CategoryChipsWrapper locale={locale} activeSlug={activeCategory} />
 				{productNodes.length === 0 ? (
 					<div className="flex flex-col items-center gap-4 py-16 text-center">
 						<p className="text-content-secondary">{t("noResults")}</p>
