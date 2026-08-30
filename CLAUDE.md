@@ -253,6 +253,24 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
   - i18n: "supplier" namespace in en.json + ar.json (meta/hero/categories/requirements/steps/
     form/faq/cta) — Arabic copy is formal Modern Standard Arabic (الفصحى) throughout, not
     dialect
+  - RTL phone/select fixes (session 29): two real bugs only showed up on manual visual
+    review in Arabic, not from HTML-string inspection — use logical Tailwind properties
+    (ps-_/pe-_/ms-_/me-_/start-_/end-_, gap-_ on flex containers), not physical ones
+    (pl-_/pr-_/ml-_/mr-_/left-_/right-_), in any future form work in this codebase:
+    (1) a shared `inputClass()` helper baked in `w-full`, then a caller appended a
+    separate `w-28`/`w-24` alongside it — both are width utilities with equal
+    specificity, so the winner depends on Tailwind's internal generation order, not on
+    which class is listed first/last in JSX. This stretched the phone row's country-code
+    select to full width and pushed the phone number input out of the form. Fixed by
+    splitting into a width-free `inputBaseClass()` + per-field width (w-full px-4 for
+    normal fields; w-28 shrink-0 / w-24 shrink-0 / min-w-0 flex-1 for the phone row) —
+    never combine two width utilities on one element, even via a shared base + override.
+    (2) `@tailwindcss/forms` draws every `<select>`'s dropdown chevron with a hardcoded
+    `background-position: right ...`, which is a physical value that never flips for
+    RTL — in Arabic the chevron and the select's own (right-aligned) text land on the
+    same side and overlap. Fixed with `rtl:bg-[left_...]` overriding the default
+    `bg-[right_...]`, plus `ps-_/pe-_`(not`px-_`) so the chevron always has clearance
+    on whichever side it lands
 
 ## Health status (post-Session 25)
 
