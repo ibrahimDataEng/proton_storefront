@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { Check } from "lucide-react";
+import { Check, Trash2 } from "lucide-react";
 import { AuthFormField } from "@/ui/components/auth/AuthFormField";
 import { ChangePasswordForm } from "@/ui/components/auth/ChangePasswordForm";
+import { DeleteAccountModal } from "@/ui/components/account/DeleteAccountModal";
 import { updateAccount } from "@/app/[locale]/[channel]/(main)/account/actions";
 import type { CurrentUserOrderListQuery } from "@/gql/graphql";
 
@@ -18,6 +19,7 @@ interface Props {
 export function SettingsSection({ user }: Props) {
 	const t = useTranslations("account");
 	const tAuth = useTranslations("auth");
+	const tDelete = useTranslations("accountDeletion");
 	const router = useRouter();
 
 	const [firstName, setFirstName] = useState(user.firstName ?? "");
@@ -25,6 +27,7 @@ export function SettingsSection({ user }: Props) {
 	const [saving, setSaving] = useState(false);
 	const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">("idle");
 	const [saveError, setSaveError] = useState<string | null>(null);
+	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
 	async function handleSave(e: React.FormEvent) {
 		e.preventDefault();
@@ -103,6 +106,26 @@ export function SettingsSection({ user }: Props) {
 				<h2 className="mb-5 text-base font-semibold text-content-primary">{t("security")}</h2>
 				<ChangePasswordForm />
 			</div>
+
+			{/* Delete account — visually separated destructive block */}
+			<div className="rounded-2xl border-t-2 border-status-danger/40 bg-surface-base p-6 ring-1 ring-line-subtle">
+				<h2 className="mb-1 text-base font-semibold text-status-danger">{tDelete("sectionTitle")}</h2>
+				<p className="mb-5 text-sm text-content-secondary">{tDelete("sectionSubtitle")}</p>
+				<button
+					type="button"
+					onClick={() => setIsDeleteModalOpen(true)}
+					className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold text-status-danger ring-1 ring-status-danger/40 transition-colors hover:bg-status-danger/10"
+				>
+					<Trash2 className="h-4 w-4" aria-hidden="true" />
+					{tDelete("deleteButton")}
+				</button>
+			</div>
+
+			<DeleteAccountModal
+				isOpen={isDeleteModalOpen}
+				onClose={() => setIsDeleteModalOpen(false)}
+				email={user.email}
+			/>
 		</div>
 	);
 }

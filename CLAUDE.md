@@ -56,6 +56,24 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
 
 ## Known issues
 
+- **[P0, beads front_store-gfa]** `/login` and `/register` currently 500 for
+  every visitor, both locales — discovered Session 34 while verifying the
+  account-deletion feature (needed a working login to test Settings). Root
+  cause: `(main)/login/page.tsx` and `(main)/register/page.tsx` are async
+  Server Components (`cookies()`/`redirect()`/`getTranslations`) that render
+  `<AuthFormWrapper mode="login" onModeChange={() => undefined} />` —
+  `AuthFormWrapper` is a Client Component, and passing an inline function
+  prop from a Server Component across the RSC boundary is invalid under
+  Next.js 15 ("Event handlers cannot be passed to Client Component props").
+  Confirmed reproducible from a fully cleared `.next` cache, so it isn't
+  build-cache noise. `AuthModal.tsx`'s own use of `AuthFormWrapper` (passing
+  `setAuthModalMode`) is unaffected — that's a client-to-client call. Fix is
+  a one-line prop default (`onModeChange` optional, no-op internally) plus
+  dropping the inline handler from both standalone pages; flagged as its own
+  session rather than fixed inline here to keep the account-deletion branch
+  scoped. This also explains why beads front_store-u40 ("Verify auth flow
+  end-to-end", open since Session 8) never got closed — item 9 on that
+  checklist is exactly this.
 - 7 lint warnings: 6 in src/checkout/ + 1 in Logo.tsx
   (next/image suggestion — Logo is raw <img>)
 - ~~/pages/about may not exist in Saleor backend~~ — confirmed working in
@@ -278,9 +296,12 @@ text-content-inverse` when active, same convention as FilterBar's
 - /search — theme applied (session 6), no-results EmptyState (session 16)
 - /pages/[slug] — CMS page, design tokens applied (session 11)
 - /collections/[slug] — design tokens applied (session 11)
-- /login — fallback standalone page (session 8)
-- /register — fallback standalone page (session 8)
+- /login — fallback standalone page (session 8) — currently 500s, see "Known issues"
+- /register — fallback standalone page (session 8) — currently 500s, see "Known issues"
 - /reset-password — set password from email token (session 10)
+- /delete-account — reads `?token=`, calls `confirmAccountDeletion`; 4 states
+  (missing token / not authenticated / expired-invalid / success →
+  auto-logout + redirect home after 2s) (session 34)
 - /[any-bad-url] — 404/error coverage complete: root (bilingual CSS-only), locale, (main) framer motion, products/[slug] (session 17)
 - /account — full SPA dashboard (session 19):
   - AccountDashboard: client SPA, 4 sections (overview/orders/addresses/settings)
@@ -483,6 +504,15 @@ SearchBar.tsx, SearchOverlay.tsx (session 7).
   sentSubtitle,sendError,required,invalidEmail,invalidUrl,invalidPhone,selectAtLeastOne};
   faq.{sectionTitle,q1-4,a1-4}; cta.{headline,subtitle,button,hours,waMessageEn,waMessageAr}
   (session 26 — Arabic copy is formal MSA throughout, not dialect)
+- `accountDeletion` — sectionTitle,sectionSubtitle,deleteButton,modalTitle,
+  whatGetsDeletedTitle,whatGetsDeletedItem1-3,whatIsKeptTitle,whatIsKeptBody
+  (the explicit PII-retention disclosure — states past orders keep their name/
+  address/phone unanonymized; do not soften this copy),confirmInstruction,
+  confirmPlaceholder,confirmButton,requestSuccessTitle,requestSuccessBody
+  (interpolates `{email}`),closeButton,pageTitle,processing,successTitle,
+  successBody,missingToken,invalidOrExpired,notAuthenticated,backHome
+  (session 34 — formal MSA Arabic; the confirm word "DELETE" itself stays
+  literal/untranslated in both locales per the type-to-confirm requirement)
 - `error`, `button`, `welcome`, `goodbye` — misc
   (`error` extended in session 17: +title, +description, +tryAgain, +goHome, +code)
 
@@ -531,6 +561,75 @@ runs next-intl first, then silently refreshes expiring tokens (<5 min) via
   user name + logout dropdown
 - account/actions.ts — updateAccount, createAddress/Update/Delete,
   setDefaultAddress: all read saleor_token cookie → Authorization: Bearer header
+
+## Account Deletion (Session 34)
+
+Built on a diagnostic session against local Saleor 3.23.1 that confirmed:
+`accountRequestDeletion(redirectUrl!, channel)` and `accountDelete(token!)`
+both require `AUTHENTICATED_USER` (self-service only, no admin override);
+`redirectUrl` **is** validated against `ALLOWED_CLIENT_HOSTS` (an external
+URL is rejected with a clear error — no open-redirect risk); and — the
+load-bearing finding — after `accountDelete` the `account_user` row is
+**hard-deleted**, but any past order **survives** with `user_id` set to
+`NULL` while `order_order.user_email` and the linked billing/shipping
+`account_address` rows (name, phone, street address) are left **completely
+untouched**. Saleor does not anonymize PII on historical orders when an
+account is deleted. This is disclosed explicitly and un-softened in the
+confirmation modal copy (`accountDeletion.whatIsKeptBody`) — do not water
+this down to a generic "order history is kept" line in future copy edits.
+
+- GraphQL: `src/graphql/mutations/AccountRequestDeletion.graphql` +
+  `AccountDelete.graphql` (both additive, errors-only selection — no `user`
+  field needed on either)
+- Server actions in `account/actions.ts`: `requestAccountDeletion({redirectUrl,
+channel})` (mirrors `updateAccount`'s `getAuthHeaders()` pattern) and
+  `confirmAccountDeletion(token)` — the latter reads the access-token cookie
+  itself first and returns `{ok:false, error:"NOT_AUTHENTICATED"}` before even
+  calling the mutation if it's missing (handles: user requested deletion, then
+  signed out or opened the email link in a different browser, before
+  clicking it — `accountDelete` has no email/user-id arg, it operates on
+  whoever is currently authenticated, so the token alone isn't sufficient).
+  On success it clears both cookies directly via `cookies().set(..., {maxAge:
+0})` rather than waiting for the client's `logout()` round trip — the
+  deleted user's tokens are dead the instant the mutation succeeds.
+- `DeleteAccountModal.tsx` (`src/ui/components/account/`) — reuses
+  AuthModal's exact focus-trap/Escape/backdrop-click/body-scroll-lock
+  pattern (copied inline, not extracted — AuthModal is context-driven global
+  state, this is local `isOpen`/`onClose` props, different enough not to
+  share a hook). Type-to-confirm: literal English word `"DELETE"`,
+  case-sensitive, hardcoded as a `CONFIRM_WORD` constant — always English
+  even in the Arabic UI (the instructional copy embeds the literal word
+  inside the translated sentence in both locales), trimmed but not
+  case-folded. All red/destructive styling uses `status-danger` Tailwind
+  tokens (`text-status-danger`, `bg-status-danger`, `ring-status-danger/*`)
+  from tokens.ts — never hardcoded `red-*` (existing components like
+  AddressSection's delete-confirm still use hardcoded `red-*`; new
+  destructive UI should follow tokens.ts instead, not that precedent).
+- Wired into `SettingsSection.tsx` as a new card below the Security card:
+  `border-t-2 border-status-danger/40`, danger-tinted title/button, opens
+  `DeleteAccountModal`.
+- `DeleteAccountConfirm.tsx` + `/delete-account/page.tsx` — client component
+  reading `?token=` via `useSearchParams` (page wraps it in `<Suspense>`,
+  same requirement as `SetPasswordForm`/reset-password). Four states:
+  missing token, not authenticated, expired/invalid token, success (shows a
+  message then calls `logout()` from `useAuth` after a 2s delay — `logout()`
+  POSTs `/api/auth/logout`, which is idempotent even though the cookies are
+  already gone by that point).
+- `requestAccountDeletion`'s `redirectUrl` is built client-side in
+  `DeleteAccountModal` via `useParams<{locale;channel}>()` +
+  `window.location.origin` as `${origin}/${locale}/${channel}/delete-account`
+  — **do not** copy `ForgotPasswordForm`/`RegisterForm`'s existing
+  `${origin}/reset-password` pattern, which omits the locale/channel path
+  segments entirely; that pattern likely 404s against the real
+  `/[locale]/[channel]/reset-password` route and was not used here.
+- Verified end-to-end live against local Saleor: full round trip (settings →
+  modal → request → email via Mailpit → `/delete-account?token=...` →
+  confirm → account hard-deleted in DB → cookies cleared → redirected home
+  logged-out), the case-sensitivity gate (`delete` stays disabled, `DELETE`
+  enables), all 4 `/delete-account` states individually, and Arabic RTL (the
+  modal's button order auto-mirrors correctly via plain `justify-end` — no
+  manual RTL styling needed, consistent with this codebase's established
+  "trust logical properties, verify visually" RTL approach).
 
 ## New dependencies
 
