@@ -11,10 +11,10 @@ type AuthView = "login" | "register" | "forgot" | "confirmation";
 
 type Props = {
 	mode: "login" | "register";
-	onModeChange: (mode: "login" | "register") => void;
+	onModeChange?: (mode: "login" | "register") => void;
 };
 
-export function AuthFormWrapper({ mode, onModeChange }: Props) {
+export function AuthFormWrapper({ mode, onModeChange = () => {} }: Props) {
 	const t = useTranslations("auth");
 	const [view, setView] = useState<AuthView>(mode);
 
