@@ -538,5 +538,14 @@
 		"securePay": "Secure Payment",
 		"freeReturns": "Free Returns",
 		"fastDelivery": "Fast UAE Delivery"
+	},
+	"confirmAccount": {
+		"pageTitle": "Confirm Your Account",
+		"pending": "Confirming your account...",
+		"successTitle": "Account confirmed",
+		"successSubtitle": "Your account is now active. You can sign in whenever you're ready.",
+		"errorTitle": "Confirmation failed",
+		"errorSubtitle": "This confirmation link is invalid or has expired. Please try signing in or registering again.",
+		"loginButton": "Go to Sign In"
 	}
 }

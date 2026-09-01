@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { AuthFormField } from "./AuthFormField";
 import { Button } from "@/ui/components/Button";
 import { useAuth } from "@/ui/context/AuthContext";
@@ -17,6 +17,7 @@ export function RegisterForm({ onConfirmationRequired }: Props) {
 	const router = useRouter();
 	const params = useParams<{ channel?: string }>();
 	const channel = params.channel ?? "default-channel";
+	const locale = useLocale();
 	const { closeAuthModal, setUser } = useAuth();
 
 	const [firstName, setFirstName] = useState("");
@@ -43,8 +44,9 @@ export function RegisterForm({ onConfirmationRequired }: Props) {
 		setLoading(true);
 
 		try {
+			const confirmAccountPath = `/${locale}/${encodeURIComponent(channel)}/confirm-account`;
 			const redirectUrl =
-				typeof window !== "undefined" ? `${window.location.origin}/reset-password` : "/reset-password";
+				typeof window !== "undefined" ? `${window.location.origin}${confirmAccountPath}` : confirmAccountPath;
 
 			const res = await fetch("/api/auth/register", {
 				method: "POST",
@@ -68,7 +70,7 @@ export function RegisterForm({ onConfirmationRequired }: Props) {
 			if (!res.ok || data.error) {
 				const code = data.error ?? "unknown";
 				setErrors({
-					form: t(`errors.${code}` , { defaultValue: t("errors.unknown") }),
+					form: t(`errors.${code}`, { defaultValue: t("errors.unknown") }),
 				});
 				return;
 			}
