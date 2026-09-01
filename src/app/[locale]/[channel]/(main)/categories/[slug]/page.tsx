@@ -23,7 +23,7 @@ export const generateMetadata = async (
 		revalidate: 1,
 	});
 	if (!category) {
-		return { title: "Category · Saleor Storefront example", description: "" };
+		return { title: "Category · Tawasi Plus", description: "" };
 	}
 	const localizedCategory = locale === "ar" && category?.translation ? category.translation : category;
 

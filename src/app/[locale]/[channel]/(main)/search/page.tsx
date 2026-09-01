@@ -9,8 +9,8 @@ import { EmptyState } from "@/ui/components/EmptyState";
 import { ProductsPerPage } from "@/app/[locale]/config";
 
 export const metadata = {
-	title: "Search products · Saleor Storefront example",
-	description: "Search products in Saleor Storefront example",
+	title: "Search products · Tawasi Plus",
+	description: "Search products at Tawasi Plus",
 };
 
 export default async function Page(props: {

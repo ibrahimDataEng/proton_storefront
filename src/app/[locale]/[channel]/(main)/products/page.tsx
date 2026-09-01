@@ -20,7 +20,7 @@ import { Breadcrumb } from "@/ui/components/products/Breadcrumb";
 import { ProductsPerPage } from "@/app/[locale]/config";
 
 export const metadata = {
-	title: "Products · Saleor Storefront",
+	title: "Products · Tawasi Plus",
 	description: "All products in the storefront",
 };
 

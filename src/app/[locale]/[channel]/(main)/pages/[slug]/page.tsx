@@ -62,7 +62,7 @@ export const generateMetadata = async (props: {
 	});
 
 	if (!page) {
-		return { title: "Page · Saleor Storefront example", description: "" };
+		return { title: "Page · Tawasi Plus", description: "" };
 	}
 
 	const localizedPage = params.locale === "ar" && page.translation ? page.translation : page;
@@ -76,7 +76,7 @@ export const generateMetadata = async (props: {
 	}
 
 	return {
-		title: `${localizedPage?.seoTitle || localizedPage?.title || "Page"} · Saleor Storefront example`,
+		title: `${localizedPage?.seoTitle || localizedPage?.title || "Page"} · Tawasi Plus`,
 		description: localizedPage?.seoDescription || localizedPage?.title,
 	};
 };
