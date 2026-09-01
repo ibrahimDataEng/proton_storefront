@@ -6,8 +6,9 @@ import { TopBar } from "@/ui/components/nav/TopBar";
 import { BottomNavClient } from "@/ui/components/nav/BottomNavClient";
 
 export const metadata = {
-	title: "Saleor Storefront example",
-	description: "Starter pack for building performant e-commerce experiences with Saleor.",
+	title: "Tawasi Plus",
+	description:
+		"Tawasi Plus Store is a leading online retailer offering a wide range of products like nuts, dried fruits, coffee, spices and more at competitive prices. Shop with confidence and enjoy fast shipping and excellent customer service.",
 };
 
 export default async function RootLayout(props: {
