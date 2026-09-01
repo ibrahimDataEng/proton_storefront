@@ -605,7 +605,8 @@ channel})` (mirrors `updateAccount`'s `getAuthHeaders()` pattern) and
   from tokens.ts — never hardcoded `red-*` (existing components like
   AddressSection's delete-confirm still use hardcoded `red-*`; new
   destructive UI should follow tokens.ts instead, not that precedent).
-- Wired into `SettingsSection.tsx` as a new card below the Security card:
+- Wired into `SettingsSection.tsx` as a card below Security (and, since the
+  Session 34 revision below, below the Download Your Data card too):
   `border-t-2 border-status-danger/40`, danger-tinted title/button, opens
   `DeleteAccountModal`.
 - `DeleteAccountConfirm.tsx` + `/delete-account/page.tsx` — client component
@@ -630,6 +631,71 @@ channel})` (mirrors `updateAccount`'s `getAuthHeaders()` pattern) and
   modal's button order auto-mirrors correctly via plain `justify-end` — no
   manual RTL styling needed, consistent with this codebase's established
   "trust logical properties, verify visually" RTL approach).
+
+### Session 34 revision (copy hardening + reason capture + data export)
+
+- Retention disclosure (`whatIsKeptTitle`/`whatIsKeptBody`) rewritten with
+  explicit legal framing (Amazon-style: "we are legally required to retain
+  certain records... for tax, accounting, and fraud-prevention purposes")
+  while keeping the specific PII callout (name/delivery address/phone on
+  past orders) intact — both ideas are required, not either/or.
+- New standalone permanence-warning callout (`permanenceTitle`/
+  `permanenceBody`) added below the retention box, visually distinct via
+  `status-warning` tokens (amber) vs. the retention box's `status-danger`
+  (red) — tokens.ts does have a `status.warning` token, so no danger-token
+  fallback was needed. Reuses the same `AlertTriangle` icon already imported
+  for the modal header; two icons in one modal read fine here since they
+  answer different questions (header = general severity, this box =
+  specifically "you cannot undo or restore this").
+- Optional "reason for closing" `<select>` added above the confirm input —
+  a plain native `<select>`, not FilterBar's custom dropdown (FilterBar's
+  pattern is for URL-param-synced multi-field filter bars; this is one
+  optional field in a modal, so the native element is simpler and more
+  accessible). Styled per `SupplierApplicationForm.tsx`'s established
+  `@tailwindcss/forms` RTL-chevron fix (`bg-[right_0.75rem_center]
+rtl:bg-[left_0.75rem_center]` — the chevron's `background-position` has no
+  logical Tailwind utility, so it's flipped explicitly). 6 real reasons +
+  "Prefer not to say" as the default/placeholder (empty value).
+- If a reason is selected, `handleConfirm` fires `POST
+/api/account-deletion-feedback` (new route, nodemailer, same transporter
+  pattern as `/api/contact`) via `void fetch(...).catch(() => {})` —
+  genuinely not awaited, so a slow/failed email can never delay or block the
+  real `requestAccountDeletion` call right after it. The route maps the
+  reason key to a fixed English label server-side (not routed through i18n
+  — this is an internal ops email, always in English regardless of the
+  customer's locale, so hardcoding the map there is correct, not a "zero
+  hardcoded strings" violation). Recipient is `info@tawasiplus.com`,
+  hardcoded — deliberately NOT reusing `/api/contact`'s `CONTACT_TO_EMAIL`
+  env var (which defaults to a different address), per explicit instruction.
+- **Operational finding, worth knowing before testing anything email-related
+  in this project again**: `.env`'s `SMTP_HOST`/`SMTP_USER`/`SMTP_PASS` are
+  configured for the **real production Zoho mailbox** (`info@tawasiplus.com`),
+  not Mailpit, despite a comment above them saying "dev: Mailpit on
+  localhost:1025". Confirmed by testing this feature live — the test
+  request's feedback email actually sent to the real inbox, it did not show
+  up in Mailpit. `/api/contact` shares this exact transporter config, so the
+  same is true there. If local Mailpit catching is wanted for dev, `.env`
+  needs `SMTP_HOST=localhost` / `SMTP_PORT=1025` explicitly — nobody should
+  assume the comment reflects the actual configured values.
+- New card "Download Your Data" added to `SettingsSection.tsx`, positioned
+  between the Security card and the Delete Account card (non-destructive
+  styling, same `rounded-2xl ring-1 ring-line-subtle` card shell as
+  Personal Info/Security — no danger/warning tokens). Purely client-side:
+  builds a JSON object from `user.orders`/`user.addresses` — both already
+  present on the `user` prop via `CurrentUserOrderListQuery` (no new
+  GraphQL query needed, per explicit instruction to reuse what
+  Orders/AddressSection already fetch) — serializes with
+  `JSON.stringify(data, null, 2)`, and triggers a download via
+  `Blob` + a programmatically-clicked `<a download>` (`URL.createObjectURL`
+  → click → `document.body.removeChild` → `URL.revokeObjectURL`).
+  Filename: `tawasi-plus-my-data-{YYYY-MM-DD}.json`. No backend changes, no
+  new mutations. Verified live: the download mechanism fires with the exact
+  correct filename (confirmed by monkey-patching `HTMLAnchorElement.click`
+  in the browser); full JSON-content inspection wasn't possible through the
+  test tooling (blob: URLs aren't fetchable from the browser-automation
+  injection context) but the data-construction code only reads fields
+  already proven correct elsewhere (same fragments OrdersSection/
+  AddressSection render from).
 
 ## New dependencies
 

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { Check, Trash2 } from "lucide-react";
+import { Check, Download, Trash2 } from "lucide-react";
 import { AuthFormField } from "@/ui/components/auth/AuthFormField";
 import { ChangePasswordForm } from "@/ui/components/auth/ChangePasswordForm";
 import { DeleteAccountModal } from "@/ui/components/account/DeleteAccountModal";
@@ -44,6 +44,43 @@ export function SettingsSection({ user }: Props) {
 		setSaveStatus("success");
 		router.refresh();
 		setTimeout(() => setSaveStatus("idle"), 2500);
+	}
+
+	function handleDownloadData() {
+		const orders = user.orders?.edges.map((edge) => edge.node) ?? [];
+
+		const data = {
+			exportedAt: new Date().toISOString(),
+			account: {
+				email: user.email,
+				firstName: user.firstName,
+				lastName: user.lastName,
+				dateJoined: user.dateJoined,
+			},
+			orders: orders.map((order) => ({
+				number: order.number,
+				date: order.created,
+				status: order.status,
+				total: order.total?.gross,
+				items: order.lines.map((line) => ({
+					product: line.variant?.product?.name,
+					variant: line.variant?.name,
+					quantity: line.quantity,
+					price: line.variant?.pricing?.price?.gross,
+				})),
+			})),
+			addresses: user.addresses ?? [],
+		};
+
+		const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement("a");
+		link.href = url;
+		link.download = `tawasi-plus-my-data-${new Date().toISOString().slice(0, 10)}.json`;
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+		URL.revokeObjectURL(url);
 	}
 
 	return (
@@ -105,6 +142,20 @@ export function SettingsSection({ user }: Props) {
 			<div className="rounded-2xl bg-surface-base p-6 ring-1 ring-line-subtle">
 				<h2 className="mb-5 text-base font-semibold text-content-primary">{t("security")}</h2>
 				<ChangePasswordForm />
+			</div>
+
+			{/* Download your data — non-destructive courtesy export */}
+			<div className="rounded-2xl bg-surface-base p-6 ring-1 ring-line-subtle">
+				<h2 className="mb-1 text-base font-semibold text-content-primary">{t("downloadDataTitle")}</h2>
+				<p className="mb-5 text-sm text-content-secondary">{t("downloadDataSubtitle")}</p>
+				<button
+					type="button"
+					onClick={handleDownloadData}
+					className="flex items-center gap-2 rounded-xl bg-surface-base px-5 py-2.5 text-sm font-semibold text-content-primary ring-1 ring-line-default transition-colors hover:bg-surface-sunken"
+				>
+					<Download className="h-4 w-4" aria-hidden="true" />
+					{t("downloadDataButton")}
+				</button>
 			</div>
 
 			{/* Delete account — visually separated destructive block */}

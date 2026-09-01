@@ -8,6 +8,15 @@ import { requestAccountDeletion } from "@/app/[locale]/[channel]/(main)/account/
 
 const CONFIRM_WORD = "DELETE";
 
+const REASON_OPTIONS = [
+	{ key: "noLongerUse", labelKey: "reasonNoLongerUse" },
+	{ key: "haveAnotherAccount", labelKey: "reasonHaveAnotherAccount" },
+	{ key: "wantNewAccount", labelKey: "reasonWantNewAccount" },
+	{ key: "securityConcerns", labelKey: "reasonSecurityConcerns" },
+	{ key: "privacyConcerns", labelKey: "reasonPrivacyConcerns" },
+	{ key: "unresolvedIssues", labelKey: "reasonUnresolvedIssues" },
+] as const;
+
 interface Props {
 	isOpen: boolean;
 	onClose: () => void;
@@ -22,6 +31,7 @@ export function DeleteAccountModal({ isOpen, onClose, email }: Props) {
 	const panelRef = useRef<HTMLDivElement>(null);
 
 	const [confirmText, setConfirmText] = useState("");
+	const [reason, setReason] = useState("");
 	const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
 
 	const canConfirm = confirmText.trim() === CONFIRM_WORD && status !== "sending";
@@ -30,6 +40,7 @@ export function DeleteAccountModal({ isOpen, onClose, email }: Props) {
 	useEffect(() => {
 		if (isOpen) {
 			setConfirmText("");
+			setReason("");
 			setStatus("idle");
 		}
 	}, [isOpen]);
@@ -91,6 +102,16 @@ export function DeleteAccountModal({ isOpen, onClose, email }: Props) {
 	async function handleConfirm() {
 		if (!canConfirm) return;
 		setStatus("sending");
+
+		// Fire-and-forget: an internal notification, not part of the deletion
+		// contract — it must never delay or block the actual request below.
+		if (reason) {
+			void fetch("/api/account-deletion-feedback", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ email, reason }),
+			}).catch(() => {});
+		}
 
 		const redirectUrl =
 			typeof window !== "undefined"
@@ -164,11 +185,40 @@ export function DeleteAccountModal({ isOpen, onClose, email }: Props) {
 							<p className="text-sm text-content-secondary">{t("whatIsKeptBody")}</p>
 						</div>
 
+						{/* Permanence warning — a distinct callout, separate from the retention disclosure above */}
+						<div className="flex items-start gap-3 rounded-xl bg-status-warning/10 p-4 ring-1 ring-status-warning/30">
+							<AlertTriangle className="h-5 w-5 shrink-0 text-status-warning" aria-hidden="true" />
+							<div className="flex flex-col gap-1">
+								<p className="text-sm font-semibold text-status-warning">{t("permanenceTitle")}</p>
+								<p className="text-sm text-content-secondary">{t("permanenceBody")}</p>
+							</div>
+						</div>
+
 						{status === "error" && (
 							<p role="alert" className="rounded-md bg-status-danger/10 px-3 py-2 text-sm text-status-danger">
 								{tAuth("errors.unknown")}
 							</p>
 						)}
+
+						<div className="flex flex-col gap-2">
+							<label htmlFor="delete-account-reason" className="text-sm font-medium text-content-primary">
+								{t("reasonLabel")}
+							</label>
+							<select
+								id="delete-account-reason"
+								value={reason}
+								onChange={(e) => setReason(e.target.value)}
+								disabled={status === "sending"}
+								className="w-full rounded-lg border border-line-default bg-surface-base bg-[length:1.25em_1.25em] bg-[right_0.75rem_center] bg-no-repeat py-3 pe-10 ps-4 text-sm text-content-primary outline-none transition-colors focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 disabled:opacity-60 rtl:bg-[left_0.75rem_center]"
+							>
+								<option value="">{t("reasonPlaceholder")}</option>
+								{REASON_OPTIONS.map(({ key, labelKey }) => (
+									<option key={key} value={key}>
+										{t(labelKey)}
+									</option>
+								))}
+							</select>
+						</div>
 
 						<div className="flex flex-col gap-2">
 							<label
