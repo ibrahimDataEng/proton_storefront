@@ -1,10 +1,10 @@
 "use client";
 
-import { LayoutDashboard, ShoppingBag, MapPin, Settings, LogOut } from "lucide-react";
+import { LayoutDashboard, ShoppingBag, History, MapPin, Settings, LogOut } from "lucide-react";
 import { clsx } from "clsx";
 import { useAuth } from "@/ui/context/AuthContext";
 
-export type AccountSection = "overview" | "orders" | "addresses" | "settings";
+export type AccountSection = "overview" | "orders" | "recentlyViewed" | "addresses" | "settings";
 
 interface Props {
 	initials: string;
@@ -15,6 +15,7 @@ interface Props {
 	labels: {
 		overview: string;
 		orders: string;
+		recentlyViewed: string;
 		addresses: string;
 		settings: string;
 		signOut: string;
@@ -24,6 +25,7 @@ interface Props {
 const navItems: { id: AccountSection; Icon: React.ElementType; labelKey: keyof Props["labels"] }[] = [
 	{ id: "overview", Icon: LayoutDashboard, labelKey: "overview" },
 	{ id: "orders", Icon: ShoppingBag, labelKey: "orders" },
+	{ id: "recentlyViewed", Icon: History, labelKey: "recentlyViewed" },
 	{ id: "addresses", Icon: MapPin, labelKey: "addresses" },
 	{ id: "settings", Icon: Settings, labelKey: "settings" },
 ];

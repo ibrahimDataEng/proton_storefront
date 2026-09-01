@@ -56,6 +56,24 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
 
 ## Known issues
 
+- **Local dev-server flakiness (observed repeatedly, Session 35, env-level —
+  not an app bug):** this project's `next dev` (Next.js 15.5.6) periodically
+  falls into a documented dev-mode-only failure: the console/server log shows
+  `src\app\not-found.tsx doesn't have a root layout` (Next error code `E394`),
+  followed by `[Fast Refresh] performing full reload because your application
+had an unrecoverable error` on a loop, and every route (including totally
+  unrelated ones, and `/api/auth/refresh`) starts 500ing. It tends to show up
+  after the dev server has been running a long time across several sessions
+  and/or many rapid HMR recompiles, and `.next/cache/webpack/.../*.pack.gz`
+  rename-ENOENT warnings are usually visible just before it hits. It is NOT
+  caused by application code — confirmed by reproducing it on stock,
+  untouched pages. **Fix**: stop the dev server, delete `.next` entirely, and
+  restart (`pnpm dev`) — this has resolved it every time it's been hit
+  (Sessions 34 and 35 both). If you're mid-debugging something and requests
+  mysteriously stop reaching a page/action with no error, check server logs
+  for `E394` / repeated "Fast Refresh...full reload" before assuming your own
+  code is broken — it can silently swallow in-flight client effects/requests
+  without any error surfacing at the call site.
 - ~~`/login` and `/register` 500 for every visitor~~ — fixed on
   `hotfix/login-register-rsc-crash` (merged directly to main per the hotfix
   convention). Root cause: both standalone pages are Server Components that
@@ -303,15 +321,20 @@ text-content-inverse` when active, same convention as FilterBar's
   auto-logout + redirect home after 2s) (session 34)
 - /[any-bad-url] — 404/error coverage complete: root (bilingual CSS-only), locale, (main) framer motion, products/[slug] (session 17)
 - /account — full SPA dashboard (session 19):
-  - AccountDashboard: client SPA, 4 sections (overview/orders/addresses/settings)
+  - AccountDashboard: client SPA, 5 sections (overview/orders/recentlyViewed/addresses/settings) — recentlyViewed added session 35
   - AccountSidebar: desktop sidebar + mobile horizontal tab bar, sign-out via useAuth
   - OverviewSection: 4 stat cards (total orders, last order, default address, member since), staggered framer entrance
   - OrdersSection: paginated (5+5), accordion line items, status badge color-coding, product thumbnails
+  - RecentlyViewedSection: reuses ProductElement in the same grid as RelatedProducts; EmptyState when
+    empty; products resolved server-side in account/page.tsx (session 35 — see "Recently Viewed
+    Products" section below)
   - AddressSection: CRUD grid (2-col), inline AnimatePresence slide form, inline delete confirm, set-default actions
   - SettingsSection: edit name (updateAccount action) + reuse ChangePasswordForm
-  - account/actions.ts: updateAccount, createAddress, updateAddress, deleteAddress, setDefaultAddress
-  - New GraphQL mutations: AccountUpdate, AccountAddressCreate, AccountAddressUpdate, AccountAddressDelete, AccountSetDefaultAddress
-  - UserDetailsFragment extended: dateJoined + addresses array
+  - account/actions.ts: updateAccount, createAddress, updateAddress, deleteAddress, setDefaultAddress,
+    recordProductView, getRecentlyViewed (latter two added session 35)
+  - New GraphQL mutations: AccountUpdate, AccountAddressCreate, AccountAddressUpdate, AccountAddressDelete,
+    AccountSetDefaultAddress, UpdateUserMetadata (session 35)
+  - UserDetailsFragment extended: dateJoined + addresses array + metadata (session 35)
   - OrderDetailsFragment extended: status (OrderStatus)
 - /cart — full redesign, two-column layout, recommendations,
   saved for later, quantity stepper, order summary (session 14)
@@ -322,7 +345,9 @@ text-content-inverse` when active, same convention as FilterBar's
   - ProductVariantSelector: client-side pills, OOS greyed+strikethrough, low-stock warning
   - ProductInfo: breadcrumb, price+undiscounted, quantity stepper, add-to-cart
     (AnimatePresence states: idle/pending/success/error + shake), attributes table,
-    collapsible description
+    collapsible description; fire-and-forget `recordProductView(product.slug)`
+    call in a `useEffect` (guarded by `useAuth().isLoggedIn` — guests aren't
+    tracked), session 35
   - RelatedProducts: async server component, same-category, 4-col grid, Suspense skeleton
 - /pages/wholesale — full Wholesale page (session 22):
   - WholesalePageClient: src/ui/components/wholesale/WholesalePageClient.tsx ("use client") — 9 sections
@@ -482,6 +507,8 @@ SearchBar.tsx, SearchOverlay.tsx (session 7).
   totalOrders, lastOrder, defaultAddress, noAddress, addressSaved, addressDeleted,
   cancel, confirm, firstName, lastName, streetAddress1, streetAddress2, city,
   postalCode, phone, qty (session 19)
+- `recentlyViewed` — navLabel, emptyTitle, emptySubtitle (session 35 — CTA in the
+  empty state reuses `account.shopNow` rather than duplicating it)
 - `notFound` — title, subtitle, goHome, browse, checkUrl (session 17)
 - `home` — header, description, aboutLink, contactLink,
   shopByCountry (session 21)
@@ -695,6 +722,75 @@ rtl:bg-[left_0.75rem_center]` — the chevron's `background-position` has no
   injection context) but the data-construction code only reads fields
   already proven correct elsewhere (same fragments OrdersSection/
   AddressSection render from).
+
+## Recently Viewed Products (Session 35)
+
+Built on a diagnostic session against local Saleor 3.23.1 that confirmed:
+`User.metadata` (public metadata) is writable by an authenticated customer on
+their **own** `User` object with no staff/app permission required (unlike
+`privateMetadata`, which is staff/app-only) — the top-level `user(id:)` query
+is itself staff-gated, so there's no cross-user read/write leak despite the
+field being permission-free at the field level. No size limit is enforced
+anywhere in Saleor's app code for this version (only a non-empty-key check
+exists — checked the actual source). `updateMetadata` is a full key-overwrite
+only — no atomic array-append — and a live concurrent-write test showed
+plain last-write-wins with no locking, which is an accepted, invisible risk
+for this feature (very tight race between two product views could drop one
+from the list).
+
+- Storage: one metadata key, `"recentlyViewed"`, JSON-stringified array of
+  `{slug, viewedAt}`, capped at 20, newest first, deduped (repeat view moves
+  the existing entry to the front rather than adding a second one).
+- GraphQL: `UserDetailsFragment` gained a `metadata { key value }` field
+  (additive — flows into every `me` query that uses the fragment). New
+  mutation file `UpdateUserMetadata.graphql` wraps `updateMetadata`. New
+  query `ProductsBySlugs.graphql` batches slug→product resolution in one
+  call via `products(filter: { slugs: $slugs }, first: 20, channel)` —
+  confirmed via introspection that `ProductFilterInput.slugs` exists.
+- `account/actions.ts`: `recordProductView(slug)` is fire-and-forget from the
+  client (called via `void` in a `useEffect`, never awaited) — reads the
+  access-token cookie directly (not `getAuthHeaders()`, since it also needs
+  the raw token to decode `user_id` via `decodeJwtPayload` — same pattern
+  `[channel]/layout.tsx` already uses to seed `AuthProvider`, avoiding an
+  extra `me { id }` round trip), reads current metadata via the existing
+  `CurrentUserDocument` (already carries `metadata` via the fragment above),
+  computes the deduped/capped array, writes it back with one
+  `UpdateUserMetadataDocument` call. Every step is wrapped in one try/catch
+  that swallows all errors (`console.warn` in dev only) — a tracking failure
+  must never surface on the PDP. `getRecentlyViewed()` is the read-only
+  counterpart used by `account/page.tsx` to render the section.
+- Trigger: `ProductInfo.tsx` (already a Client Component) — a `useEffect`
+  keyed on `[isLoggedIn, product.slug]` calls `recordProductView`. Guests
+  are simply never tracked (`isLoggedIn` guard). This is the only touch
+  point on the PDP; `page.tsx` itself was not changed.
+- Rendering: `account/page.tsx` (Server Component) calls `getRecentlyViewed()`
+  then `ProductsBySlugsDocument`, builds a `Map<slug, product>` from the
+  result and re-maps the ORIGINAL ordered slug list through it — this is
+  what preserves newest-first order (Saleor's `slugs` filter does not
+  guarantee result order) and is also what makes a deleted/unpublished
+  product silently disappear from the list (its slug just isn't in the map).
+  The resolved product array is passed down as a prop through
+  `AccountDashboard` to `RecentlyViewedSection`, exactly like `orders`/
+  `addresses` already are — `RecentlyViewedSection` cannot fetch its own
+  data because `AccountDashboard` is a Client Component and can't host an
+  async Server Component as a normal child.
+- `RecentlyViewedSection.tsx` reuses `ProductElement` (the exact same
+  component/grid `RelatedProducts` uses on the PDP) — no lighter card
+  variant was needed. Empty state reuses `EmptyState` with a `History`
+  lucide icon.
+- Verified end-to-end live: fresh product view gets tracked, revisiting an
+  already-tracked product moves it to the front with a fresh timestamp
+  without duplicating (array length stays constant), the Account SPA section
+  renders the correct newest-first order using real `ProductElement` cards
+  (pricing/variants/Add-to-Cart all functional), and Arabic RTL (grid mirrors
+  correctly with zero manual RTL code, consistent with this codebase's other
+  sections).
+- **Do not copy `ForgotPasswordForm`/`RegisterForm`'s existing
+  `${origin}/reset-password` redirectUrl pattern for anything new** — it
+  omits the `/{locale}/{channel}` path segments that the actual
+  `/[locale]/[channel]/reset-password` route requires, and almost certainly
+  404s. Not touched/fixed here (out of scope), but noted so it isn't
+  accidentally propagated into new code.
 
 ## New dependencies
 

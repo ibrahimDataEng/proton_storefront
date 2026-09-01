@@ -4,6 +4,10 @@ fragment UserDetails on User {
 	firstName
 	lastName
 	dateJoined
+	metadata {
+		key
+		value
+	}
 	avatar {
 		url
 		alt

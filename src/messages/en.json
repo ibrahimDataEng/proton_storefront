@@ -212,6 +212,11 @@
 		"notAuthenticated": "Please sign in with the account you requested this from, then open the link again.",
 		"backHome": "Back to homepage"
 	},
+	"recentlyViewed": {
+		"navLabel": "Recently Viewed",
+		"emptyTitle": "No recently viewed products",
+		"emptySubtitle": "Products you view will appear here so you can find them again easily."
+	},
 	"contact": {
 		"title": "Contact Us",
 		"subtitle": "We'd love to hear from you. Send us a message and we'll get back to you as soon as possible.",
