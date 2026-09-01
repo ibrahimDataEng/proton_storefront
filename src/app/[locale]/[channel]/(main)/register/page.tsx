@@ -19,7 +19,7 @@ export default async function RegisterPage() {
 				<div className="mx-auto w-full max-w-md">
 					<h1 className="mb-8 text-center text-2xl font-semibold text-content-primary">{t("register")}</h1>
 					<div className="rounded-2xl bg-surface-base p-6 shadow-sm ring-1 ring-line-subtle">
-						<AuthFormWrapper mode="register" onModeChange={() => undefined} />
+						<AuthFormWrapper mode="register" />
 					</div>
 				</div>
 			</Container>

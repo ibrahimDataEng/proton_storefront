@@ -56,24 +56,23 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
 
 ## Known issues
 
-- **[P0, beads front_store-gfa]** `/login` and `/register` currently 500 for
-  every visitor, both locales — discovered Session 34 while verifying the
-  account-deletion feature (needed a working login to test Settings). Root
-  cause: `(main)/login/page.tsx` and `(main)/register/page.tsx` are async
-  Server Components (`cookies()`/`redirect()`/`getTranslations`) that render
-  `<AuthFormWrapper mode="login" onModeChange={() => undefined} />` —
-  `AuthFormWrapper` is a Client Component, and passing an inline function
-  prop from a Server Component across the RSC boundary is invalid under
-  Next.js 15 ("Event handlers cannot be passed to Client Component props").
-  Confirmed reproducible from a fully cleared `.next` cache, so it isn't
-  build-cache noise. `AuthModal.tsx`'s own use of `AuthFormWrapper` (passing
-  `setAuthModalMode`) is unaffected — that's a client-to-client call. Fix is
-  a one-line prop default (`onModeChange` optional, no-op internally) plus
-  dropping the inline handler from both standalone pages; flagged as its own
-  session rather than fixed inline here to keep the account-deletion branch
-  scoped. This also explains why beads front_store-u40 ("Verify auth flow
-  end-to-end", open since Session 8) never got closed — item 9 on that
-  checklist is exactly this.
+- ~~`/login` and `/register` 500 for every visitor~~ — fixed on
+  `hotfix/login-register-rsc-crash` (merged directly to main per the hotfix
+  convention). Root cause: both standalone pages are Server Components that
+  passed an inline `onModeChange={() => undefined}` function prop to
+  `AuthFormWrapper` (a Client Component) — invalid under Next.js 15's RSC
+  model. Fix: `AuthFormWrapper`'s `onModeChange` prop is now optional with
+  an internal `() => {}` default; both pages simply omit the prop.
+  `AuthModal.tsx`'s own usage (passing `setAuthModalMode` client-to-client)
+  was untouched — it was never the problem. Verified live in both en/ar with
+  a fully cleared `.next` cache: both pages render with zero console/server
+  errors. Closed beads front_store-gfa. Note for whoever's testing standalone
+  auth pages next: the Sign In / Create Account tab buttons on these two
+  pages don't actually switch the visible form — that's pre-existing and
+  unrelated to this fix (`AuthFormWrapper`'s `effectiveView` is derived from
+  the `mode` prop, which is a fixed per-page value on these two routes, not
+  from the tab click's internal state — only `AuthModal`'s usage, where
+  `mode` is real state, makes the tabs functional).
 - 7 lint warnings: 6 in src/checkout/ + 1 in Logo.tsx
   (next/image suggestion — Logo is raw <img>)
 - ~~/pages/about may not exist in Saleor backend~~ — confirmed working in
