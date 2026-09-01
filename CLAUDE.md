@@ -315,7 +315,10 @@ text-content-inverse` when active, same convention as FilterBar's
 - /collections/[slug] — design tokens applied (session 11)
 - /login — fallback standalone page (session 8) — currently 500s, see "Known issues"
 - /register — fallback standalone page (session 8) — currently 500s, see "Known issues"
-- /reset-password — set password from email token (session 10)
+- /reset-password — set password from email token (session 10); redirectUrl
+  fix (session 36, see "Account Confirmation & Password Reset Redirect Fix")
+- /confirm-account — account activation from registration email (session 36) —
+  see "Account Confirmation & Password Reset Redirect Fix" section
 - /delete-account — reads `?token=`, calls `confirmAccountDeletion`; 4 states
   (missing token / not authenticated / expired-invalid / success →
   auto-logout + redirect home after 2s) (session 34)
@@ -509,6 +512,8 @@ SearchBar.tsx, SearchOverlay.tsx (session 7).
   postalCode, phone, qty (session 19)
 - `recentlyViewed` — navLabel, emptyTitle, emptySubtitle (session 35 — CTA in the
   empty state reuses `account.shopNow` rather than duplicating it)
+- `confirmAccount` — pageTitle, pending, successTitle, successSubtitle,
+  errorTitle, errorSubtitle, loginButton (session 36)
 - `notFound` — title, subtitle, goHome, browse, checkUrl (session 17)
 - `home` — header, description, aboutLink, contactLink,
   shopByCountry (session 21)
@@ -791,6 +796,75 @@ from the list).
   `/[locale]/[channel]/reset-password` route requires, and almost certainly
   404s. Not touched/fixed here (out of scope), but noted so it isn't
   accidentally propagated into new code.
+
+## Account Confirmation & Password Reset Redirect Fix (Session 36)
+
+Diagnostic session (same session, read-only pass first) confirmed two broken
+production flows: account-confirmation emails had **no page to land on at
+all** (no `confirmAccount`/`accountConfirm` mutation call existed anywhere in
+the app, no confirm-account route), and password-reset emails landed on the
+**homepage** instead of `/reset-password`. Root cause for the reset-password
+symptom: `RegisterForm.tsx` and `ForgotPasswordForm.tsx` both built
+`redirectUrl` as `${window.location.origin}/reset-password` — a bare path
+missing the required `/{locale}/{channel}` segments. Saleor appends
+`?email=...&token=...` to that path and emails it verbatim; when clicked,
+next-intl's locale-prefix middleware rewrites the locale-less path to
+`/en/reset-password`, and the App Router then resolves that 2-segment path
+as `locale=en, channel="reset-password"` — since `[channel]/layout.tsx`
+never validates the channel param against real Saleor channels, and `(main)`
+is a route group (adds no URL segment), the router falls through to
+`(main)/page.tsx` (the homepage) with `channel` bound to the literal string
+`"reset-password"`. Same mechanism would have broken confirm-account links
+too, had a confirm-account page existed.
+
+- **Fix in both forms**: `redirectUrl` is now built via `useLocale()` (next-intl)
+  - `useParams<{ channel }>()`, e.g.
+    `` `${origin}/${locale}/${encodeURIComponent(channel)}/reset-password` ``
+    (ForgotPasswordForm.tsx) and `.../confirm-account` (RegisterForm.tsx).
+    Verified live by monkey-patching `window.fetch` in the browser and
+    inspecting the actual outgoing request body for both forms — confirmed
+    `redirectUrl` resolves correctly (e.g.
+    `http://localhost:3000/en/uae-channel/reset-password`).
+- **New account-confirmation flow** (previously entirely missing):
+  - Schema was introspected first (via `src/gql/graphql.ts`, not assumed) —
+    the correct mutation is `confirmAccount(email: String!, token: String!):
+ConfirmAccount { user { id email } errors { field message code } }`, NOT
+    `accountConfirm`. No `token`/`refreshToken` is returned — this mutation
+    only activates the account, it does not log the user in.
+  - `src/graphql/mutations/AccountConfirm.graphql` — new additive file (no
+    existing .graphql file touched), `pnpm run generate` run after
+    (generates `AccountConfirmDocument`; project's actual codegen script is
+    `generate`, not `codegen` — there is no `codegen` package.json script).
+  - `src/app/api/auth/confirm-account/route.ts` — mirrors
+    `set-password/route.ts`'s pattern exactly: raw inline mutation string +
+    direct `fetch()` to `SALEOR_API_URL` (not `executeGraphQL`/the generated
+    Document, to match the existing set-password/route.ts convention this
+    was asked to mirror); maps `INVALID`/`NOT_FOUND` AccountErrorCode →
+    `TOKEN_INVALID`, never leaks raw Saleor error messages.
+  - `src/app/[locale]/[channel]/(main)/confirm-account/page.tsx` +
+    `src/ui/components/auth/ConfirmAccountClient.tsx` — same
+    Suspense-wrapped Server Component page shell as `reset-password/page.tsx`
+    / `delete-account/page.tsx`. Client component reads `email`+`token` from
+    `useSearchParams()`, fire-once (`ranRef` guard) POSTs to the new route on
+    mount, three states (pending spinner / success checkmark / error X) using
+    framer-motion fade+scale matching `EmptyState.tsx`/the `(main)/error.tsx`
+    visual language — tokens only (`status-success`/`status-danger`/
+    `brand-primary`), both success and error CTA use `LinkWithChannel` to
+    `/login`. A missing/malformed `email` or `token` in the URL short-circuits
+    straight to the error state without ever calling the API.
+  - New `confirmAccount` i18n namespace (en + ar formal MSA): pageTitle,
+    pending, successTitle, successSubtitle, errorTitle, errorSubtitle,
+    loginButton — zero hardcoded strings.
+  - Verified live against local Saleor in both `en` and `ar` (RTL): the
+    error state renders correctly for an invalid token (real 400 from
+    Saleor's `confirmAccount`), and the missing-token/email case
+    short-circuits to the same error state with no network call.
+- `pnpm tsc --noEmit`: 0 errors. `pnpm lint`: 6 warnings (baseline is ≤7 —
+  the pre-existing 6 src/checkout/ warnings; the Logo.tsx warning didn't
+  print this run but the count stayed under baseline either way, no new
+  warnings introduced).
+- beads: front_store-69c created and closed (see issue for full resolution
+  notes).
 
 ## New dependencies
 

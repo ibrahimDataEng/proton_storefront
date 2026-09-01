@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { useParams } from "next/navigation";
 import { AuthFormField } from "./AuthFormField";
 import { Button } from "@/ui/components/Button";
@@ -14,6 +14,7 @@ export function ForgotPasswordForm({ onBack }: Props) {
 	const t = useTranslations("auth");
 	const params = useParams<{ channel?: string }>();
 	const channel = params.channel ?? "default-channel";
+	const locale = useLocale();
 
 	const [email, setEmail] = useState("");
 	const [loading, setLoading] = useState(false);
@@ -26,8 +27,9 @@ export function ForgotPasswordForm({ onBack }: Props) {
 		setLoading(true);
 
 		try {
+			const resetPasswordPath = `/${locale}/${encodeURIComponent(channel)}/reset-password`;
 			const redirectUrl =
-				typeof window !== "undefined" ? `${window.location.origin}/reset-password` : "/reset-password";
+				typeof window !== "undefined" ? `${window.location.origin}${resetPasswordPath}` : resetPasswordPath;
 
 			await fetch("/api/auth/forgot-password", {
 				method: "POST",
