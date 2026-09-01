@@ -56,6 +56,23 @@ Reusable client-side hooks — import from `@/ui/hooks/`:
 
 ## Known issues
 
+- ~~`/login` and `/register` 500 for every visitor~~ — fixed on
+  `hotfix/login-register-rsc-crash` (merged directly to main per the hotfix
+  convention). Root cause: both standalone pages are Server Components that
+  passed an inline `onModeChange={() => undefined}` function prop to
+  `AuthFormWrapper` (a Client Component) — invalid under Next.js 15's RSC
+  model. Fix: `AuthFormWrapper`'s `onModeChange` prop is now optional with
+  an internal `() => {}` default; both pages simply omit the prop.
+  `AuthModal.tsx`'s own usage (passing `setAuthModalMode` client-to-client)
+  was untouched — it was never the problem. Verified live in both en/ar with
+  a fully cleared `.next` cache: both pages render with zero console/server
+  errors. Closed beads front_store-gfa. Note for whoever's testing standalone
+  auth pages next: the Sign In / Create Account tab buttons on these two
+  pages don't actually switch the visible form — that's pre-existing and
+  unrelated to this fix (`AuthFormWrapper`'s `effectiveView` is derived from
+  the `mode` prop, which is a fixed per-page value on these two routes, not
+  from the tab click's internal state — only `AuthModal`'s usage, where
+  `mode` is real state, makes the tabs functional).
 - 7 lint warnings: 6 in src/checkout/ + 1 in Logo.tsx
   (next/image suggestion — Logo is raw <img>)
 - ~~/pages/about may not exist in Saleor backend~~ — confirmed working in
