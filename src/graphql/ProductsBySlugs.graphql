@@ -1,0 +1,9 @@
+query ProductsBySlugs($slugs: [String!]!, $channel: String!, $language: LanguageCodeEnum!) {
+	products(filter: { slugs: $slugs }, first: 20, channel: $channel) {
+		edges {
+			node {
+				...ProductListItem
+			}
+		}
+	}
+}

@@ -5,20 +5,23 @@ import { useTranslations } from "next-intl";
 import { AccountSidebar, type AccountSection } from "./AccountSidebar";
 import { OverviewSection } from "./sections/OverviewSection";
 import { OrdersSection } from "./sections/OrdersSection";
+import { RecentlyViewedSection } from "./sections/RecentlyViewedSection";
 import { AddressSection } from "./sections/AddressSection";
 import { SettingsSection } from "./sections/SettingsSection";
-import type { CurrentUserOrderListQuery } from "@/gql/graphql";
+import type { CurrentUserOrderListQuery, ProductListItemFragment } from "@/gql/graphql";
 
 type UserWithOrders = NonNullable<CurrentUserOrderListQuery["me"]>;
 
 interface Props {
 	user: UserWithOrders;
 	locale: string;
+	recentlyViewedProducts: ProductListItemFragment[];
 }
 
-export function AccountDashboard({ user, locale }: Props) {
+export function AccountDashboard({ user, locale, recentlyViewedProducts }: Props) {
 	const t = useTranslations("account");
 	const tAuth = useTranslations("auth");
+	const tRecentlyViewed = useTranslations("recentlyViewed");
 	const [activeSection, setActiveSection] = useState<AccountSection>("overview");
 
 	const fullName = [user.firstName, user.lastName].filter(Boolean).join(" ");
@@ -30,6 +33,7 @@ export function AccountDashboard({ user, locale }: Props) {
 	const sidebarLabels = {
 		overview: t("overview"),
 		orders: t("orders"),
+		recentlyViewed: tRecentlyViewed("navLabel"),
 		addresses: t("addresses"),
 		settings: t("settings"),
 		signOut: tAuth("signOut"),
@@ -53,6 +57,9 @@ export function AccountDashboard({ user, locale }: Props) {
 					<OverviewSection user={user} orders={orders} onNavigate={setActiveSection} locale={locale} />
 				)}
 				{activeSection === "orders" && <OrdersSection orders={orders} locale={locale} />}
+				{activeSection === "recentlyViewed" && (
+					<RecentlyViewedSection products={recentlyViewedProducts} />
+				)}
 				{activeSection === "addresses" && <AddressSection addresses={addresses} />}
 				{activeSection === "settings" && <SettingsSection user={user} />}
 			</main>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
 import { m, AnimatePresence } from "framer-motion";
 import { ChevronRight, ShoppingCart, Check, Minus, Plus } from "lucide-react";
@@ -11,6 +11,8 @@ import { ProductVariantSelector } from "./ProductVariantSelector";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 import { AvailabilityMessage } from "@/ui/components/AvailabilityMessage";
 import { addLineWithQuantity } from "@/app/[locale]/[channel]/(main)/cart/actions";
+import { recordProductView } from "@/app/[locale]/[channel]/(main)/account/actions";
+import { useAuth } from "@/ui/context/AuthContext";
 import { formatMoney, formatMoneyRange } from "@/lib/utils";
 import type { ProductDetailsQuery } from "@/gql/graphql";
 
@@ -32,6 +34,12 @@ const shakeVariants = {
 export function ProductInfo({ product, locale, channel }: Props) {
 	const t = useTranslations("products");
 	const tCart = useTranslations("cart");
+	const { isLoggedIn } = useAuth();
+
+	useEffect(() => {
+		if (!isLoggedIn) return;
+		void recordProductView(product.slug);
+	}, [isLoggedIn, product.slug]);
 
 	const variants = product.variants ?? [];
 	const firstAvailable = variants.find((v) => (v.quantityAvailable ?? 0) > 0) ?? variants[0];
