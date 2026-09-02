@@ -2,11 +2,12 @@
 
 import { useRef, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { ChevronDown, SlidersHorizontal, X } from "lucide-react";
+import { useTranslations, useLocale } from "next-intl";
+import Image from "next/image";
+import { ChevronDown, SlidersHorizontal, X, Check } from "lucide-react";
 import { clsx } from "clsx";
 import { useClickOutside } from "@/ui/hooks/useClickOutside";
-import { COUNTRIES } from "@/ui/components/home/CountrySection";
+import { COUNTRY_ORIGINS, getCountryBySlug, getFlagUrl } from "@/lib/countryOrigin";
 
 export interface FilterCategory {
 	id: string;
@@ -17,10 +18,10 @@ export interface FilterCategory {
 interface FilterBarProps {
 	totalCount: number;
 	categories: FilterCategory[];
-	activeCountry?: string;
+	activeCountries?: string[];
 }
 
-type OpenDropdown = "sort" | "category" | "price" | null;
+type OpenDropdown = "sort" | "category" | "price" | "country" | null;
 
 const PRICE_PRESETS = [
 	{ label: "Under 50", min: "", max: "50" },
@@ -29,8 +30,9 @@ const PRICE_PRESETS = [
 	{ label: "200+", min: "200", max: "" },
 ];
 
-export function FilterBar({ totalCount, categories, activeCountry }: FilterBarProps) {
+export function FilterBar({ totalCount, categories, activeCountries = [] }: FilterBarProps) {
 	const t = useTranslations("products");
+	const locale = useLocale();
 	const router = useRouter();
 	const searchParams = useSearchParams();
 
@@ -50,7 +52,7 @@ export function FilterBar({ totalCount, categories, activeCountry }: FilterBarPr
 	const currentInStock = searchParams.get("inStock") === "true";
 
 	const hasActiveFilters =
-		!!activeCountry ||
+		activeCountries.length > 0 ||
 		!!currentCategory ||
 		!!currentMinPrice ||
 		!!currentMaxPrice ||
@@ -104,30 +106,50 @@ export function FilterBar({ totalCount, categories, activeCountry }: FilterBarPr
 		setOpenDropdown(openDropdown === "price" ? null : "price");
 	};
 
+	const toggleCountry = useCallback(
+		(slug: string) => {
+			const next = activeCountries.includes(slug)
+				? activeCountries.filter((c) => c !== slug)
+				: [...activeCountries, slug];
+			updateParam("country", next.length > 0 ? next.join(",") : null);
+		},
+		[activeCountries, updateParam],
+	);
+
 	return (
 		<div className="mb-6">
-			{/* ── Country pill (both desktop + mobile visible strip) ── */}
-			{activeCountry &&
-				(() => {
-					const country = COUNTRIES.find((c) => c.slug === activeCountry);
-					if (!country) return null;
-					return (
-						<div className="mb-3 flex flex-wrap gap-2">
-							<span className="flex items-center gap-1.5 rounded-full border border-brand-primary/30 bg-surface-raised px-3 py-1 text-sm text-content-primary">
-								<span aria-hidden="true">{country.emoji}</span>
-								{t("filteredByCountry")}: {country.nameEn}
+			{/* ── Country pills (both desktop + mobile visible strip) ── */}
+			{activeCountries.length > 0 && (
+				<div className="mb-3 flex flex-wrap gap-2">
+					{activeCountries.map((slug) => {
+						const country = getCountryBySlug(slug);
+						if (!country) return null;
+						return (
+							<span
+								key={slug}
+								className="flex items-center gap-1.5 rounded-full border border-brand-primary/30 bg-surface-raised px-3 py-1 text-sm text-content-primary"
+							>
+								<Image
+									src={getFlagUrl(country.flagCode, 80)}
+									width={16}
+									height={11}
+									alt=""
+									className="rounded-sm object-cover"
+								/>
+								{locale === "ar" ? country.nameAr : country.nameEn}
 								<button
 									type="button"
-									onClick={() => updateParam("country", null)}
-									className="ml-1 flex h-4 w-4 items-center justify-center rounded-full text-content-secondary transition-colors hover:bg-red-100 hover:text-red-600"
+									onClick={() => toggleCountry(slug)}
+									className="ms-1 flex h-4 w-4 items-center justify-center rounded-full text-content-secondary transition-colors hover:bg-red-100 hover:text-red-600"
 									aria-label={t("clearCountry")}
 								>
 									<X size={10} aria-hidden="true" />
 								</button>
 							</span>
-						</div>
-					);
-				})()}
+						);
+					})}
+				</div>
+			)}
 
 			{/* ── Desktop bar ─────────────────────────────────────────── */}
 			<div ref={containerRef} className="hidden items-center justify-between gap-4 sm:flex">
@@ -220,6 +242,51 @@ export function FilterBar({ totalCount, categories, activeCountry }: FilterBarPr
 							)}
 						</div>
 					)}
+
+					{/* Country of origin (multi-select) */}
+					<div className="relative">
+						<button
+							type="button"
+							onClick={() => setOpenDropdown(openDropdown === "country" ? null : "country")}
+							className="flex items-center gap-2 rounded-lg border border-line-subtle bg-surface-raised px-3 py-2 text-sm text-content-primary transition-colors hover:border-brand-primary"
+						>
+							{activeCountries.length > 0 && (
+								<span className="h-2 w-2 rounded-full bg-brand-primary" aria-hidden="true" />
+							)}
+							{t("countryOfOrigin")}
+							<ChevronDown size={14} aria-hidden="true" />
+						</button>
+						{openDropdown === "country" && (
+							<div className="absolute right-0 top-full z-20 mt-2 max-h-72 min-w-56 overflow-y-auto rounded-xl bg-surface-raised p-2 shadow-elevated">
+								{COUNTRY_ORIGINS.map((country) => {
+									const checked = activeCountries.includes(country.slug);
+									return (
+										<button
+											key={country.slug}
+											type="button"
+											onClick={() => toggleCountry(country.slug)}
+											className={clsx(
+												"flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-surface-sunken",
+												checked ? "font-semibold text-brand-primary" : "text-content-primary",
+											)}
+										>
+											<span className="flex items-center gap-2">
+												<Image
+													src={getFlagUrl(country.flagCode, 80)}
+													width={20}
+													height={14}
+													alt=""
+													className="rounded-sm object-cover"
+												/>
+												{locale === "ar" ? country.nameAr : country.nameEn}
+											</span>
+											{checked && <Check size={14} aria-hidden="true" />}
+										</button>
+									);
+								})}
+							</div>
+						)}
+					</div>
 
 					{/* Price range */}
 					<div className="relative">
@@ -339,28 +406,40 @@ export function FilterBar({ totalCount, categories, activeCountry }: FilterBarPr
 							</button>
 						</div>
 
-						{/* Active country */}
-						{activeCountry &&
-							(() => {
-								const country = COUNTRIES.find((c) => c.slug === activeCountry);
-								if (!country) return null;
-								return (
-									<div className="mb-5">
-										<p className="mb-2 text-sm font-medium text-content-primary">{t("filteredByCountry")}</p>
+						{/* Country of origin (multi-select) */}
+						<div className="mb-5">
+							<p className="mb-2 text-sm font-medium text-content-primary">{t("countryOfOrigin")}</p>
+							<div className="max-h-56 space-y-1 overflow-y-auto">
+								{COUNTRY_ORIGINS.map((country) => {
+									const checked = activeCountries.includes(country.slug);
+									return (
 										<button
+											key={country.slug}
 											type="button"
-											onClick={() => updateParam("country", null)}
-											className="flex w-full items-center justify-between rounded-lg border border-brand-primary/30 bg-surface-raised px-3 py-2 text-sm text-content-primary"
+											onClick={() => toggleCountry(country.slug)}
+											className={clsx(
+												"flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm",
+												checked
+													? "bg-brand-primary text-content-inverse"
+													: "text-content-primary hover:bg-surface-sunken",
+											)}
 										>
 											<span className="flex items-center gap-2">
-												<span aria-hidden="true">{country.emoji}</span>
-												{country.nameEn}
+												<Image
+													src={getFlagUrl(country.flagCode, 80)}
+													width={20}
+													height={14}
+													alt=""
+													className="rounded-sm object-cover"
+												/>
+												{locale === "ar" ? country.nameAr : country.nameEn}
 											</span>
-											<X size={14} className="text-content-secondary" aria-hidden="true" />
+											{checked && <Check size={14} aria-hidden="true" />}
 										</button>
-									</div>
-								);
-							})()}
+									);
+								})}
+							</div>
+						</div>
 
 						{/* Sort */}
 						<div className="mb-5">

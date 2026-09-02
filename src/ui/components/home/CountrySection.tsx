@@ -5,20 +5,53 @@ import { useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { Container } from "@/ui/components/Container";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
+import { getCountryBySlug } from "@/lib/countryOrigin";
 
-export const COUNTRIES = [
-	{ slug: "syria", nameEn: "Syria", nameAr: "سوريا", code: "sy", emoji: "🇸🇾" },
-	{ slug: "egypt", nameEn: "Egypt", nameAr: "مصر", code: "eg", emoji: "🇪🇬" },
-	{ slug: "india", nameEn: "India", nameAr: "الهند", code: "in", emoji: "🇮🇳" },
-	{ slug: "united-states", nameEn: "United States", nameAr: "الولايات المتحدة", code: "us", emoji: "🇺🇸" },
-	{ slug: "turkey", nameEn: "Turkey", nameAr: "تركيا", code: "tr", emoji: "🇹🇷" },
-	{ slug: "china", nameEn: "China", nameAr: "الصين", code: "cn", emoji: "🇨🇳" },
-	{ slug: "yemen", nameEn: "Yemen", nameAr: "اليمن", code: "ye", emoji: "🇾🇪" },
-	{ slug: "south-africa", nameEn: "South Africa", nameAr: "جنوب أفريقيا", code: "za", emoji: "🇿🇦" },
-	{ slug: "pakistan", nameEn: "Pakistan", nameAr: "باكستان", code: "pk", emoji: "🇵🇰" },
-	{ slug: "chile", nameEn: "Chile", nameAr: "تشيلي", code: "cl", emoji: "🇨🇱" },
-	{ slug: "nicaragua", nameEn: "Nicaragua", nameAr: "نيكاراغوا", code: "ni", emoji: "🇳🇮" },
+/**
+ * Curated subset of src/lib/countryOrigin.ts (the single source of truth for
+ * country name/flag data) shown in the homepage carousel. Kept deliberately
+ * smaller than the full origin-of-country attribute list — this is a
+ * showcase, not the PLP filter.
+ */
+const HOMEPAGE_COUNTRY_SLUGS = [
+	"syria",
+	"egypt",
+	"india",
+	"united-states",
+	"turkey",
+	"china",
+	"yemen",
+	"south-africa",
+	"pakistan",
+	"chile",
+	"nicaragua",
 ] as const;
+
+const HOMEPAGE_COUNTRY_EMOJI: Record<(typeof HOMEPAGE_COUNTRY_SLUGS)[number], string> = {
+	syria: "🇸🇾",
+	egypt: "🇪🇬",
+	india: "🇮🇳",
+	"united-states": "🇺🇸",
+	turkey: "🇹🇷",
+	china: "🇨🇳",
+	yemen: "🇾🇪",
+	"south-africa": "🇿🇦",
+	pakistan: "🇵🇰",
+	chile: "🇨🇱",
+	nicaragua: "🇳🇮",
+};
+
+export const COUNTRIES = HOMEPAGE_COUNTRY_SLUGS.map((slug) => {
+	const country = getCountryBySlug(slug);
+	if (!country) throw new Error(`countryOrigin.ts is missing mapping for homepage country "${slug}"`);
+	return {
+		slug: country.slug,
+		nameEn: country.nameEn,
+		nameAr: country.nameAr,
+		code: country.flagCode,
+		emoji: HOMEPAGE_COUNTRY_EMOJI[slug],
+	};
+});
 
 export function CountrySection({ channel: _channel, locale }: { channel: string; locale: string }) {
 	const t = useTranslations("home");

@@ -2,7 +2,8 @@ import { notFound } from "next/navigation";
 import { type ResolvingMetadata, type Metadata } from "next";
 import { type WithContext, type Product } from "schema-dts";
 import { executeGraphQL } from "@/lib/graphql";
-import { LanguageCodeEnum, ProductDetailsDocument } from "@/gql/graphql";
+import { LanguageCodeEnum, ProductDetailsDocument, ProductOriginDetailsDocument } from "@/gql/graphql";
+import { getCountryBySlug } from "@/lib/countryOrigin";
 import { Container } from "@/ui/components/Container";
 import { ProductGallery } from "@/ui/components/pdp/ProductGallery";
 import { ProductInfo } from "@/ui/components/pdp/ProductInfo";
@@ -53,14 +54,25 @@ export default async function Page(props: {
 	const { locale, channel, slug } = params;
 	const language = locale === "ar" ? LanguageCodeEnum.Ar : LanguageCodeEnum.EnUs;
 
-	const { product } = await executeGraphQL(ProductDetailsDocument, {
-		variables: { slug: decodeURIComponent(slug), channel, language },
-		revalidate: 60,
-	});
+	const [{ product }, originResult] = await Promise.all([
+		executeGraphQL(ProductDetailsDocument, {
+			variables: { slug: decodeURIComponent(slug), channel, language },
+			revalidate: 60,
+		}),
+		executeGraphQL(ProductOriginDetailsDocument, {
+			variables: { slug: decodeURIComponent(slug), channel, language },
+			revalidate: 60,
+		}),
+	]);
 
 	if (!product) notFound();
 
 	const localizedProduct = locale === "ar" && product.translation ? product.translation : product;
+
+	// Origin-of-country badge data — resolved by attribute slug, never by display name
+	const originAttr = originResult.product?.attributes.find((a) => a.attribute.slug === "origin-of-country");
+	const originSlug = originAttr?.values[0]?.slug;
+	const originCountry = originSlug ? getCountryBySlug(originSlug) : undefined;
 
 	// Build gallery images: media first, fall back to thumbnail
 	const galleryImages: Array<{ url: string; alt: string | null }> =
@@ -100,7 +112,7 @@ export default async function Page(props: {
 			/>
 			<Container className="py-8 md:py-12">
 				<div className="grid gap-8 lg:grid-cols-2 lg:gap-12">
-					<ProductGallery images={galleryImages} productName={product.name} />
+					<ProductGallery images={galleryImages} productName={product.name} originCountry={originCountry} />
 					<ProductInfo product={product} locale={locale} channel={channel} />
 				</div>
 

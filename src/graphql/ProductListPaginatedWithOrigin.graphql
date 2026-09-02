@@ -1,0 +1,30 @@
+query ProductListPaginatedWithOrigin(
+	$first: Int!
+	$after: String
+	$channel: String!
+	$language: LanguageCodeEnum!
+	$sortBy: ProductOrderField!
+	$sortDirection: OrderDirection!
+	$filter: ProductFilterInput
+) {
+	products(
+		first: $first
+		after: $after
+		channel: $channel
+		sortBy: { field: $sortBy, direction: $sortDirection }
+		filter: $filter
+	) {
+		totalCount
+		edges {
+			node {
+				...ProductListItem
+				...ProductOriginAttribute
+			}
+			cursor
+		}
+		pageInfo {
+			endCursor
+			hasNextPage
+		}
+	}
+}

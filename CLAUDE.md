@@ -496,7 +496,9 @@ SearchBar.tsx, SearchOverlay.tsx (session 7).
   clearFilters, noResults, clearAndReset, added,
   selectSize, relatedProducts, addError, readMore, readLess,
   specifications, onlyLeft, quantity (session 18),
-  filteredByCountry, clearCountry (session 21)
+  filteredByCountry, clearCountry (session 21),
+  countryOfOrigin, origin (session 37 — origin interpolates {country},
+  reused for both the PDP gallery badge and the PLP filter dropdown)
 - `auth` — login, register, logout, email, password, confirmPassword, firstName,
   lastName, forgotPassword, sendResetLink, resetEmailSent, switchToRegister,
   switchToLogin, confirmEmailRequired, backToLogin, resetPassword, newPassword,
@@ -865,6 +867,135 @@ ConfirmAccount { user { id email } errors { field message code } }`, NOT
   warnings introduced).
 - beads: front_store-69c created and closed (see issue for full resolution
   notes).
+
+## Country of Origin (Session 37)
+
+Multi-select "Country of Origin" PLP filter plus flag badges on the PLP card
+and PDP gallery, built against the Saleor "origin-of-country" attribute
+(Dropdown type, up to 32 country values, product-to-country assignment done
+manually in the Dashboard and ongoing — not every product has it set).
+
+- **Single source of truth**: `src/lib/countryOrigin.ts` — new file, exports
+  `COUNTRY_ORIGINS` (32 entries: `slug`/`nameEn`/`nameAr`/`flagCode`, the
+  `slug` matching the Saleor AttributeValue slug exactly), `getCountryBySlug()`
+  (returns `undefined` rather than throwing when a slug doesn't match — the
+  attribute may be unassigned or a Dashboard value may not exist in this
+  list yet), and `getFlagUrl(flagCode, width)` wrapping
+  `https://flagcdn.com/w{width}/{flagCode}.png` (already whitelisted via
+  next.config.ts's `https://**` remotePatterns wildcard — no config change
+  needed).
+  `src/ui/components/home/CountrySection.tsx`'s own `COUNTRIES` export (11
+  countries, used by the homepage carousel and by
+  `SupplierApplicationForm.tsx`'s unrelated "Country of Operation" select)
+  now derives its data from `getCountryBySlug()` for a curated
+  `HOMEPAGE_COUNTRY_SLUGS` list instead of hardcoding names/codes a second
+  time — the `emoji` field (not part of the central mapping, decorative only,
+  still used by `SupplierApplicationForm.tsx`) stays as a small local
+  `HOMEPAGE_COUNTRY_EMOJI` map. Export shape (`slug`/`nameEn`/`nameAr`/`code`/
+  `emoji`) is unchanged, so neither consumer needed changes. Confirmed live
+  the homepage carousel still renders all 11 flags/names correctly after the
+  refactor.
+- **GraphQL (additive only — no existing .graphql file edited)**:
+  - `src/graphql/fragments/ProductOriginAttribute.graphql` — new fragment on
+    `Product`: `attributes { attribute { slug } values { slug name
+translation(languageCode: $language) { name } } }`. Existing
+    `ProductDetails.graphql` already fetched a generic `attributes` block for
+    the PDP's specifications table, but without `slug` on either `attribute`
+    or `values` — there was no reliable, locale-independent way to identify
+    "this is the origin-of-country row" (matching on display name is
+    locale-fragile) or to get the value's slug needed to look up
+    `getCountryBySlug()`. This new fragment is the only place `slug` is
+    fetched, and both new operations below spread it.
+  - `src/graphql/ProductListPaginatedWithOrigin.graphql` — new query, same
+    shape as `ProductListPaginated.graphql` (still untouched, still used
+    nowhere now but left in place) but the product node spreads both
+    `...ProductListItem` and `...ProductOriginAttribute`.
+    `products/page.tsx` now calls `ProductListPaginatedWithOriginDocument`
+    instead of `ProductListPaginatedDocument`.
+  - `src/graphql/ProductOriginDetails.graphql` — new query,
+    `product(slug, channel) { id ...ProductOriginAttribute }`. Called via
+    `Promise.all` alongside the existing `ProductDetailsDocument` call in
+    `products/[slug]/page.tsx` (one extra request, kept separate rather than
+    editing `ProductDetails.graphql`).
+  - `pnpm run generate` run after adding these — confirmed
+    `ProductOriginAttributeFragment`, `ProductListPaginatedWithOriginQuery`,
+    `ProductOriginDetailsQuery` all generated with `attribute.slug: string`
+    (non-null) and `values[].slug: string | null` (nullable — filter/find
+    defensively, never assume index 0 exists or has a slug).
+- **PLP filter** (`src/ui/components/products/FilterBar.tsx`,
+  `products/page.tsx`): `?country=` is now a comma-separated list
+  (`?country=syria,lebanon`), parsed to `string[]` in `products/page.tsx` and
+  passed as `filter.attributes = [{ slug: "origin-of-country", values:
+countries }]` — `AttributeInput.values` already accepted `Array<string>`
+  with OR semantics ("filters results to include only records with one of
+  the matching values") _before_ this session, so multi-select needed zero
+  schema/API changes, only parsing changes on the storefront side.
+  `FilterBar`'s prop changed from `activeCountry?: string` to
+  `activeCountries?: string[]` (default `[]`). New desktop dropdown +
+  mobile-bottom-sheet section (positioned like the existing Sort/Category
+  controls) lists all 32 `COUNTRY_ORIGINS` as a flag + localized-name
+  checkbox-style toggle list (immediate toggle on click, no explicit Apply —
+  matches the Sort/Category pattern, not the Price Range pattern). The old
+  single dismissible pill became a pill list (one per active country,
+  independently removable via `toggleCountry`), still rendered in the shared
+  strip above both the desktop bar and the mobile view. `hasActiveFilters`
+  and `clearAllFilters` cover the new array. New i18n keys in the
+  `products` namespace: `countryOfOrigin` ("Country of Origin" /
+  "بلد المنشأ"), `origin` ("Origin: {country}" / "المنشأ: {country}" —
+  interpolated, also reused for the PDP badge and PLP card tooltip text).
+  **Known limitation** (explicitly accepted, not a bug): the dropdown lists
+  all 32 countries from `countryOrigin.ts`, not just ones actually assigned
+  to an in-stock/available product in this channel — Saleor has no
+  straightforward query to derive "distinct attribute values actually in use
+  across available products in a channel" without a full product scan, so
+  selecting an unused country will correctly show "0 products" rather than
+  being hidden from the list.
+- **PLP card badge** (`src/ui/components/ProductElement.tsx`): small flag-only
+  corner badge (`next/image`, ~24×16px, `title` attribute shows the
+  localized country name) rendered when the product's `attributes` array
+  (now present because `products/page.tsx` passes the
+  `ProductListPaginatedWithOrigin` query's product nodes through) has an
+  `origin-of-country` entry with a resolvable `getCountryBySlug()` slug.
+  Positioned at physical `left-2 top-2` — deliberately the opposite corner
+  from the existing OOS badge at `right-2 top-2`, matching that badge's
+  existing non-logical (not RTL-flipping) convention rather than introducing
+  a mixed logical/physical positioning scheme on the same card; confirmed
+  visually correct in both `en` and `ar`. `ProductElement`'s prop type is
+  `ProductListItemFragment & { attributes?: [...] }` (attributes optional) —
+  every other `ProductElement` call site (`RelatedProducts`,
+  `CartRecommendations`, `RecentlyViewedSection`, search/collections/
+  categories pages, which still use the plain `ProductListItemFragment`-based
+  queries) simply has no `attributes` field at runtime and renders no badge;
+  only the main PLP (`products/page.tsx` → `ProductList.tsx`) has origin data
+  today. No component changes were needed in `ProductList.tsx` — structural
+  typing lets the wider query-result type flow through a variable typed
+  `ProductListItemFragment[]` transparently.
+- **PDP badge** (`src/ui/components/pdp/ProductGallery.tsx`): pill badge
+  (flag + `t("origin", {country})`) absolutely positioned at logical
+  `start-3 top-3` over the main gallery image (kept logical, unlike the PLP
+  card badge, since this is new standalone overlay markup with no existing
+  physical-positioning precedent to match in this file — the pre-existing
+  zoom-icon overlay stays at its own `bottom-3 right-3`). Purely decorative
+  (no onClick), so it doesn't intercept the image's lightbox-open click
+  handler. `originCountry` is resolved server-side in
+  `products/[slug]/page.tsx` (via the `ProductOriginDetails` query above) and
+  passed down as a plain serializable prop; `ProductGallery` picks
+  `nameAr`/`nameEn` itself via `useLocale()`. Renders nothing when the
+  product has no origin-of-country value.
+- Verified end-to-end live against local Saleor data (products already
+  carrying a real origin-of-country value, e.g. "Lemon Super Seeds" →
+  Egypt): PLP multi-select filter (`?country=syria,egypt` → correct OR
+  result count, both pills, both dropdown checkmarks; removing one pill
+  narrows the URL back to a single slug), PLP card flag badge, PDP gallery
+  badge (`🇪🇬 Origin: Egypt`), full Arabic/RTL pass (dropdown + pills +
+  both badges mirror correctly, verified with live screenshots per this
+  project's established "verify visually, don't assume" RTL rule), and
+  mobile bottom-sheet multi-select (toggling a country closes into the
+  correct filtered URL, sheet stays open across toggles matching the
+  existing Sort/Category behavior).
+- `pnpm tsc --noEmit`: 0 errors. `pnpm lint`: 6 warnings (baseline, all
+  pre-existing in `src/checkout/`) — no new warnings introduced.
+- beads: front_store-m0e (see issue for full resolution notes).
 
 ## New dependencies
 

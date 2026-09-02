@@ -1,0 +1,14 @@
+fragment ProductOriginAttribute on Product {
+	attributes {
+		attribute {
+			slug
+		}
+		values {
+			slug
+			name
+			translation(languageCode: $language) {
+				name
+			}
+		}
+	}
+}
