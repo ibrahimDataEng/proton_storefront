@@ -1,0 +1,6 @@
+query ProductOriginDetails($slug: String!, $channel: String!, $language: LanguageCodeEnum!) {
+	product(slug: $slug, channel: $channel) {
+		id
+		...ProductOriginAttribute
+	}
+}

@@ -3,7 +3,7 @@ import { getTranslations } from "next-intl/server";
 import {
 	MenuGetBySlugDocument,
 	OrderDirection,
-	ProductListPaginatedDocument,
+	ProductListPaginatedWithOriginDocument,
 	ProductOrderField,
 	StockAvailability,
 	type ProductFilterInput,
@@ -95,13 +95,14 @@ export default async function Page(props: {
 			filter.categories = [cat.id];
 		}
 	}
-	const country = typeof searchParams.country === "string" ? searchParams.country : undefined;
-	if (country) {
-		filter.attributes = [{ slug: "origin-of-country", values: [country] }];
+	const countries =
+		typeof searchParams.country === "string" ? searchParams.country.split(",").filter(Boolean) : [];
+	if (countries.length > 0) {
+		filter.attributes = [{ slug: "origin-of-country", values: countries }];
 	}
 	const hasFilter = Object.keys(filter).length > 0;
 
-	const { products } = await executeGraphQL(ProductListPaginatedDocument, {
+	const { products } = await executeGraphQL(ProductListPaginatedWithOriginDocument, {
 		variables: {
 			first: ProductsPerPage,
 			after: cursor,
@@ -136,7 +137,7 @@ export default async function Page(props: {
 		...(searchParams.maxPrice ? { maxPrice: searchParams.maxPrice } : {}),
 		...(searchParams.inStock ? { inStock: searchParams.inStock } : {}),
 		...(searchParams.category ? { category: searchParams.category } : {}),
-		...(country ? { country } : {}),
+		...(countries.length > 0 ? { country: countries.join(",") } : {}),
 	});
 
 	const t = await getTranslations("products");
@@ -151,7 +152,7 @@ export default async function Page(props: {
 				<FilterBar
 					totalCount={products.totalCount ?? productNodes.length}
 					categories={categories}
-					activeCountry={country}
+					activeCountries={countries}
 				/>
 				<CategoryChipsWrapper locale={locale} activeSlug={activeCategory} />
 				{productNodes.length === 0 ? (

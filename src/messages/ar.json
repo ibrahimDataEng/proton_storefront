@@ -124,7 +124,9 @@
 		"filteredByCountry": "البلد",
 		"clearCountry": "مسح",
 		"home": "الرئيسية",
-		"allProducts": "المنتجات"
+		"allProducts": "المنتجات",
+		"countryOfOrigin": "بلد المنشأ",
+		"origin": "المنشأ: {country}"
 	},
 	"availability": {
 		"outofstock": "غير متوفر"

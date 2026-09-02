@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
+import Image from "next/image";
 import { m } from "framer-motion";
 import { clsx } from "clsx";
 import { LinkWithChannel } from "../atoms/LinkWithChannel";
@@ -9,15 +10,28 @@ import { ProductImageWrapper } from "@/ui/atoms/ProductImageWrapper";
 import { ProductAddButton } from "@/ui/components/products/ProductAddButton";
 import type { ProductListItemFragment } from "@/gql/graphql";
 import { formatMoney, formatMoneyRange } from "@/lib/utils";
+import { getCountryBySlug, getFlagUrl } from "@/lib/countryOrigin";
+
+type ProductWithOptionalOrigin = ProductListItemFragment & {
+	attributes?: Array<{
+		attribute: { slug?: string | null };
+		values: Array<{ slug?: string | null }>;
+	}>;
+};
 
 export function ProductElement({
 	product,
 	loading,
 	priority,
-}: { product: ProductListItemFragment } & { loading: "eager" | "lazy"; priority?: boolean }) {
+}: { product: ProductWithOptionalOrigin } & { loading: "eager" | "lazy"; priority?: boolean }) {
 	const t = useTranslations("products");
+	const locale = useLocale();
 	const variants = product.variants ?? [];
 	const isAvailable = product.isAvailable ?? true;
+
+	const originAttr = product.attributes?.find((a) => a.attribute.slug === "origin-of-country");
+	const originSlug = originAttr?.values[0]?.slug;
+	const originCountry = originSlug ? getCountryBySlug(originSlug) : undefined;
 
 	const [selectedVariantId, setSelectedVariantId] = useState<string | undefined>(variants[0]?.id);
 
@@ -69,6 +83,20 @@ export function ProductElement({
 						{!isAvailable && (
 							<div className="absolute right-2 top-2 z-10 rounded-md bg-surface-raised px-2 py-0.5 text-xs text-status-danger shadow-soft">
 								{t("outOfStock")}
+							</div>
+						)}
+						{originCountry && (
+							<div
+								className="absolute left-2 top-2 z-10 overflow-hidden rounded-md shadow-soft ring-1 ring-surface-base"
+								title={locale === "ar" ? originCountry.nameAr : originCountry.nameEn}
+							>
+								<Image
+									src={getFlagUrl(originCountry.flagCode, 80)}
+									alt={locale === "ar" ? originCountry.nameAr : originCountry.nameEn}
+									width={24}
+									height={16}
+									className="block h-4 w-6 object-cover"
+								/>
 							</div>
 						)}
 						{product?.thumbnail?.url && (

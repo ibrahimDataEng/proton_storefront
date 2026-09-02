@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
+import { useTranslations, useLocale } from "next-intl";
 import { m, AnimatePresence } from "framer-motion";
 import { X, ZoomIn } from "lucide-react";
+import { getFlagUrl, type CountryOrigin } from "@/lib/countryOrigin";
 
 interface GalleryImage {
 	url: string;
@@ -13,11 +15,15 @@ interface GalleryImage {
 interface Props {
 	images: GalleryImage[];
 	productName: string;
+	originCountry?: CountryOrigin;
 }
 
-export function ProductGallery({ images, productName }: Props) {
+export function ProductGallery({ images, productName, originCountry }: Props) {
+	const t = useTranslations("products");
+	const locale = useLocale();
 	const [selectedIndex, setSelectedIndex] = useState(0);
 	const [lightboxOpen, setLightboxOpen] = useState(false);
+	const originName = originCountry ? (locale === "ar" ? originCountry.nameAr : originCountry.nameEn) : null;
 
 	const selectedUrl = images[selectedIndex]?.url ?? "";
 	const selectedAlt = images[selectedIndex]?.alt ?? productName;
@@ -69,6 +75,20 @@ export function ProductGallery({ images, productName }: Props) {
 							/>
 						</m.div>
 					</AnimatePresence>
+					{originCountry && originName && (
+						<div className="absolute start-3 top-3 z-10 flex items-center gap-1.5 rounded-full bg-surface-base/90 px-2.5 py-1 shadow-soft backdrop-blur-sm">
+							<Image
+								src={getFlagUrl(originCountry.flagCode, 80)}
+								alt=""
+								width={20}
+								height={14}
+								className="rounded-sm object-cover"
+							/>
+							<span className="text-xs font-medium text-content-primary">
+								{t("origin", { country: originName })}
+							</span>
+						</div>
+					)}
 					<div className="absolute bottom-3 right-3 rounded-lg bg-surface-base/80 p-1.5 opacity-0 backdrop-blur-sm transition-opacity group-hover:opacity-100">
 						<ZoomIn className="h-4 w-4 text-content-secondary" aria-hidden="true" />
 					</div>

@@ -124,7 +124,9 @@
 		"filteredByCountry": "Country",
 		"clearCountry": "Clear",
 		"home": "Home",
-		"allProducts": "Products"
+		"allProducts": "Products",
+		"countryOfOrigin": "Country of Origin",
+		"origin": "Origin: {country}"
 	},
 	"availability": {
 		"outofstock": "Out of stock"
