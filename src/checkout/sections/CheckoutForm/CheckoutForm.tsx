@@ -20,8 +20,27 @@ import { CheckoutStepper } from "@/checkout/components/CheckoutStepper";
 import { CheckoutErrorBanner } from "@/checkout/components/CheckoutErrorBanner";
 import { Button } from "@/checkout/components/Button";
 import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
+import {
+	trackBeginCheckout,
+	trackAddShippingInfo,
+	trackAddPaymentInfo,
+	type GA4Item,
+} from "@/lib/analytics/gtag";
 
 type Step = "contact" | "shipping" | "payment";
+
+// CheckoutLineFragment carries no product id — variant.id is used as the
+// GA4 item_id for checkout-step events (see Session 37 diagnostic).
+function getCheckoutItems(checkout: ReturnType<typeof useCheckout>["checkout"] | undefined): GA4Item[] {
+	return (checkout?.lines ?? []).map((line) => ({
+		item_id: line.variant.id,
+		item_name: line.variant.product.translation?.name || line.variant.product.name,
+		item_category:
+			line.variant.product.category?.translation?.name || line.variant.product.category?.name || undefined,
+		price: line.unitPrice?.gross?.amount,
+		quantity: line.quantity,
+	}));
+}
 
 const slideVariants = {
 	initial: (dir: "forward" | "back") => ({ opacity: 0, x: dir === "forward" ? 24 : -24 }),
@@ -40,6 +59,16 @@ export const CheckoutForm = () => {
 	const [currentStep, setCurrentStep] = useState<Step>("contact");
 	const [direction, setDirection] = useState<"forward" | "back">("forward");
 	const [checkoutError, setCheckoutError] = useState<string | null>(null);
+
+	useEffect(() => {
+		if (!checkout) return;
+		trackBeginCheckout({
+			value: checkout.totalPrice?.gross?.amount ?? 0,
+			items: getCheckoutItems(checkout),
+		});
+		// Fires once on mount only — not on step changes
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	useEffect(() => {
 		const unsubscribe = toast.onChange((payload) => {
@@ -93,6 +122,17 @@ export const CheckoutForm = () => {
 	const goBack = (prev: Step) => {
 		setDirection("back");
 		setCurrentStep(prev);
+	};
+
+	const handleContinueToPayment = () => {
+		const items = getCheckoutItems(checkout);
+		const value = checkout?.totalPrice?.gross?.amount ?? 0;
+		const selectedShippingMethod = checkout?.shippingMethods?.find(
+			(method) => method.id === checkout?.deliveryMethod?.id,
+		);
+		trackAddShippingInfo({ value, items, shipping_tier: selectedShippingMethod?.name });
+		trackAddPaymentInfo({ value, items });
+		goNext("payment");
 	};
 
 	let stepContent: React.ReactNode;
@@ -164,7 +204,7 @@ export const CheckoutForm = () => {
 						className="flex-1 justify-center"
 					/>
 					<Button
-						onClick={() => goNext("payment")}
+						onClick={handleContinueToPayment}
 						variant="primary"
 						label={
 							<span className="flex items-center gap-2">

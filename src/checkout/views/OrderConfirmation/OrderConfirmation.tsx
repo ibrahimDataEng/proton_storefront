@@ -4,6 +4,7 @@ import { Summary, SummarySkeleton } from "@/checkout/sections/Summary";
 import { OrderInfo } from "@/checkout/sections/OrderInfo";
 import { useOrder } from "@/checkout/hooks/useOrder";
 import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
+import { trackPurchase } from "@/lib/analytics/gtag";
 
 export const OrderConfirmation = () => {
 	const { orderConfirmation } = useCheckoutMessages();
@@ -24,6 +25,30 @@ export const OrderConfirmation = () => {
 			window.history.replaceState({}, "", url.toString());
 		}
 	}, []);
+
+	useEffect(() => {
+		if (!order?.id) return;
+		// OrderLineFragment carries no product/variant id — the order line id
+		// stands in as the GA4 item_id (see Session 37 diagnostic)
+		const dedupeKey = `ga4_purchase_tracked_${order.id}`;
+		try {
+			if (sessionStorage.getItem(dedupeKey)) return;
+			sessionStorage.setItem(dedupeKey, "1");
+		} catch {
+			// sessionStorage unavailable (private mode, etc.) — fall through and
+			// track once for this mount rather than blocking the event entirely
+		}
+		trackPurchase({
+			transaction_id: order.number ?? order.id,
+			value: order.total?.gross?.amount ?? 0,
+			items: (order.lines ?? []).map((line) => ({
+				item_id: line.id,
+				item_name: line.productName,
+				price: line.unitPrice?.gross?.amount,
+				quantity: line.quantity,
+			})),
+		});
+	}, [order?.id, order?.number, order?.total?.gross?.amount, order?.lines]);
 
 	return (
 		<main className="grid grid-cols-1 gap-x-16 lg:grid-cols-2" dir={locale === "ar" ? "rtl" : "ltr"}>

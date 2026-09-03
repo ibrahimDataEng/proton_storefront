@@ -14,6 +14,7 @@ import { addLineWithQuantity } from "@/app/[locale]/[channel]/(main)/cart/action
 import { recordProductView } from "@/app/[locale]/[channel]/(main)/account/actions";
 import { useAuth } from "@/ui/context/AuthContext";
 import { formatMoney, formatMoneyRange } from "@/lib/utils";
+import { trackViewItem, trackAddToCart } from "@/lib/analytics/gtag";
 import type { ProductDetailsQuery } from "@/gql/graphql";
 
 type Product = NonNullable<ProductDetailsQuery["product"]>;
@@ -81,6 +82,18 @@ export function ProductInfo({ product, locale, channel }: Props) {
 			? product.category.translation.name
 			: product.category?.name;
 
+	useEffect(() => {
+		trackViewItem({
+			item_id: product.id,
+			item_name: productName,
+			item_category: categoryName ?? undefined,
+			price:
+				firstAvailable?.pricing?.price?.gross?.amount ?? product.pricing?.priceRange?.start?.gross?.amount,
+		});
+		// Fire once per product load, not on every variant/locale-derived recompute
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [product.id]);
+
 	// Description
 	let descriptionHtml: string[] | null = null;
 	const rawDesc = localizedProduct.description;
@@ -106,6 +119,13 @@ export function ProductInfo({ product, locale, channel }: Props) {
 			setTimeout(() => setAddStatus("idle"), 2000);
 			return;
 		}
+		trackAddToCart({
+			item_id: selectedVariant?.id ?? selectedVariantId,
+			item_name: productName,
+			item_category: categoryName ?? undefined,
+			price: selectedVariant?.pricing?.price?.gross?.amount,
+			quantity,
+		});
 		setAddStatus("success");
 		setTimeout(() => setAddStatus("idle"), 2000);
 	};

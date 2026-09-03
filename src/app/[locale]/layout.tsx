@@ -3,9 +3,12 @@ import { IBM_Plex_Sans, IBM_Plex_Sans_Arabic } from "next/font/google";
 import { NextIntlClientProvider, hasLocale } from "next-intl";
 import { notFound } from "next/navigation";
 import { setRequestLocale } from "next-intl/server";
+import Script from "next/script";
 import { MotionProvider } from "@/ui/components/MotionProvider";
 import { ThemeInitializer } from "@/ui/components/ThemeInitializer";
 import { routing } from "@/i18n/routing";
+
+const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
 
 const plexSans = IBM_Plex_Sans({
 	subsets: ["latin", "latin-ext"],
@@ -67,6 +70,20 @@ export default async function RootLayout({
 				<NextIntlClientProvider locale={locale} messages={messages}>
 					<MotionProvider>{children}</MotionProvider>
 				</NextIntlClientProvider>
+				{gaMeasurementId && (
+					<>
+						<Script
+							src={`https://www.googletagmanager.com/gtag/js?id=${gaMeasurementId}`}
+							strategy="afterInteractive"
+						/>
+						<Script id="ga4-init" strategy="afterInteractive">
+							{`window.dataLayer = window.dataLayer || [];
+							function gtag(){window.dataLayer.push(arguments);}
+							gtag('js', new Date());
+							gtag('config', '${gaMeasurementId}');`}
+						</Script>
+					</>
+				)}
 			</body>
 		</html>
 	);

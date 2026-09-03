@@ -997,6 +997,111 @@ countries }]` — `AttributeInput.values` already accepted `Array<string>`
   pre-existing in `src/checkout/`) — no new warnings introduced.
 - beads: front_store-m0e (see issue for full resolution notes).
 
+## GA4 E-commerce Funnel Tracking (Session 37)
+
+Full funnel instrumentation: view_item → add_to_cart → view_cart →
+begin_checkout → add_shipping_info → add_payment_info → purchase. Built on
+a diagnostic pass (same session) that mapped every insertion point before
+any code was written.
+
+- **No new dependency**: the diagnostic assumed `next/third-parties/google`
+  ships inside the installed `next` package — confirmed false during
+  implementation (`@next/third-parties` is a separate, uninstalled package
+  in this Next.js 15.5.6 install; `find node_modules/next -iname "*third*"`
+  returns nothing). Per the "no new dependencies without asking" rule, GA is
+  instead loaded via the standard `next/script` component (genuinely bundled
+  in `next` core, verified present at `node_modules/next/script.js`) with
+  the plain gtag.js snippet (two `<Script strategy="afterInteractive">` tags
+  — one loading `googletagmanager.com/gtag/js`, one initializing
+  `dataLayer`/`gtag`) — same end result as `<GoogleAnalytics>`, zero new
+  packages.
+- `NEXT_PUBLIC_GA_MEASUREMENT_ID` added to `.env.example` (empty value). Not
+  set in local `.env` — the `<Script>` tags render conditionally
+  (`{gaMeasurementId && ...}`) and are simply omitted when unset, so local
+  dev is unaffected and `window.gtag` never exists in dev today.
+- **Central helper**: `src/lib/analytics/gtag.ts` — one typed function per
+  event (`trackViewItem`, `trackAddToCart`, `trackViewCart`,
+  `trackBeginCheckout`, `trackAddShippingInfo`, `trackAddPaymentInfo`,
+  `trackPurchase`), all routed through a private `sendEvent()` that no-ops
+  when `window.gtag` isn't defined (`typeof window !== "undefined" &&
+window.gtag` guard) — safe with GA unconfigured. `currency` is hardcoded
+  `"AED"` throughout (this storefront has one currency). Exports the
+  `GA4Item` type (`item_id`/`item_name`/`item_category`/`price`/`quantity`).
+  No inline `window.gtag(...)` calls exist anywhere else in the codebase —
+  every call site imports from this file.
+- **view_item** + **add_to_cart (PDP path)**:
+  `src/ui/components/pdp/ProductInfo.tsx` — a new `useEffect` keyed on
+  `[product.id]` only (fires once per product load, ungated by
+  `isLoggedIn` — unlike the adjacent `recordProductView` effect, which stays
+  guest-excluded on purpose). `trackAddToCart` call added in
+  `handleAddToCart()` right after the `result.ok` success check, using
+  `selectedVariant` for id/price and the same product name/category the
+  page already displays.
+- **add_to_cart (PLP/card path)**: `ProductAddButton.tsx` had no product
+  name/price/category in scope (only `selectedVariantId`/`isAvailable`/
+  `hasMultipleVariants`) — 3 new optional props (`productName`,
+  `categoryName`, `price`) threaded in from its only caller,
+  `ProductElement.tsx` (which already computes all three for its own
+  display). `trackAddToCart` fires in `handleClick()` on `result.ok`,
+  `item_id` = `selectedVariantId` (no product id available at this layer).
+- **view_cart**: `src/app/[locale]/[channel]/(main)/cart/page.tsx` is a
+  Server Component and cannot call `gtag` itself. New file
+  `src/ui/components/cart/CartViewTracker.tsx` ("use client", renders
+  `null`) exists solely as the client boundary — mounted inside
+  `OrderSummary.tsx` (still a Server Component; this is a standard RSC
+  parent-renders-client-child, same pattern `ProductInfo` already
+  represents on the PDP), `useEffect` keyed on `[checkoutId]` fires once per
+  cart load. Item list built from `lines` already passed into
+  `OrderSummary`.
+- **begin_checkout**: `src/checkout/sections/CheckoutForm/CheckoutForm.tsx`
+  — new `useEffect(() => {...}, [])` (empty deps, fires once on mount only)
+  near the existing `useState` block, reading `checkout` from the
+  already-destructured `useCheckout()` return value (reading its off-limits
+  source file's exported value is fine; the file itself was not edited — a
+  type-only reference via `ReturnType<typeof useCheckout>` was used for the
+  local `getCheckoutItems()` mapper instead of importing anything from
+  `src/checkout/graphql/`).
+- **add_shipping_info** + **add_payment_info**: same file — a new
+  `handleContinueToPayment()` wraps the existing `goNext("payment")` call
+  (the "Continue to Payment" button's `onClick` now points at the wrapper
+  instead of calling `goNext` directly); both events fire together here per
+  GA4 semantics. `shipping_tier` resolved by matching
+  `checkout.deliveryMethod.id` against `checkout.shippingMethods[]` (the
+  fragment's `deliveryMethod` union only carries `id`, not `name`).
+  `payment_type` is deliberately omitted from `add_payment_info` — it isn't
+  derivable outside the off-limits `AdyenDropIn`/`StripeElements` adapters.
+  **Known data gap**: `CheckoutLineFragment` (in the off-limits
+  `src/checkout/graphql/checkout.graphql`) has no product id — `variant.id`
+  stands in as `item_id` for all three checkout-step events. Do not add a
+  product-id field to that fragment to "fix" this; it's off-limits.
+- **purchase**: `src/checkout/views/OrderConfirmation/OrderConfirmation.tsx`
+  — new `useEffect` keyed on `[order?.id, order?.number,
+order?.total?.gross?.amount, order?.lines]`, deduplicated via a
+  `sessionStorage` flag (`ga4_purchase_tracked_${order.id}`) so a refresh on
+  the confirmation URL doesn't refire the event (wrapped in try/catch —
+  private-mode/sessionStorage-unavailable browsers still get one event per
+  mount rather than being blocked entirely). **Known data gap**:
+  `OrderLineFragment` has no product/variant id at all (only
+  `variant.name`) — the order line's own `id` is used as `item_id` instead;
+  `item_category` is omitted from purchase items (not present in this
+  fragment). `transaction_id` = `order.number ?? order.id`.
+- **Verified live** (local Saleor, `pnpm dev`, real browser pass): homepage,
+  PLP (131 products, PLP add-to-cart click → cart badge incremented, zero
+  console errors), PDP (`Lemon Super Seeds`, add-to-cart click, zero console
+  errors), cart page (`CartViewTracker`'s null-render caused no layout
+  disruption), and the checkout wizard's Contact → Shipping transition (form
+  fill + "Continue to Shipping" click rendered step 2 correctly, zero
+  console errors) — all with `NEXT_PUBLIC_GA_MEASUREMENT_ID` unset locally,
+  confirming every `trackX()` call's `window.gtag` guard no-ops silently
+  rather than throwing.
+- `pnpm tsc --noEmit`: 0 errors. `pnpm lint`: 6 warnings (baseline,
+  pre-existing in `src/checkout/`) — no new warnings introduced.
+- Off-limits files confirmed untouched via `git diff --name-only`: nothing
+  under `src/checkout/hooks/`, `src/checkout/state/`, `src/checkout/graphql/`,
+  `src/checkout/sections/PaymentSection/AdyenDropIn/`, or
+  `src/checkout/sections/PaymentSection/StripeElements/` appears in the
+  diff.
+
 ## New dependencies
 
 - framer-motion@12.38.0 — card entrance, pill tap, add-to-cart AnimatePresence

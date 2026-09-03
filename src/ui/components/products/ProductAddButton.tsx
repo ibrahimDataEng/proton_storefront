@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { m, AnimatePresence } from "framer-motion";
 import { clsx } from "clsx";
 import { addLineToCheckout } from "@/app/[locale]/[channel]/(main)/cart/actions";
+import { trackAddToCart } from "@/lib/analytics/gtag";
 
 interface Props {
 	selectedVariantId: string | undefined;
@@ -14,6 +15,9 @@ interface Props {
 	isAvailable: boolean;
 	hasMultipleVariants: boolean;
 	onSelectClick?: () => void;
+	productName?: string;
+	categoryName?: string;
+	price?: number;
 }
 
 const shakeVariants = {
@@ -27,6 +31,9 @@ export function ProductAddButton({
 	isAvailable,
 	hasMultipleVariants,
 	onSelectClick,
+	productName,
+	categoryName,
+	price,
 }: Props) {
 	const t = useTranslations("products");
 	const params = useParams();
@@ -69,6 +76,13 @@ export function ProductAddButton({
 			setTimeout(() => setState("idle"), 2000);
 			return;
 		}
+		trackAddToCart({
+			item_id: selectedVariantId,
+			item_name: productName ?? "",
+			item_category: categoryName,
+			price,
+			quantity: 1,
+		});
 		setState("added");
 		setTimeout(() => setState("idle"), 2000);
 	};

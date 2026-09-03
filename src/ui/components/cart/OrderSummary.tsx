@@ -1,5 +1,6 @@
 import { getTranslations } from "next-intl/server";
 import { PromoCodeField } from "./PromoCodeField";
+import { CartViewTracker } from "./CartViewTracker";
 import type { CheckoutFindQuery } from "@/gql/graphql";
 import { formatMoney } from "@/lib/utils";
 import { CheckoutLink } from "@/app/[locale]/[channel]/(main)/cart/CheckoutLink";
@@ -34,6 +35,20 @@ export async function OrderSummary({
 
 	return (
 		<div className="sticky top-24 rounded-2xl border border-line-subtle bg-surface-raised p-6 shadow-raised">
+			<CartViewTracker
+				checkoutId={checkoutId}
+				value={totalPrice.amount}
+				items={lines.map((line) => ({
+					item_id: line.variant.id,
+					item_name: line.variant.product.translation?.name || line.variant.product.name,
+					item_category:
+						line.variant.product.category?.translation?.name ||
+						line.variant.product.category?.name ||
+						undefined,
+					price: line.variant.pricing?.price?.gross.amount,
+					quantity: line.quantity,
+				}))}
+			/>
 			<div className="space-y-3">
 				<div className="flex justify-between text-sm">
 					<span className="text-content-secondary">{t("subtotal")}</span>
