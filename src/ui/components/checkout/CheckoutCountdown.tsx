@@ -12,21 +12,23 @@ interface DeliveryInfo {
 
 /**
  * UAE time = UTC+4 (no DST).
- * Window 13:00–21:59 UAE → deliver TOMORROW  (count to 22:00 UAE = 18:00 UTC)
- * Window 22:00–12:59 UAE → deliver DAY AFTER (count to next 13:00 UAE = 09:00 UTC)
+ * Delivery cutoff: 08:00–20:00 UAE → next-day delivery; 20:00–08:00 UAE →
+ * delivery in 2 days (Session 39).
+ * Window 08:00–19:59 UAE → deliver TOMORROW  (count to 20:00 UAE = 16:00 UTC)
+ * Window 20:00–07:59 UAE → deliver DAY AFTER (count to next 08:00 UAE = 04:00 UTC)
  */
 function getDeliveryInfo(): DeliveryInfo {
 	const now = new Date();
 	const uaeHour = (now.getUTCHours() + 4) % 24;
 
-	if (uaeHour >= 13 && uaeHour < 22) {
-		// Inside same-day window → count down to 22:00 UAE (18:00 UTC)
-		const target = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 18, 0, 0, 0));
+	if (uaeHour >= 8 && uaeHour < 20) {
+		// Inside same-day window → count down to 20:00 UAE (16:00 UTC)
+		const target = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 16, 0, 0, 0));
 		if (target <= now) target.setUTCDate(target.getUTCDate() + 1);
 		return { label: "tomorrow", targetMs: target.getTime() };
 	} else {
-		// Outside window → count down to next 13:00 UAE (09:00 UTC)
-		const target = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 9, 0, 0, 0));
+		// Outside window → count down to next 08:00 UAE (04:00 UTC)
+		const target = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 4, 0, 0, 0));
 		if (target <= now) target.setUTCDate(target.getUTCDate() + 1);
 		return { label: "dayAfterTomorrow", targetMs: target.getTime() };
 	}
