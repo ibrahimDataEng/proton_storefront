@@ -1102,6 +1102,180 @@ order?.total?.gross?.amount, order?.lines]`, deduplicated via a
   `src/checkout/sections/PaymentSection/StripeElements/` appears in the
   diff.
 
+## Checkout Customer Recognition (Session 38)
+
+Bug: a logged-in customer (valid `saleor_token` cookie) reaching `/checkout`
+was shown the register/login prompt and never offered their saved
+addresses — treated exactly like a guest. Root cause, confirmed by a
+read-only diagnostic pass before any code was touched: **this app runs two
+separate, unbridged auth systems.** The main storefront uses the custom
+`src/lib/auth/` JWT stack (httpOnly `saleor_token`/`saleor_refresh_token`).
+The checkout sub-app (`src/checkout/`) — a top-level route at
+`src/app/[locale]/checkout/`, **outside** `[channel]` and therefore outside
+the main `AuthProvider` — is wrapped in its own, separate
+`src/ui/components/AuthProvider.tsx`, built on `@saleor/auth-sdk`
+(`SaleorAuthProvider` + `createSaleorAuthClient`). The checkout's client had
+never once seen the main app's login state.
+
+The important finding: `src/checkout/`'s customer-recognition logic was
+**already fully built and correct** — `useUser()`, the auto-firing
+`useCustomerAttach()` hook (calls the real `checkoutCustomerAttach`
+mutation, already defined in `src/checkout/graphql/checkout.graphql`), and
+`UserShippingAddressSection` (backed by the checkout's own `me { addresses
+}` query in `src/checkout/graphql/user.graphql`) were all dead code purely
+because `useUser()`'s `authenticated` flag was always `false`. None of that
+needed to change, and **no file under `src/checkout/` was touched** for
+this fix, per the diagnostic's off-limits assessment.
+
+- **Fix — entirely in `src/middleware.ts`**: `@saleor/auth-sdk`'s
+  `SaleorAuthClient.fetchWithAuth` has a built-in one-shot bridge (see
+  `node_modules/@saleor/auth-sdk` `SaleorAuthClient` source) — on first use
+  it reads a plain, **non-httpOnly** cookie literally named `token` via
+  `document.cookie`, adopts it as the checkout's access token, then deletes
+  the cookie itself. The main app's login flow never set that cookie.
+  Middleware now sets it — `httpOnly: false`, `sameSite: "lax"`, `secure` in
+  production, `maxAge: 60` seconds — **only** when the request path is
+  `/checkout` (locale-prefixed: `/en/checkout` or `/ar/checkout`, matched
+  via a new `isCheckoutPath()` helper) **and** a valid access token is
+  present (using the just-refreshed token if the existing silent-refresh
+  block ran this request). Guests, and every other route, are completely
+  unaffected — the cookie is never set when `saleor_token` is absent, and
+  its 60s lifetime plus the SDK's own self-delete-on-read minimize how long
+  a JS-readable token cookie exists in the browser.
+- **Known limitation, by design, not fixed here**: the bridge only seeds the
+  checkout SDK's **access token** (short-lived). Its refresh token remains
+  in `window.localStorage` (never populated — the real refresh token stays
+  httpOnly in `saleor_refresh_token`), so a very long-lived checkout session
+  will eventually have the access token expire and silently fall back to
+  guest UI. Acceptable for a normal checkout session length; flagged here so
+  a future session doesn't mistake it for a regression.
+- Verified live end-to-end (local Saleor, real browser, `admin@example.com`
+  test login — the only account with a known password in this environment,
+  see `saleor_platform/README.md`): Contact step renders the **signedInUser**
+  state (`Account` / `admin@example.com` / `Sign out`), not the guest
+  prompt; network tab confirms `checkoutCustomerAttach` fires with `errors:
+[]` and the checkout's `user` becomes attached; `UserShippingAddressSection`
+  renders the account's real saved address (`132 Mclean Meadow Suite 446,
+Chelsealand`) as a selectable radio option; signing out and returning to
+  `/checkout` correctly falls back to the guest Contact-details form with no
+  errors; the bridge `token` cookie was confirmed **absent** via
+  `document.cookie` on the homepage, `/products`, and `/cart` both logged in
+  and logged out — it only ever appears (briefly) on `/checkout`.
+- `pnpm tsc --noEmit`: 0 errors. `pnpm lint`: 6 warnings (baseline,
+  pre-existing in `src/checkout/`) — no new warnings introduced.
+  `git diff --name-only`: only `src/middleware.ts` changed.
+- beads: front_store-qja created and closed (see issue for full resolution
+  notes).
+
+## Legal Pages Migrated to Saleor CMS (Session 38)
+
+Diagnostic session (read-only first pass) found the task's original premise
+was wrong: `pages/[slug]/page.tsx` had **no** special-case branches for
+`"privacy-policy"`, `"terms"`, or `"cookies"` — only `contact-us`,
+`wholesale`, `become-supplier`, and `about` are hardcoded to dedicated
+client components. [Footer.tsx](src/ui/components/Footer.tsx) already linked
+to `/pages/privacy-policy`, `/pages/terms`, `/pages/cookies` via the generic
+route. These three slugs simply had **no Saleor Page record at all**, so
+they 404'd — there was nothing to remove from the code. `refund-policy` was
+in the same situation, plus needed as a brand-new page.
+
+- **No code changes were made this session** — this was a pure content
+  operation. `pnpm tsc --noEmit`: 0 errors. `pnpm lint`: 6 warnings
+  (baseline, pre-existing in `src/checkout/`).
+- **Content format** (confirmed by inspecting `PageGetBySlug.graphql` +
+  the `edjsHTML()` parser actually bundled — `editorjs-html@3.4.3`, no
+  custom block parsers registered): `Page.content` is a JSON **string**
+  in EditorJS block format (`{time, blocks: [...], version}`). Only
+  `header`, `paragraph`, `list`, `image`, `quote`, `code`, `delimiter`,
+  and `embed` (YouTube/Vimeo only) block types are supported — anything
+  else throws. `list` blocks use `{style: "ordered"|"unordered", items:
+[...]}`. Inline HTML (`<b>`, `<a href>`) inside a `paragraph`/`list` item's
+  `text`/string is passed through as-is by the parser, then sanitized by
+  `xss()` before render — this is how the existing `about` page's content
+  already worked, confirmed live from the real DB record.
+- 4 pages created via `pageCreate` (English base content) +
+  `pageTranslate(languageCode: AR)` (Arabic translation) — **not** 8
+  separate pages — using the `"Simple"` page type (same one `about`/
+  `contact-us` already use). All `isPublished: true`.
+  - `privacy-policy` / `terms` / `cookies` / `refund-policy` (new)
+- **Important local-env finding, worth knowing before touching Saleor data
+  from a script again**: this machine has **two independent Saleor
+  backend processes both listening on port 8000** — one reachable via
+  IPv4 (`127.0.0.1:8000`, hit by default from `curl`/Python), and a
+  **different one** reachable via IPv6 (`[::1]:8000`, hit by default from
+  Node's `fetch`/undici, and therefore by the Next.js dev server's own
+  server-side fetches to `NEXT_PUBLIC_SALEOR_API_URL=http://localhost:8000`)
+  — confirmed via `netstat -ano`: PID 13280 (`com.docker.backend.exe`,
+  wildcard `0.0.0.0`/`[::]`), PID for a `127.0.0.1`-only listener, and a
+  separate `wslrelay.exe` PID for an `[::1]`-only listener. These are two
+  **separate databases** (not just two paths to the same one) — a page
+  created via plain `curl http://localhost:8000/...` did not appear when
+  the Next dev server queried the same URL. A JWT minted against one
+  instance also fails signature verification against the other. **Fix**:
+  always mint the auth token AND run every subsequent query through the
+  exact same fetch mechanism the app itself uses (Node `fetch()` with no
+  `--dns-result-order` override), never mix `curl` and Node `fetch()` calls
+  against `localhost:8000` in the same script. This was not previously
+  documented and cost real time to diagnose — check `netstat -ano | grep
+:8000` first if a mutation "succeeds" but its effect isn't visible in the
+  app.
+- **Known content issue, not fixed (content-authoring, not code)**: the
+  privacy-policy page's own body contains a raw `<a href="/pages/cookies">`
+  link (from the user-supplied EditorJS JSON) missing the `/{locale}/
+{channel}` prefix — this hits the same broken-redirect pattern documented
+  under "Account Confirmation & Password Reset Redirect Fix (Session 36)"
+  (a bare `/pages/...` path resolves to `channel="pages"` via the locale
+  middleware, not the actual page). The Footer's own links are correct
+  (`LinkWithChannel` adds the prefix automatically) — only this one inline
+  content link is affected. Fixing it means editing the Page content in
+  the Dashboard (or via `pageTranslate`/`pageUpdate`), not code.
+- Verified live in both locales for all 4 slugs: `/en/uae-channel/pages/
+{privacy-policy,terms,cookies,refund-policy}` and the `/ar/uae-channel/...`
+  equivalents — correct title, correct AR translation (not an EN fallback),
+  correct RTL rendering (screenshot-verified on refund-policy), zero new
+  console errors.
+
+## Delivery Countdown Cutoff Fix (Session 39)
+
+Bug: `CheckoutCountdown.tsx`'s delivery-day cutoff logic did not match the
+business rule. **This supersedes the Session 26/27 changelog entries above**
+for this component — those entries describe a 13:00/22:00 UAE two-boundary
+window that is no longer what the code does; they're left in place only as
+history, not as current behavior.
+
+Diagnostic (prior session, read-only) found the component itself was
+already correct in every respect except the two boundary constants: fixed
+UTC+4 offset math (no browser-timezone dependency), correct day-rollover
+handling, and bilingual hardcoded text (no i18n keys exist for this
+component — none were introduced, consistent with the established pattern)
+were all sound and preserved as-is.
+
+- **Fix — constants only**, in
+  [`src/ui/components/checkout/CheckoutCountdown.tsx`](src/ui/components/checkout/CheckoutCountdown.tsx)'s
+  `getDeliveryInfo()`: boundary `13` → `8`, boundary `22` → `20`, countdown
+  target `18` (UTC, was 22:00 UAE) → `16` (UTC, = 20:00 UAE), countdown
+  target `9` (UTC, was 13:00 UAE) → `4` (UTC, = 08:00 UAE). Correct rule now
+  encoded: **08:00–20:00 UAE → "tomorrow" delivery, countdown to today's
+  20:00 UAE; 20:00–08:00 UAE → "day after tomorrow" delivery, countdown to
+  the next 08:00 UAE.** No other file touched — this component has no
+  dependents beyond `checkout/page.tsx`'s existing import.
+- Verified with a throwaway Node script (not committed) iterating all 24
+  UAE hours through the exact post-fix logic: label flips precisely at
+  08:00 and 20:00, target UTC hour is 16 for the whole `[8,20)` range and 4
+  for the whole `[20,8)` range (wrapping correctly across midnight), and
+  target is always in the future relative to `now` — output matched the
+  required table exactly before any live check was attempted.
+- Live sanity check (local Saleor, real browser, real system time — UAE
+  21:25 at test time, inside the 20:00–08:00 window): checkout page
+  rendered "Order now for day-after-tomorrow's delivery" with a countdown
+  of ~10h34m to the next 08:00 UAE, matching the expected math exactly;
+  zero console errors.
+- `pnpm tsc --noEmit`: 0 errors. `pnpm lint`: 6 warnings (baseline,
+  pre-existing in `src/checkout/` — this file is not in that directory and
+  introduced zero new warnings, not merely "under baseline").
+- beads: front_store issue created and closed (see issue for full
+  resolution notes).
+
 ## New dependencies
 
 - framer-motion@12.38.0 — card entrance, pill tap, add-to-cart AnimatePresence
@@ -1151,6 +1325,9 @@ Session 26 additions (all in `src/ui/components/checkout/`):
 Session 27 updates:
 
 - `CheckoutCountdown.tsx` — window logic: 13:00–21:59 UAE → "tomorrow", countdown to 22:00 UAE (18:00 UTC); 22:00–12:59 UAE → "day after tomorrow", countdown to 13:00 UAE (09:00 UTC); bilingual delivery label in timer bar; abbreviated mobile text updated
+  **Superseded by Session 39** — see "Delivery Countdown Cutoff Fix (Session
+  39)" below; the 13:00/22:00 boundaries described here are no longer what
+  the code does, kept only for history.
 - `CheckoutShippingProgress.tsx` — threshold raised from 100 → 200 AED; text updated: "orders over د.إ 200"; free message updated; scale label still uses `{threshold}` variable
 - checkout/page.tsx — header redesigned: cart←logo(center)→help layout; Back-to-cart link uses `checkoutChannel` derived from `checkoutData?.channel?.slug`; ShippingProgress placed above RootWrapper (desktop, lg:flex justify-end w-[400px]) + inside lg:hidden wrapper below form (mobile); also fetches `checkoutChannel` from checkout data
 - Footer — language switcher (globe icon + alternate locale link) added to bottom bar; payment icons row (Visa/MC/ApplePay/Amex/Cash) added centered; legal links (Terms of Use + Privacy Notice) via LinkWithChannel; bilingual copyright updated to "Tawasi Plus"; `Link` import added
