@@ -158,6 +158,13 @@ export function ProductElement({
 						isAvailable={isAvailable}
 						hasMultipleVariants={showVariantPills}
 						onSelectClick={handlePillsScroll}
+						productName={product.translation?.name || product.name}
+						categoryName={
+							(locale === "ar" ? product.category?.translation?.name : undefined) ||
+							product.category?.name ||
+							undefined
+						}
+						price={selectedVariant?.pricing?.price?.gross?.amount}
 					/>
 				</div>
 			</div>
