@@ -1102,6 +1102,71 @@ order?.total?.gross?.amount, order?.lines]`, deduplicated via a
   `src/checkout/sections/PaymentSection/StripeElements/` appears in the
   diff.
 
+## Checkout Customer Recognition (Session 38)
+
+Bug: a logged-in customer (valid `saleor_token` cookie) reaching `/checkout`
+was shown the register/login prompt and never offered their saved
+addresses — treated exactly like a guest. Root cause, confirmed by a
+read-only diagnostic pass before any code was touched: **this app runs two
+separate, unbridged auth systems.** The main storefront uses the custom
+`src/lib/auth/` JWT stack (httpOnly `saleor_token`/`saleor_refresh_token`).
+The checkout sub-app (`src/checkout/`) — a top-level route at
+`src/app/[locale]/checkout/`, **outside** `[channel]` and therefore outside
+the main `AuthProvider` — is wrapped in its own, separate
+`src/ui/components/AuthProvider.tsx`, built on `@saleor/auth-sdk`
+(`SaleorAuthProvider` + `createSaleorAuthClient`). The checkout's client had
+never once seen the main app's login state.
+
+The important finding: `src/checkout/`'s customer-recognition logic was
+**already fully built and correct** — `useUser()`, the auto-firing
+`useCustomerAttach()` hook (calls the real `checkoutCustomerAttach`
+mutation, already defined in `src/checkout/graphql/checkout.graphql`), and
+`UserShippingAddressSection` (backed by the checkout's own `me { addresses
+}` query in `src/checkout/graphql/user.graphql`) were all dead code purely
+because `useUser()`'s `authenticated` flag was always `false`. None of that
+needed to change, and **no file under `src/checkout/` was touched** for
+this fix, per the diagnostic's off-limits assessment.
+
+- **Fix — entirely in `src/middleware.ts`**: `@saleor/auth-sdk`'s
+  `SaleorAuthClient.fetchWithAuth` has a built-in one-shot bridge (see
+  `node_modules/@saleor/auth-sdk` `SaleorAuthClient` source) — on first use
+  it reads a plain, **non-httpOnly** cookie literally named `token` via
+  `document.cookie`, adopts it as the checkout's access token, then deletes
+  the cookie itself. The main app's login flow never set that cookie.
+  Middleware now sets it — `httpOnly: false`, `sameSite: "lax"`, `secure` in
+  production, `maxAge: 60` seconds — **only** when the request path is
+  `/checkout` (locale-prefixed: `/en/checkout` or `/ar/checkout`, matched
+  via a new `isCheckoutPath()` helper) **and** a valid access token is
+  present (using the just-refreshed token if the existing silent-refresh
+  block ran this request). Guests, and every other route, are completely
+  unaffected — the cookie is never set when `saleor_token` is absent, and
+  its 60s lifetime plus the SDK's own self-delete-on-read minimize how long
+  a JS-readable token cookie exists in the browser.
+- **Known limitation, by design, not fixed here**: the bridge only seeds the
+  checkout SDK's **access token** (short-lived). Its refresh token remains
+  in `window.localStorage` (never populated — the real refresh token stays
+  httpOnly in `saleor_refresh_token`), so a very long-lived checkout session
+  will eventually have the access token expire and silently fall back to
+  guest UI. Acceptable for a normal checkout session length; flagged here so
+  a future session doesn't mistake it for a regression.
+- Verified live end-to-end (local Saleor, real browser, `admin@example.com`
+  test login — the only account with a known password in this environment,
+  see `saleor_platform/README.md`): Contact step renders the **signedInUser**
+  state (`Account` / `admin@example.com` / `Sign out`), not the guest
+  prompt; network tab confirms `checkoutCustomerAttach` fires with `errors:
+[]` and the checkout's `user` becomes attached; `UserShippingAddressSection`
+  renders the account's real saved address (`132 Mclean Meadow Suite 446,
+Chelsealand`) as a selectable radio option; signing out and returning to
+  `/checkout` correctly falls back to the guest Contact-details form with no
+  errors; the bridge `token` cookie was confirmed **absent** via
+  `document.cookie` on the homepage, `/products`, and `/cart` both logged in
+  and logged out — it only ever appears (briefly) on `/checkout`.
+- `pnpm tsc --noEmit`: 0 errors. `pnpm lint`: 6 warnings (baseline,
+  pre-existing in `src/checkout/`) — no new warnings introduced.
+  `git diff --name-only`: only `src/middleware.ts` changed.
+- beads: front_store-qja created and closed (see issue for full resolution
+  notes).
+
 ## New dependencies
 
 - framer-motion@12.38.0 — card entrance, pill tap, add-to-cart AnimatePresence
