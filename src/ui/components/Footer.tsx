@@ -5,10 +5,9 @@ import Image from "next/image";
 import { Instagram } from "lucide-react";
 
 import { LinkWithChannel } from "../atoms/LinkWithChannel";
-import { ChannelSelect } from "./ChannelSelect";
 import { Logo } from "./Logo";
 import { ThemeToggle } from "./ThemeToggle";
-import { ChannelsListDocument, MenuGetBySlugDocument } from "@/gql/graphql";
+import { MenuGetBySlugDocument } from "@/gql/graphql";
 import { executeGraphQL } from "@/lib/graphql";
 import { getSaleorLanguage } from "@/lib/saleor-language";
 
@@ -37,30 +36,19 @@ async function getFooterData(channel: string, locale: string) {
 	try {
 		const saleorLanguage = getSaleorLanguage(locale);
 
-		const [footerLinks, channels] = await Promise.all([
-			executeGraphQL(MenuGetBySlugDocument, {
-				variables: {
-					slug: "footer",
-					channel,
-					language: saleorLanguage,
-				},
-				revalidate: 60,
-			}),
+		const footerLinks = await executeGraphQL(MenuGetBySlugDocument, {
+			variables: {
+				slug: "footer",
+				channel,
+				language: saleorLanguage,
+			},
+			revalidate: 60,
+		});
 
-			process.env.SALEOR_APP_TOKEN
-				? executeGraphQL(ChannelsListDocument, {
-						withAuth: false,
-						headers: {
-							Authorization: `Bearer ${process.env.SALEOR_APP_TOKEN}`,
-						},
-					})
-				: Promise.resolve(null),
-		]);
-
-		return { footerLinks, channels };
+		return { footerLinks };
 	} catch (error) {
 		console.error("Error fetching footer data:", error);
-		return { footerLinks: null, channels: null };
+		return { footerLinks: null };
 	}
 }
 
@@ -88,14 +76,35 @@ const linkClass = "text-content-footer/70 hover:text-content-footer text-sm py-1
 const socialLinkClass =
 	"flex items-center gap-2 text-content-footer/70 hover:text-content-footer text-sm py-1 transition-colors";
 
+// CMS menu items (e.g. the "footer" Saleor menu) can only store a full absolute
+// URL, never a relative path — Saleor's MenuItemCreateInput.url is validated as
+// a Django URLField and rejects anything not starting with a scheme. When that
+// absolute URL actually points at one of this storefront's own domains, it must
+// still be routed through LinkWithChannel (which prepends /{locale}/{channel})
+// rather than rendered as a raw external link, or it resolves to the wrong page.
+const KNOWN_STOREFRONT_HOSTNAMES = ["localhost", "127.0.0.1", "tawasiplus.com", "www.tawasiplus.com"];
+
+function toInternalHref(url: string): string {
+	try {
+		const parsed = new URL(url);
+		if (KNOWN_STOREFRONT_HOSTNAMES.includes(parsed.hostname)) {
+			return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+		}
+	} catch {
+		// Not a parseable absolute URL — fall through and treat it as-is
+		// (e.g. an already-relative "/pages/x" value from elsewhere).
+	}
+	return url;
+}
+
 async function FooterContent({ channel, locale }: { channel: string; locale: string }) {
-	const { footerLinks, channels } = await getFooterData(channel, locale);
+	const { footerLinks } = await getFooterData(channel, locale);
 	const currentYear = new Date().getFullYear();
 	const isAr = locale === "ar";
 
 	const description = isAr
-		? "مجموعات مختارة بعناية لذوق رفيع."
-		: "Curated collections for the discerning eye.";
+		? "تواصي بلس، جزء من مجموعة Green Line Group — نقدّم أجود أنواع المكسرات والبهارات والقهوة والمنتجات الفاخرة من منابعها الأصيلة."
+		: "Tawasi Plus, part of Green Line Group — bringing premium nuts, spices, coffee, and fine foods from their finest origins.";
 	const exploreTitle = isAr ? "استكشف" : "Explore";
 	const legalTitle = isAr ? "قانوني" : "Legal";
 	const followTitle = isAr ? "تابعنا" : "Follow Us";
@@ -108,10 +117,10 @@ async function FooterContent({ channel, locale }: { channel: string; locale: str
 	const alternateLocaleHref = `/${alternateLocale}/${channel}`;
 
 	const legalLinks = [
-		{ href: "/pages/become-supplier", label: isAr ? "كن مورّداً لنا" : "Become a Supplier" },
 		{ href: "/pages/privacy-policy", label: isAr ? "سياسة الخصوصية" : "Privacy Policy" },
 		{ href: "/pages/terms", label: isAr ? "شروط الخدمة" : "Terms of Service" },
 		{ href: "/pages/cookies", label: isAr ? "سياسة ملفات الارتباط" : "Cookie Policy" },
+		{ href: "/pages/refund-policy", label: isAr ? "سياسة الإرجاع والاستبدال" : "Refund Policy" },
 	];
 
 	return (
@@ -133,7 +142,6 @@ async function FooterContent({ channel, locale }: { channel: string; locale: str
 							/>
 						</div>
 						<p className="mb-6 mt-3 text-sm leading-relaxed text-content-footer/60">{description}</p>
-						{channels?.channels && <ChannelSelect channels={channels.channels} />}
 					</div>
 
 					{/* Column 2 — Explore (CMS menu) */}
@@ -177,7 +185,7 @@ async function FooterContent({ channel, locale }: { channel: string; locale: str
 									if (child.url) {
 										return (
 											<li key={child.id}>
-												<LinkWithChannel href={child.url} className={linkClass}>
+												<LinkWithChannel href={toInternalHref(child.url)} className={linkClass}>
 													{childName}
 												</LinkWithChannel>
 											</li>
