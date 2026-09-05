@@ -27,7 +27,8 @@
 		"description": "This is a multilingual Next.js site using next-intl.",
 		"aboutLink": "About Us",
 		"contactLink": "Contact",
-		"shopByCountry": "Shop by Country of Origin"
+		"shopByCountry": "Shop by Country of Origin",
+		"trendingNow": "Trending Now"
 	},
 	"header": {},
 	"Search": {
@@ -527,6 +528,7 @@
 			"INVALID_CREDENTIALS": "Incorrect email or password.",
 			"ACCOUNT_NOT_CONFIRMED": "Please confirm your email before signing in.",
 			"INACTIVE": "This account has been deactivated.",
+			"LOGIN_ATTEMPT_DELAYED": "Too many failed login attempts. Please wait 20 minutes before trying again, or reset your password.",
 			"PASSWORD_TOO_SHORT": "Password must be at least 8 characters.",
 			"UNIQUE": "An account with this email already exists.",
 			"PASSWORD_MISMATCH": "Passwords do not match.",

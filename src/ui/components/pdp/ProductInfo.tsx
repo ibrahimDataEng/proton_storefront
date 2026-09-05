@@ -42,6 +42,18 @@ export function ProductInfo({ product, locale, channel }: Props) {
 		void recordProductView(product.slug);
 	}, [isLoggedIn, product.slug]);
 
+	// Trending-score ping (proton_analytics), separate from recordProductView above:
+	// that one is the logged-in-only "recently viewed" feature, this one counts every
+	// visitor. Fire-and-forget — failures are swallowed so they can never surface to
+	// the shopper or interfere with the unrelated "recently viewed" tracking.
+	useEffect(() => {
+		void fetch("/api/analytics/track-view", {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({ productId: product.id }),
+		}).catch(() => {});
+	}, [product.id]);
+
 	const variants = product.variants ?? [];
 	const firstAvailable = variants.find((v) => (v.quantityAvailable ?? 0) > 0) ?? variants[0];
 	const [selectedVariantId, setSelectedVariantId] = useState<string | undefined>(firstAvailable?.id);

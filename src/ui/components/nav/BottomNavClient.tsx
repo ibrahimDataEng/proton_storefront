@@ -64,11 +64,14 @@ export function BottomNavClient() {
 				<span className={labelCls(activePage === "products")}>{t("shop")}</span>
 			</LinkWithChannel>
 
-			{/* Account */}
+			{/* Account — accent reflects isLoggedIn (matches UserMenu's brand-primary
+			    logged-in treatment), not route-active state, so it's visible from any
+			    tab once logged in. The logged-out branch below is untouched, so a stale
+			    "account" route can never render accented while actually logged out. */}
 			{isLoggedIn ? (
 				<LinkWithChannel href="/account" className={itemCls}>
-					<User className={iconCls(activePage === "account")} />
-					<span className={labelCls(activePage === "account")}>{t("account")}</span>
+					<User className={iconCls(true)} />
+					<span className={labelCls(true)}>{t("account")}</span>
 				</LinkWithChannel>
 			) : (
 				<button type="button" onClick={() => openAuthModal("login")} className={itemCls}>

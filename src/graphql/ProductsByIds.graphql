@@ -1,0 +1,9 @@
+query ProductsByIds($ids: [ID!]!, $channel: String!, $language: LanguageCodeEnum!, $first: Int!) {
+	products(filter: { ids: $ids }, first: $first, channel: $channel) {
+		edges {
+			node {
+				...ProductListItem
+			}
+		}
+	}
+}
