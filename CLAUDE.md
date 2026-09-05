@@ -1451,6 +1451,42 @@ default-channel setup is untouched).
   `feature/footer-updates-session-42` — not pushed, per standing workflow
   (local commit only, user reviews and pushes manually).
 
+**Follow-up, same session — gap closed, production now fully live**: the
+user pushed `feature/footer-updates-session-42` and merged it to `main` via
+PR #20 (`ba53194`). Deployed to production: `git pull` had already landed
+the commit on the server (confirmed via `git log`), but the running
+`saleor-storefront` container was still 44 hours old and serving the
+pre-merge build — `docker compose -f docker-compose.yml -f
+docker-compose.server.yml build --no-cache saleor-storefront` +
+`up -d --force-recreate saleor-storefront` (both run via SSH, the first
+initially blocked by the auto-mode permission classifier as a
+production-affecting action — re-run after explicit user approval) rebuilt
+and restarted it. Verified against the live container directly (bypassing
+any Cloudflare cache) that the footer's Legal column now shows Refund
+Policy and no "Become a Supplier", and the new tagline renders — a
+separate, unrelated "Become a Supplier" string on the page turned out to
+come from `MobileLinksMenu.tsx`'s own hardcoded hamburger-popup link (out
+of scope for this work, never touched), not a leftover in the footer.
+
+- Then created the production `"Become a Supplier"` menu item (same
+  process as local: `menuItemCreate` with
+  `url: "https://tawasiplus.com/pages/become-supplier"`, parented under the
+  same `Green Line` item, id `TWVudUl0ZW06MjQ3` — coincidentally the same
+  ID as local's, since both menus had the same 2 pre-existing children) and
+  its AR translation via `menuItemTranslate`. This time the Arabic payload
+  was sent as a local UTF-8 file `scp`'d to the server first, then posted
+  with `curl --data-binary @/tmp/....json` from an SSH shell on the box
+  itself — no corruption, confirmed correct on the first attempt (unlike
+  the local-DB corruption incident in Session 41, which happened via a
+  Windows Git Bash `-d` inline string argument).
+- Verified fully live on both locales:
+  `https://tawasiplus.com/en/uae-channel/` Explore column → "Become a
+  Supplier" → `/en/uae-channel/pages/become-supplier` (renders); the `/ar/`
+  equivalent → "كن مورّداً لنا" (real Arabic, confirmed via `find`, not "?"
+  characters) → `/ar/uae-channel/pages/become-supplier` (renders). All
+  three footer tasks (Legal column, Explore menu item, tagline) are now
+  live on production in both locales, matching local dev exactly.
+
 ## New dependencies
 
 - framer-motion@12.38.0 — card entrance, pill tap, add-to-cart AnimatePresence
