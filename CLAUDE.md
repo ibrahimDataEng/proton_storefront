@@ -1547,27 +1547,126 @@ homepage section. No new dependencies.
 Three separate pre-existing environment failures blocked testing; recorded so
 the next session doesn't re-diagnose them:
 
-1. **`SALEOR_APP_TOKEN` in `.env` no longer authenticates.** `channels` returns
-   `PermissionDenied`, `executeGraphQL` throws inside
-   `[channel]/layout.tsx`'s `generateStaticParams`, and **every** page under
-   `[channel]` 500s. Unrelated to this session's code. Workaround used for
-   testing: comment the var out, so `generateStaticParams` takes its
-   `default-channel` fallback branch. **The token needs regenerating.**
+1. ~~`SALEOR_APP_TOKEN` in `.env` no longer authenticates~~ — **disproven by a
+   follow-up read-only audit** (2026-09-04/05, beads front_store-k5h, closed).
+   The token is valid and authenticates fine — verified live returning
+   `default-channel`/`uae-channel` — and the app holds 10 permissions
+   including `MANAGE_CHANNELS`, not the narrow scope originally assumed. The
+   `PermissionDenied`/500s below were a symptom of point 2 (a broken
+   `localhost:8000` path), not a token/auth problem. **Do not regenerate the
+   token to "fix" this.**
 2. **Port 8000 has three listeners** — Docker (`0.0.0.0`), VS Code's auto
-   port-forward (`127.0.0.1`), and `wslrelay` (`[::1]`). Node resolves
-   `localhost` → `::1` and hits the broken relay, while `curl` prefers IPv4
-   and works — which is why "it works in curl but not in the app". This is the
-   real mechanism behind the "two Saleor instances" note in the Session 38
-   entry. Fix for local runs: `NODE_OPTIONS=--dns-result-order=ipv4first`.
-   Do **not** just switch the URL to `127.0.0.1` — the compose `api` service
-   overrides `ALLOWED_HOSTS=localhost,api`, so a `127.0.0.1` Host header gets
-   Django's `DisallowedHost`. Port 4000 has the same `[::1]` relay shadow.
+   port-forward (`127.0.0.1`), and `wslrelay` (`[::1]`). Whichever one
+   `localhost` resolves to on a given run decides success/failure, and
+   **which path is broken flips between sessions** as Docker restarts and VS
+   Code's forwarder reconnects — Session 44 saw `::1` broken and `127.0.0.1`
+   working; the Session 44-follow-up audit saw the opposite (`127.0.0.1`
+   timing out via VS Code's forward, `::1` working). **Do not chase this with
+   `NODE_OPTIONS=--dns-result-order=ipv4first`** — forcing IPv4 pins you to
+   whichever of the two host-side forwards happens to be broken that day; it
+   is not a stable fix and has already caused a false "token is dead"
+   diagnosis once. The actual fix is to stop VS Code from auto-forwarding
+   port 8000 at all (Ports panel → _Stop Forwarding Port_, or
+   `"remote.autoForwardPorts": false`) so only Docker's real listener and the
+   `wslrelay` path to it remain — both reach the same live Saleor instance.
+   If a page 500s with `PermissionDenied`/`ECONNREFUSED`/timeout touching
+   Saleor, check `netstat -ano | grep :8000` for a stray forwarder before
+   suspecting the token or the app. Do **not** just switch the URL to
+   `127.0.0.1` — the compose `api` service overrides
+   `ALLOWED_HOSTS=localhost,api`, so a `127.0.0.1` Host header gets Django's
+   `DisallowedHost`. Port 4000 has the same relay-shadow risk.
 3. **The E394 `not-found.tsx doesn't have a root layout` loop recurs
    aggressively**, preceded by `.next/cache/webpack/*.pack.gz` rename-ENOENT
    warnings (as already documented under "Known issues"). Deleting `.next`
    _while the dev server is starting_ reliably re-triggers it. Kill every
    `front_store` node process first, delete `.next`, start, then leave it
    alone for ~45s before the first request.
+
+## Login Lockout Duration Reduced + Clearer Error Message (Session 45)
+
+Diagnostic first (read-only pass) corrected an earlier misdiagnosis: a prior
+session read a Redis key's TTL (`login:fail:ip:<ip>`, ~6785s) and concluded
+login lockouts lasted ~1.9 hours. That key is actually just the **failed-attempt
+counter** (flat `ATTEMPT_COUNTER_EXPIRE_TIME = 7200`s bookkeeping window, not
+a block). The real block key is a separate one, `login:block:ip:<ip>`, whose
+TTL is the actual computed exponential-backoff delay, capped at `MAX_DELAY`
+— **1 hour**, not 1.9, and only reached after a long run of consecutive
+failures (the delay is `2^(attempts-1)` seconds per attempt against the same
+account). Still worth softening per this session's request, just correcting
+the number for the record.
+
+- **Mechanism**: Saleor's own built-in `authenticate_with_throttling()` in
+  `saleor/account/throttling.py` (core Saleor, not django-axes, not a
+  plugin, not previously patched by this project) — called from
+  `saleor/graphql/account/mutations/authentication/create_token.py`. The
+  three relevant constants (`MIN_DELAY=1`, `MAX_DELAY`, `ATTEMPT_COUNTER_EXPIRE_TIME=7200`)
+  are hardcoded Python module constants — no env var controls them.
+- **Patch**: `saleor_platform/custom_patches/throttling.py` — a byte-for-byte
+  copy of the original except `MAX_DELAY = 3600` → `MAX_DELAY = 1200` (20
+  min). `MIN_DELAY` and the exponential `2^(attempts-1)` backoff formula are
+  completely untouched — light mistyping still gets the same 1s/2s/4s...
+  progressive delay; only the ceiling for sustained repeated failures is
+  lower. Added to `saleor_platform/Dockerfile` as a third overlay `COPY`,
+  same pattern as the existing Arabic-search patch
+  (`custom_patches/product_helpers.py`) and the branded email templates —
+  see the Dockerfile's own comments for all three.
+  **Note**: `saleor_platform/` is not a git repository (confirmed — `git
+diff` there fails with "not a git repository"), so this patch and the
+  Dockerfile change aren't tracked by version control the way the
+  storefront's own changes are; only the `front_store` repo commit covers
+  the frontend half of this session's work.
+- **Local-only so far, deliberately**: image rebuilt (`docker compose build
+api`) and `api`+`worker` recreated together (`up -d --force-recreate api
+worker` — both recreated together since they share the same image, per the
+  project's version-parity rule) on the local dev stack only. **Not deployed
+  to production this session** — a separate deliberate production
+  deployment step is planned for later, same as any other backend patch.
+- **Frontend error handling** — traced end-to-end before changing anything:
+  Saleor returns GraphQL error code `LOGIN_ATTEMPT_DELAYED` for this case
+  (confirmed empirically), but
+  [route.ts](src/app/api/auth/login/route.ts)'s `ERROR_MAP` only recognized
+  `INVALID_CREDENTIALS`/`ACCOUNT_NOT_CONFIRMED`/`INACTIVE`, so it fell
+  through to `"unknown"` → `auth.errors.unknown` ("Something went wrong.
+  Please try again.") in [LoginForm.tsx](src/ui/components/auth/LoginForm.tsx).
+  Fixed: `LOGIN_ATTEMPT_DELAYED` added to `ERROR_MAP`; new
+  `auth.errors.LOGIN_ATTEMPT_DELAYED` key added to both `en.json`/`ar.json`
+  (no existing key fit — checked first). `LoginForm.tsx` now tracks the raw
+  error code separately from the display string (`errorCode` state,
+  alongside the existing `error` string state) so it can tell this specific
+  case apart from a plain wrong password — when active, the existing
+  "Forgot password?" affordance (same `onForgotPassword` prop, same
+  `t("forgotPassword")` key — no new component) is additionally rendered
+  **inside** the red error banner itself, bold and underlined, without
+  hiding or duplicating away the original small persistent one elsewhere
+  in the form. No live countdown timer (out of scope, per session request)
+  — just the static 20-minute text.
+- **Verified**:
+  - Deliberately triggered the lockout locally by seeding the IP-level
+    Redis counter (`login:fail:ip:172.20.0.1`) to 99 via `redis-cli SET`
+    (a legitimate boundary-condition test shortcut — reaching 100 organically
+    would have meant replaying the full exponential backoff in real time)
+    then firing one real failed login attempt through the actual Saleor
+    code path to push it to 100 and let the app's own `override_block` set
+    the real block key.
+  - Redis TTL check on `login:block:ip:<ip>` immediately after: **1191s**
+    (~1200 - a few elapsed seconds) — confirms the 20-minute cap is
+    genuinely active, not just present in source.
+  - Live UI check, both locales, real browser: EN shows "Too many failed
+    login attempts. Please wait 20 minutes before trying again, or reset
+    your password." with the bold in-banner "Forgot password?" link; AR
+    shows "تجاوزت عدد محاولات تسجيل الدخول المسموح بها..." with the
+    matching Arabic link, correct RTL layout, both confirmed via
+    screenshot.
+  - Normal (pre-lockout) wrong-password case confirmed unchanged: the
+    single request that pushed the counter from 99→100 itself still
+    returned the standard `INVALID_CREDENTIALS` response (not the new
+    message) — the new behavior only activates once the block is actually
+    set, exactly as scoped. Not re-verified through the live UI a second
+    time on top of that, since doing so requires waiting out the current
+    test lockout; the `ERROR_MAP`/i18n diff also confirms the three
+    pre-existing codes were left untouched.
+- `pnpm tsc --noEmit`: 0 errors. `pnpm lint`: 6 warnings (baseline,
+  pre-existing in `src/checkout/`) — no new warnings introduced.
 
 ## New dependencies
 

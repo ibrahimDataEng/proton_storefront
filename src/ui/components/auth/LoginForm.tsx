@@ -20,11 +20,13 @@ export function LoginForm({ onForgotPassword }: Props) {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState<string | null>(null);
+	const [errorCode, setErrorCode] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
 
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
 		setError(null);
+		setErrorCode(null);
 		setLoading(true);
 
 		try {
@@ -38,7 +40,8 @@ export function LoginForm({ onForgotPassword }: Props) {
 
 			if (!res.ok || data.error) {
 				const code = data.error ?? "unknown";
-				setError(t(`errors.${code}` , { defaultValue: t("errors.unknown") }));
+				setErrorCode(code);
+				setError(t(`errors.${code}`, { defaultValue: t("errors.unknown") }));
 				return;
 			}
 
@@ -56,9 +59,18 @@ export function LoginForm({ onForgotPassword }: Props) {
 	return (
 		<form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
 			{error && (
-				<p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
-					{error}
-				</p>
+				<div role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+					<p>{error}</p>
+					{errorCode === "LOGIN_ATTEMPT_DELAYED" && (
+						<button
+							type="button"
+							onClick={onForgotPassword}
+							className="mt-1 font-semibold text-red-800 underline underline-offset-2 hover:text-red-900"
+						>
+							{t("forgotPassword")}
+						</button>
+					)}
+				</div>
 			)}
 			<AuthFormField
 				id="login-email"
