@@ -1276,6 +1276,181 @@ were all sound and preserved as-is.
 - beads: front_store issue created and closed (see issue for full
   resolution notes).
 
+## Footer Updates — Legal Links, Refund Policy, Supplier Move, Tagline (Session 40)
+
+Three changes to [Footer.tsx](src/ui/components/Footer.tsx)'s Variant A (the
+main 4-column grid) — Variant B (the bottom-bar mini legal links, Terms +
+Privacy Notice only) was explicitly left untouched.
+
+- **Legal column**: `legalLinks` array (~line 110) is now Privacy Policy →
+  Terms of Service → Cookie Policy → Refund Policy (new, `/pages/refund-policy`).
+  "Become a Supplier" removed from this array entirely.
+- **Explore column — "Become a Supplier" moved to the CMS-driven "footer"
+  Saleor menu**, not hardcoded. Real technical finding this required a code
+  fix for: `MenuItemCreateInput.url` (and the frontend menu's `child.url`
+  field generally) is a Django `URLField` — it **rejects** a relative path
+  like `/pages/become-supplier` ("Enter a valid URL."), so a CMS menu item
+  can only ever store a full absolute URL. But `LinkWithChannel.tsx` only
+  prepends `/{locale}/{channel}` to values that already start with `/` —
+  handing it a raw absolute URL (e.g. `http://localhost:3000/pages/x`)
+  skips that prefixing entirely, producing a locale-less link that resolves
+  to the wrong route (same failure class as the Session 36 reset-password
+  bug). Fixed generally, not as a one-off: `Footer.tsx` now has
+  `KNOWN_STOREFRONT_HOSTNAMES` (`localhost`, `127.0.0.1`, `tawasiplus.com`,
+  `www.tawasiplus.com`) and a `toInternalHref()` helper — if a menu item's
+  `url` parses to one of those hostnames, only the pathname+search+hash is
+  passed to `LinkWithChannel` (so it gets correctly locale/channel-prefixed
+  on whichever environment renders it); any other hostname passes through
+  completely unchanged (genuine external links keep working exactly as
+  before, since `LinkWithChannel` already no-ops on non-`/`-prefixed
+  hrefs). This is reusable for any future CMS menu item that needs to link
+  internally — no per-item special-casing required.
+  - No Saleor Page exists for `become-supplier` (it's the fully hardcoded
+    `SupplierPageClient` route, same pattern as `contact-us`) — so the new
+    menu item was created with `url: "http://localhost:3000/pages/become-supplier"`
+    (local) rather than a `page:` reference. Production's equivalent must
+    use `url: "https://tawasiplus.com/pages/become-supplier"` — the
+    `toInternalHref()` fix handles both automatically once the domain is in
+    the known-hostnames list, which it already is.
+  - Footer "footer" menu structure (local, confirmed via introspection):
+    one top-level item **"Green Line"** (id `TWVudUl0ZW06MjIw`, itself never
+    rendered — `Footer.tsx` only iterates `item.children`) with 3 children
+    in order: **About** → page `about`, **Contact us** → page `contact-us`,
+    **Become a Supplier** (new, id `TWVudUl0ZW06MjQ3`) → `url`-based per
+    above. AR translation added via `menuItemTranslate(id, {name}, AR)` —
+    `NameTranslationInput` has exactly one field, `name: String` (confirmed
+    via schema introspection, not guessed).
+  - **Operational gotcha, cost real time**: the first `menuItemTranslate`
+    call, sending the Arabic name inline via `curl -d '{"query":...}'` in
+    Git Bash on Windows, silently corrupted the Arabic text into literal
+    `?` characters — and it was genuinely **stored** that way in the DB
+    (confirmed by re-querying fresh via a different method), not just a
+    terminal-display artifact. Root cause: Windows/MSYS argv doesn't
+    reliably preserve UTF-8 multi-byte sequences passed as an inline `-d`
+    string. **Fix**: write the mutation payload (query + variables,
+    including any non-ASCII content) to a `.json` file via the `Write` tool
+    first, then send it with `curl --data-binary @file.json` — never pass
+    Arabic/non-ASCII content inline via `-d` in this environment again. The
+    corrupted value was overwritten with a correct second call using this
+    method; verified correct on re-query.
+  - Verified live: EN Explore column shows "Become a Supplier" →
+    `/en/uae-channel/pages/become-supplier`; AR shows "كن مورّداً لنا" →
+    `/ar/uae-channel/pages/become-supplier` (locale-correct in both
+    directions, not a fixed locale regardless of which was clicked);
+    navigated to the AR URL directly and confirmed the real
+    `SupplierPageClient` page renders (not a 404).
+  - **Production not yet done this session** — needs a production App
+    token with `MANAGE_MENUS` (same as local) before the same two mutations
+    (`menuItemCreate` + `menuItemTranslate`, with the `https://tawasiplus.com/...`
+    url) can be safely run there via SSH + `docker exec`, per this
+    project's established rule of never using a bare `localhost`/`127.0.0.1`
+    call to reach production and never falling back to superuser
+    credentials.
+- **Tagline** (`description` at ~line 96, brand Column 1, hardcoded — not an
+  i18n key, confirmed neither string exists in `en.json`/`ar.json`):
+  replaced the short "Curated collections for the discerning eye." /
+  "مجموعات مختارة بعناية لذوق رفيع." with a longer, brand-specific line
+  naming Green Line Group and the product range. The new EN/AR strings are
+  ~3.5x longer, wrapping to an estimated 3–4 lines instead of 1 at both the
+  375px and 1280px breakpoints (desktop is actually narrower per-column
+  than mobile here — the brand column is 1-of-4 grid columns on desktop
+  `lg:grid-cols-4` vs. 1-of-1 full-width on mobile `grid-cols-1`). Accepted
+  as-is: Tailwind's CSS Grid gives each footer column independent height,
+  so a taller Column 1 doesn't clip or overflow the grid, just grows taller
+  than Columns 2–4 — a normal, safe footer pattern, confirmed via
+  `getComputedStyle` (correct dark background, `display:block`,
+  `opacity:1`, `visibility:visible` on the footer element throughout) even
+  though a pixel screenshot could not be captured this session (see below).
+- **Browser-pane tooling note, not an app bug**: screenshots and
+  `getBoundingClientRect()` geometry were unreliable for any scrolled
+  position in the Browser pane across this session and the one before it —
+  reproducibly blank/zero-size past roughly `scrollY > 200–700px`, across
+  fresh tabs, full-page-height viewport resizing, and JS-precise scroll
+  targeting with waits in between, while `document.visibilityState` read
+  `"hidden"` throughout (the pane not being fronted in the host UI).
+  `getComputedStyle` (non-geometric) and `find`/`get_page_text` (DOM/text,
+  not pixels) stayed reliable the whole time and are the fallback verification
+  method whenever this recurs — don't burn time re-troubleshooting screenshot
+  capture itself if it's blank past a shallow scroll depth.
+- `pnpm tsc --noEmit`: 0 errors. `pnpm lint`: 6 warnings (baseline,
+  pre-existing in `src/checkout/`) — no new warnings introduced.
+
+## Footer: ChannelSelect Removed from UI (Session 41)
+
+`ChannelSelect` (the currency/channel `<select>` dropdown, Column 1, below
+the tagline) removed from [Footer.tsx](src/ui/components/Footer.tsx) — a
+pure frontend removal, no backend channel changes (the `uae-channel` /
+default-channel setup is untouched).
+
+- `ChannelSelect.tsx` itself was **only ever used in Footer.tsx** (confirmed
+  via repo-wide grep) — the component file was **not deleted**, per
+  instruction not to remove it without asking first. It's now dead code;
+  flagging that removing the file too is a reasonable follow-up, but that's
+  a separate decision.
+- `ChannelsListDocument` (the GraphQL query that fed it) is **also used
+  elsewhere** — `src/app/[locale]/[channel]/layout.tsx` — so only the
+  import/usage in Footer.tsx was removed; the generated document and its
+  other call site are untouched.
+- `getFooterData()` simplified: no longer runs `Promise.all` fetching both
+  the footer CMS menu and the channels list — now just awaits
+  `MenuGetBySlugDocument` directly. The `SALEOR_APP_TOKEN`-gated
+  channels-fetch branch is gone entirely (that env var isn't referenced
+  anywhere else in this file).
+- Column 1 now ends cleanly after the tagline `<p>` — verified via direct
+  DOM inspection (`col1Children` = `[DIV, P]`, no `<select>` present, no
+  leftover wrapper/empty gap) and via two independent fresh `curl` fetches
+  of the raw SSR'd HTML (before and after a hard reload) showing zero
+  `<select>` tags.
+- **Tooling note**: the Browser pane's `read_console_messages` returned the
+  same cached `ReferenceError: channels is not defined` /
+  `ChannelsListDocument is not defined` entries (identical error digest)
+  across multiple fresh navigations and a hard reload — a stale/cached
+  artifact of that tool in this session, not a real error. Ruled out via
+  direct `curl` of the server-rendered HTML (twice) and a full grep of the
+  source file showing zero remaining references to either symbol. Worth
+  remembering: don't trust `read_console_messages` alone if its output
+  isn't changing across reloads — cross-check with a raw `curl` of the
+  page or a fresh browser tab.
+- `pnpm tsc --noEmit`: 0 errors. `pnpm lint`: 6 warnings (baseline,
+  pre-existing in `src/checkout/`) — no new warnings introduced.
+
+## Production Deployment Gap Found + ChannelSelect.tsx Deleted (Session 42)
+
+- **`ChannelSelect.tsx` deleted** (was dead code after Session 41 removed
+  its only usage from `Footer.tsx`) — reconfirmed zero remaining references
+  repo-wide via grep before deleting. `pnpm tsc --noEmit`: 0 errors,
+  `pnpm lint`: 6 warnings (baseline, `src/checkout/` only) — clean after
+  the deletion.
+- **Important finding, blocks the production half of the "Become a
+  Supplier" menu-item work (Sessions 40-41) from proceeding as planned**:
+  production (`178.104.165.44`, `tawasiplus.com`) is running deployed
+  commit `b0b94b5` ("Merge pull request #19 from
+  ibrahimDataEng/feature/country-of-origin-session-37"), while every
+  Footer.tsx change from Sessions 40-41 (Legal column reorder + Refund
+  Policy, the new tagline, the `toInternalHref()` fix, the ChannelSelect
+  removal) existed **only as uncommitted local working-tree changes** on
+  branch `feature/country-of-origin-session-37` — never committed, never
+  pushed, and therefore nowhere near production. Confirmed directly against
+  the live site (`curl https://tawasiplus.com/en/uae-channel/`): the Legal
+  column still shows the old hardcoded "Become a Supplier" entry (no
+  "Refund Policy"), and the tagline is still the old short one. Production
+  Postgres `MENU_page/footer` structure was confirmed unchanged (Green
+  Line → About, Contact us only — no third child yet), as expected.
+  **Creating the CMS "Become a Supplier" menu item on production before
+  this code deploys would produce a broken, duplicated link** — production's
+  currently-running `Footer.tsx` has no `toInternalHref()` to strip
+  `https://tawasiplus.com/pages/become-supplier` down to a locale-prefixed
+  path, and its old `legalLinks` array still separately hardcodes a
+  "Become a Supplier" entry too. **Did not create anything on production
+  this session** — stopped and flagged this instead. The production
+  `menuItemCreate`/`menuItemTranslate` steps (with
+  `url: "https://tawasiplus.com/pages/become-supplier"`) remain ready to
+  run the moment this code is actually deployed there.
+- All accumulated Footer.tsx work (Sessions 40-41) plus this session's
+  `ChannelSelect.tsx` deletion were committed together on a new branch,
+  `feature/footer-updates-session-42` — not pushed, per standing workflow
+  (local commit only, user reviews and pushes manually).
+
 ## New dependencies
 
 - framer-motion@12.38.0 — card entrance, pill tap, add-to-cart AnimatePresence
