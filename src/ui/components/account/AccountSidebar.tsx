@@ -79,7 +79,7 @@ export function AccountSidebar({ initials, fullName, email, activeSection, onSec
 			</aside>
 
 			{/* Mobile tab bar */}
-			<div className="flex overflow-x-auto border-b border-line-subtle pb-0 lg:hidden">
+			<div className="flex items-center overflow-x-auto border-b border-line-subtle pb-0 lg:hidden">
 				{navItems.map(({ id, Icon, labelKey }) => (
 					<button
 						key={id}
@@ -96,6 +96,17 @@ export function AccountSidebar({ initials, fullName, email, activeSection, onSec
 						{labels[labelKey]}
 					</button>
 				))}
+				{/* Sign out — visually distinct from the section tabs (no activeSection
+				    state, red hover treatment matching the desktop sign-out button) since
+				    it exits the account area rather than switching to another section. */}
+				<button
+					type="button"
+					onClick={logout}
+					className="ms-auto flex shrink-0 flex-col items-center gap-1 border-s border-line-subtle px-4 py-3 text-xs font-medium text-content-secondary transition-colors hover:bg-red-50 hover:text-red-600"
+				>
+					<LogOut className="h-5 w-5" aria-hidden="true" />
+					{labels.signOut}
+				</button>
 			</div>
 		</>
 	);
