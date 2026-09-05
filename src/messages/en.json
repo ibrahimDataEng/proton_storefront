@@ -27,7 +27,8 @@
 		"description": "This is a multilingual Next.js site using next-intl.",
 		"aboutLink": "About Us",
 		"contactLink": "Contact",
-		"shopByCountry": "Shop by Country of Origin"
+		"shopByCountry": "Shop by Country of Origin",
+		"trendingNow": "Trending Now"
 	},
 	"header": {},
 	"Search": {

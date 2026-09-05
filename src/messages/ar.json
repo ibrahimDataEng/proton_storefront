@@ -27,7 +27,8 @@
 		"description": "هذا موقع متعدد اللغات باستخدام next-intl.",
 		"aboutLink": "معلومات عنا",
 		"contactLink": "اتصل بنا",
-		"shopByCountry": "تسوق حسب بلد المنشأ"
+		"shopByCountry": "تسوق حسب بلد المنشأ",
+		"trendingNow": "الأكثر رواجاً الآن"
 	},
 	"header": {},
 	"Search": {

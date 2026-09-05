@@ -1,8 +1,10 @@
+import { Suspense } from "react";
 import { HeroSection } from "@/ui/components/home/HeroSection";
 import { FeaturedProductsSection } from "@/ui/components/home/FeaturedProductsSection";
 import { CategoriesSection } from "@/ui/components/home/CategoriesSection";
 import { CountrySection } from "@/ui/components/home/CountrySection";
 import { BrandStorySection } from "@/ui/components/home/BrandStorySection";
+import { TrendingSection, TrendingSectionSkeleton } from "@/ui/components/home/TrendingSection";
 
 export const revalidate = 60;
 
@@ -19,6 +21,9 @@ export default async function Page(props: { params: Promise<{ locale: string; ch
 		<main>
 			<HeroSection locale={locale} />
 			<FeaturedProductsSection channel={channel} locale={locale} />
+			<Suspense fallback={<TrendingSectionSkeleton />}>
+				<TrendingSection channel={channel} locale={locale} />
+			</Suspense>
 			<CategoriesSection channel={channel} locale={locale} />
 			<CountrySection channel={channel} locale={locale} />
 			<BrandStorySection locale={locale} />
