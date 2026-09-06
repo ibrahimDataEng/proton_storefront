@@ -21,7 +21,7 @@ function getActivePage(pathname: string, channel: string): NavPage {
 	return "home";
 }
 
-export function BottomNavClient() {
+export function BottomNavClient({ cartLineCount = 0 }: { cartLineCount?: number }) {
 	const t = useTranslations("bottomNav");
 	const pathname = usePathname();
 	const { channel } = useParams<{ channel: string }>();
@@ -80,9 +80,25 @@ export function BottomNavClient() {
 				</button>
 			)}
 
-			{/* Cart */}
+			{/* Cart — badge count fetched server-side in (main)/layout.tsx (same
+			    checkout read CartNavItem uses) and passed down as a prop, so it
+			    updates via the existing revalidatePath("/", "layout") call already
+			    triggered by every cart-mutating server action. */}
 			<LinkWithChannel href="/cart" className={itemCls}>
-				<ShoppingCart className={iconCls(activePage === "cart")} />
+				<span className="relative">
+					<ShoppingCart className={iconCls(activePage === "cart")} />
+					{cartLineCount > 0 && (
+						<span
+							className={clsx(
+								"absolute -top-1 flex h-4 items-center justify-center rounded-full bg-brand-primary px-0.5 text-[10px] font-semibold leading-none text-content-inverse",
+								cartLineCount > 9 ? "-end-2 min-w-[1rem]" : "-end-1 w-4",
+							)}
+						>
+							{cartLineCount}
+							<span className="sr-only"> item{cartLineCount > 1 ? "s" : ""} in cart</span>
+						</span>
+					)}
+				</span>
 				<span className={labelCls(activePage === "cart")}>{t("cart")}</span>
 			</LinkWithChannel>
 		</nav>

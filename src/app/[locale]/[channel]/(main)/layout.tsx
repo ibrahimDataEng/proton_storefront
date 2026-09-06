@@ -4,6 +4,7 @@ import { Header } from "@/ui/components/Header";
 import { HeaderWrapper } from "@/ui/components/HeaderWrapper";
 import { TopBar } from "@/ui/components/nav/TopBar";
 import { BottomNavClient } from "@/ui/components/nav/BottomNavClient";
+import * as Checkout from "@/lib/checkout";
 
 export const metadata = {
 	title: "Tawasi Plus",
@@ -16,6 +17,11 @@ export default async function RootLayout(props: {
 	params: Promise<{ locale: string; channel: string }>;
 }) {
 	const { locale, channel } = await props.params;
+
+	const checkoutId = await Checkout.getIdFromCookies(channel);
+	const checkout = checkoutId ? await Checkout.find(checkoutId, locale) : null;
+	const cartLineCount = checkout ? checkout.lines.reduce((result, line) => result + line.quantity, 0) : 0;
+
 	return (
 		<>
 			<TopBar />
@@ -32,8 +38,8 @@ export default async function RootLayout(props: {
 				<Footer channel={channel} locale={locale} />
 			</div>
 
-			{/* Mobile bottom navigation bar — always available, no async dependency */}
-			<BottomNavClient />
+			{/* Mobile bottom navigation bar */}
+			<BottomNavClient cartLineCount={cartLineCount} />
 		</>
 	);
 }

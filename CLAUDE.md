@@ -1668,6 +1668,53 @@ worker` — both recreated together since they share the same image, per the
 - `pnpm tsc --noEmit`: 0 errors. `pnpm lint`: 6 warnings (baseline,
   pre-existing in `src/checkout/`) — no new warnings introduced.
 
+## Mobile Cart Badge Not Updating on Add-to-Cart (Session 46)
+
+Diagnostic first (read-only pass) traced desktop's working mechanism before touching
+mobile: [CartNavItem.tsx](src/ui/components/nav/components/CartNavItem.tsx) is an async
+Server Component that reads the checkout cookie and re-fetches the checkout on every
+render — no context, no SWR, no `router.refresh()` call anywhere in the add-to-cart
+button components. The actual trigger is `revalidatePath("/", "layout")`, called by every
+cart-mutating server action in
+[cart/actions.ts](<src/app/[locale]/[channel]/(main)/cart/actions.ts>), which invalidates
+the whole layout tree's Server Component cache — `CartNavItem`, sitting in that tree,
+automatically refetches and re-renders with zero client-side code involved.
+
+- **Root cause**: [BottomNavClient.tsx](src/ui/components/nav/BottomNavClient.tsx) (the
+  mobile bottom nav) is a Client Component with no data fetching at all — its Cart tab was
+  static markup, never wired to checkout data in the first place. It wasn't a broken/stale
+  version of desktop's mechanism; there was no mechanism there to break. A dead pass-through
+  file, `BottomNavWrapper.tsx`, was found alongside it during the diagnostic — confirmed via
+  grep to be unused anywhere (the live render path in
+  `(main)/layout.tsx` imports `BottomNavClient` directly) — left untouched, out of scope.
+- **Fix**: `(main)/layout.tsx` (already an async Server Component with `channel`/`locale`
+  in hand) now runs the exact same `Checkout.getIdFromCookies` + `Checkout.find` calls
+  `CartNavItem` uses, computes `cartLineCount`, and passes it down as a prop to
+  `<BottomNavClient cartLineCount={cartLineCount} />`. No new state management — this
+  layout already sits inside the `revalidatePath("/", "layout")` scope, so it refetches
+  automatically on every cart mutation, exactly mirroring `CartNavItem`.
+  `BottomNavClient`'s Cart tab now renders a small brand-primary badge over the icon when
+  `cartLineCount > 0`, positioned with logical `-end-1`/`-end-2` (not physical `right`/`mr`)
+  for correct RTL placement.
+- **Verified with a real interaction, not just seeded data**: cleared the checkout cookie,
+  loaded a real PDP (`lemon-super-seeds`) on a 375px mobile viewport, and clicked the real
+  "Add to Cart" button. Confirmed via a fresh second browser tab (to rule out any local test
+  artifacts) that the bottom-nav badge showed "1", and confirmed via `/cart` that the
+  checkout genuinely contained 1 unit of that exact product — not the earlier
+  GraphQL-seeded test data used for an initial pass. Desktop's `CartNavItem` and mobile's
+  badge were also confirmed to render the same count from the same checkout side by side.
+- **Browser-pane tooling note**: the `computer` tool's coordinate-based click reliably timed
+  out while the pane reported itself "hidden" (reproduced twice) — a real, reproducible
+  limitation of this environment, not a fluke. A plain `.click()` dispatched via
+  `javascript_tool` did work, but its result was initially misjudged as a no-op because the
+  button's own local animation state (idle/pending/success) resets almost immediately —
+  `revalidatePath`'s full layout-tree refresh appears to interrupt the component before its
+  2-second "Added" state visibly settles. The cart badge (real server state), not the
+  button's transient text, is the reliable signal to check when verifying add-to-cart via
+  automation in this project going forward.
+- `pnpm tsc --noEmit`: 0 errors. `pnpm lint`: baseline only (6 pre-existing in
+  `src/checkout/`).
+
 ## New dependencies
 
 - framer-motion@12.38.0 — card entrance, pill tap, add-to-cart AnimatePresence
