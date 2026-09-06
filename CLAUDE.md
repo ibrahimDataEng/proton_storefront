@@ -1758,6 +1758,77 @@ Session 27 updates:
 - **Hotfix branch convention**: production-breaking bugs get their own `hotfix/<short-name>`
   branch, merged to main directly — not bundled into a long-running feature/session branch.
 
+## Session 26-30: Backend GitHub Setup, Rebrand, Bug Fixes, Dark Mode, About Page, DB Cleanup
+
+Docker Compose split, the golden local→GitHub→server deployment rule, `.gitattributes`,
+and the `output: "standalone"`/Dockerfile `COPY` requirements are already documented above
+under "Deployment & Environment Workflow (Session 27)" — not repeated here, only the
+additional facts from this session follow.
+
+- **Backend (`saleor_platform`) now on GitHub** as `proton_platform` — git-initialized
+  **from the server**, not local (the server had the real/current patches; local was stale).
+  Patches (Arabic search fix, branded email templates) are baked into the backend
+  `Dockerfile` via `COPY` from `custom_patches/` and `custom_email_templates/` — this
+  replaces the old workflow of `docker cp`-ing patches into a running container, which
+  never survived a rebuild. Secrets (`.env`, `backend.env`, `common.env`,
+  `private_key.pem`) are gitignored; `.example` versions are committed instead.
+- **Storefront repo renamed** to `proton_storefront` on GitHub (previously
+  `FrontEnd-Green-Line`) — the old URL auto-redirects, but the git remote should point at
+  the new URL directly rather than relying on the redirect.
+- **CRLF/LF drift specifics**: the server-branch-misconfiguration incident referenced above
+  (Session 26/27) cascaded into merge conflicts across ~35 files, compounded specifically
+  by Windows/Linux line-ending drift — this is what `.gitattributes` (`* text=auto eol=lf`)
+  was added to prevent going forward.
+- **`removeConsole` is a deliberate permanent choice, not a pending revert**: hardcoded
+  `false` in `next.config.ts` (kept for production debugging visibility) — if an earlier
+  note anywhere implied this needed reverting to `process.env.NODE_ENV === "production"`,
+  that's superseded; the hardcoded `false` is the intended end state.
+- **Rebrand detail beyond the existing note**: Green Line Group remains the legal business
+  entity (its real contact info is unchanged) and appears as a small secondary monochrome
+  logo mark next to the main Tawasi Plus logo in the footer (`public/greenline-mark.png`).
+  "PROTON" is the dev agency's own internal name and must never appear in any
+  storefront-facing text.
+- **Critical bug fixed — cart page crash**: `findOrCreate()` in `src/lib/checkout.ts` used
+  to write a cookie internally via `saveIdToCookie()`, which only works inside a Server
+  Action/Route Handler. `cart/page.tsx` is a plain Server Component render, so a first-time
+  visitor with no checkout cookie crashed with "Cookies can only be modified in a Server
+  Action or Route Handler." Fixed: `findOrCreate()` is now pure GraphQL I/O with no cookie
+  side effect; `cart/page.tsx` uses the existing read-only `find()` helper instead (same
+  pattern as `CartNavItem.tsx`). Server Actions in `cart/actions.ts` already call
+  `saveIdToCookie()` explicitly, so cart mutations were never affected.
+- **Dark/light mode toggle** added — `ThemeToggle.tsx` (Footer + mobile drawer header),
+  `ThemeInitializer.tsx`, `src/lib/theme.ts`. Sun/moon icon via framer-motion,
+  localStorage-persisted; light mode is always the default for first-time visitors (no
+  `prefers-color-scheme` inference). Theme persists across locale (en/ar) switches via
+  `ThemeInitializer` keyed on pathname, since client-side locale navigation doesn't trigger
+  a fresh document load (the FOUC-prevention inline script alone isn't sufficient for that
+  case). New theme-invariant `--color-text-footer` token (`#FAF7F2`, fixed in both
+  light/dark) — do **not** use `--color-text-inverse` for footer content, it flips
+  per-theme and becomes illegible against the always-dark footer.
+- **Footer cleanup**: removed X/LinkedIn social links, added WhatsApp
+  (`wa.me/971558711442`), removed a duplicate "Contact Us" entry from the Legal column (the
+  Explore column's CMS-menu-driven links are managed in the Saleor Dashboard's "footer"
+  menu, not in code). Logo sizing bug fixed across all `Logo.tsx` usages (Header, Footer,
+  MobileMenu, MobileDrawer).
+- **Custom About page** (`src/ui/components/about/AboutPageClient.tsx`,
+  `src/lib/parseAboutContent.ts`) — content stays CMS-driven (Saleor Page, slug `about`,
+  editable from the Dashboard) but is parsed from Editor.js JSON into 4 fixed-position
+  sections (About/Mission/Objectives/Values — grouped by header-block order; "· Title:
+  Description" bullet paragraphs split into card title/description pairs), rendered to
+  match `WholesalePageClient.tsx`'s visual style. Falls back to the generic prose renderer
+  if content doesn't match the expected structure (session 31 later confirmed this page
+  live in production — see the "Known issues" note above). Local and production Saleor
+  databases are completely separate — CMS content must be manually re-entered in both
+  Dashboards.
+- **Database cleanup (Aug 2026)**: both local and production Saleor DBs had all test/seed
+  orders deleted (22 orders total across default-channel/channel-pln/uae-channel) and the
+  `channel-pln` test channel removed. Required deleting legacy `payment.Transaction` rows
+  before `Payment` due to a `PROTECT` FK — Postgres itself has `NO_ACTION` on Order's FKs,
+  so Saleor's cascade logic lives entirely in the Django ORM; raw SQL deletion is never
+  safe here, only Django-shell/management-command deletion respects the cascade chain
+  correctly. Full `pg_dump` backups were taken before each deletion. `uae-channel` (the
+  real active channel) and all products/categories/users were left untouched.
+
 ## Rules (ALWAYS follow)
 
 - src/checkout/ — NEVER touch hooks/, state/, graphql/, AdyenDropIn/, StripeElements/. CSS className changes and UI-only component rewrites are permitted with explicit session approval only.
