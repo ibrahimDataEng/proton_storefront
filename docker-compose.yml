@@ -8,12 +8,17 @@ services:
       args:
         NEXT_PUBLIC_SALEOR_API_URL: ${NEXT_PUBLIC_SALEOR_API_URL}
         NEXT_PUBLIC_STOREFRONT_URL: ${NEXT_PUBLIC_STOREFRONT_URL}
+        NEXT_PUBLIC_GA_MEASUREMENT_ID: ${NEXT_PUBLIC_GA_MEASUREMENT_ID}
     restart: always
     networks:
       - saleor_network
+      - storefront_bridge
 
   # Add more containers below (nginx, postgres, etc.)
 
 networks:
   saleor_network:
     external: false
+  storefront_bridge:
+    external: true
+    name: storefront_bridge
