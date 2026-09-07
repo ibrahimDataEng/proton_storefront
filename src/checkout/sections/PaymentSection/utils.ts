@@ -1,5 +1,6 @@
 import { compact } from "lodash-es";
 import { adyenGatewayId } from "./AdyenDropIn/types";
+import { codGatewayId } from "./CODComponent/types";
 import { stripeGatewayId } from "./StripeElements/types";
 import {
 	type CheckoutAuthorizeStatusEnum,
@@ -12,7 +13,7 @@ import { type MightNotExist } from "@/checkout/lib/globalTypes";
 import { getUrl } from "@/checkout/lib/utils/url";
 import { type PaymentStatus } from "@/checkout/sections/PaymentSection/types";
 
-export const supportedPaymentGateways = [adyenGatewayId, stripeGatewayId] as const;
+export const supportedPaymentGateways = [adyenGatewayId, stripeGatewayId, codGatewayId] as const;
 
 export const getFilteredPaymentGateways = (
 	paymentGateways: MightNotExist<PaymentGateway[]>,
