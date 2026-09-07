@@ -1715,6 +1715,102 @@ automatically refetches and re-renders with zero client-side code involved.
 - `pnpm tsc --noEmit`: 0 errors. `pnpm lint`: baseline only (6 pre-existing in
   `src/checkout/`).
 
+## Cash on Delivery Payment Method Enabled (Session — Storefront COD)
+
+A real, production-installed Saleor Payment App (`com.tawasiplus.cod-payment`,
+"Cash on Delivery" — see `proton-payments`, a separate sibling repo, and the
+saleor_platform sessions that built/installed/registered it) always approved
+transactions immediately, no real charge — but the checkout's own code
+excluded every gateway this Saleor instance actually offered via a hardcoded
+allowlist, so no customer could ever select it. This closes that gap.
+
+- **`codGatewayId = "com.tawasiplus.cod-payment"`** — new constant in
+  `src/checkout/sections/PaymentSection/CODComponent/types.ts`, following the
+  exact per-folder convention `adyenGatewayId`/`stripeGatewayId`/
+  `dummyGatewayId` already use (each gateway id lives in its own component
+  folder's `types.ts`, not a shared constants file).
+- **`supportedPaymentGateways`** (`utils.ts`) — `codGatewayId` added
+  alongside `adyenGatewayId`/`stripeGatewayId`. This is the allowlist
+  `getFilteredPaymentGateways` filters `checkout.availablePaymentGateways`
+  through before ever calling `paymentGatewayInitialize` — the exact
+  mechanism that was silently dropping every real gateway this Saleor
+  instance offers, found in a prior diagnostic session.
+- **`CODComponent`** (`src/checkout/sections/PaymentSection/CODComponent/
+codComponent.tsx`) — mirrors `DummyDropIn/dummyComponent.tsx`'s proven
+  flow exactly: same hooks (`useTransactionInitializeMutation`,
+  `useCheckout`, `useCheckoutComplete`, `useAlerts`), same
+  idle/processing button states. Two differences from Dummy: sends
+  `paymentGateway: {id: codGatewayId, data: {}}` (empty data — the COD
+  app's webhook handler always returns `CHARGE_SUCCESS` unconditionally,
+  needs no input) instead of Dummy's `{event: {...}}` payload; and renders
+  a heading + one-line description above the button (`payment.cashOnDelivery`
+  / `payment.cashOnDeliveryDescription`) rather than a bare button, per this
+  session's requirement that the option be clearly labeled and honest about
+  what it is.
+- **`paymentMethodToComponent`** (`supportedPaymentApps.ts`) —
+  `[codGatewayId]: CODComponent` added.
+- **i18n**: 3 new keys in the `payment` namespace of `checkoutMessages.ts`
+  (this checkout sub-app's own bilingual-hardcoded convention, not the main
+  storefront's next-intl JSON files) — `cashOnDelivery`, `cashOnDeliveryDescription`,
+  `confirmCashOnDelivery` — added to both `en` and `ar` blocks.
+- **Local verification target — flagged and resolved by explicit user
+  choice**: local Saleor doesn't have `com.tawasiplus.cod-payment` installed
+  (only production does, per the sessions that built it). Chose to point a
+  _throwaway_ dev server (a second `next dev` instance, launched directly via
+  `node_modules/.bin/next dev -p 3001` to skip the `predev` codegen hook —
+  critical, since running `pnpm dev`/`pnpm generate` against production's
+  schema would have regenerated the shared, gitignored `src/gql/` out from
+  under the parallel session's own already-running local-Saleor-pointed dev
+  server) at production's public API for one real browser pass, rather than
+  editing the shared `.env` (would have affected that parallel session) or
+  standing up a full local install (re-fighting the SSRF/network-exposure
+  problem the saleor_platform sessions already solved by going public).
+  `SALEOR_APP_TOKEN` also had to be cleared for that throwaway process —
+  the local token isn't valid against production and otherwise crashes
+  `generateStaticParams`'s `channels` call (same class of issue as a prior
+  session's SALEOR_APP_TOKEN audit, just triggered here by pointing at the
+  wrong Saleor instance rather than a broken local network path).
+- **Verified for real, end-to-end, against production**: added a real
+  product to cart, created a genuine checkout, confirmed
+  `com.tawasiplus.cod-payment` appears in that checkout's
+  `availablePaymentGateways` once email + shipping address + a selected
+  delivery method were all present (proving the allowlist fix actually
+  surfaces it) — then called the exact `paymentGatewayInitialize` and
+  `transactionInitialize` mutations `CODComponent` sends (`data: {}`) on
+  that same real, fully-populated checkout: both returned cleanly with zero
+  errors, and `proton-payments`' own production logs confirmed the webhook
+  was received, correctly signature-verified, and answered `CHARGE_SUCCESS`
+  with the real order total (`amount: 23.99`, matching product + Aramex
+  shipping). **Not independently re-verified**: the checkout wizard's own
+  step-2-to-3 UI transition specifically could not be reliably driven
+  through this session's browser-automation tooling against real production
+  network latency (address/email saves worked once fields were freshly
+  typed rather than pre-filled from reloaded server state; the final
+  "Continue to Review & Pay" click repeatedly did not advance despite
+  confirmed-valid, confirmed-saved form data) — a testing-harness
+  limitation, not a code path this session touched (`goNext()`/step-transition
+  logic lives in the off-limits `src/checkout/sections/CheckoutForm/`). The
+  mutation-level verification above exercises the identical GraphQL calls a
+  successful click would send, on the identical real checkout object.
+- **Cart page's own add-to-cart flow doesn't fully apply here**: worth
+  noting for whoever tests this next — a **stale `checkoutId-uae-channel`
+  cookie from a different dev server/port** (cookies aren't port-scoped, so
+  a cookie set by `localhost:3000` leaks into a `localhost:3001` tab in the
+  same browser profile) silently caused "Add to Cart" to appear to succeed
+  (200 response) while adding nothing, because the referenced checkout
+  didn't exist on whichever backend was actually targeted. If a real
+  product add mysteriously doesn't show up in the cart during local
+  multi-port testing, check for this before suspecting the add-to-cart code
+  itself.
+- `pnpm tsc --noEmit`: 0 errors. `pnpm lint`: 6 warnings (baseline,
+  pre-existing in `src/checkout/`) — no new warnings introduced.
+  `git diff --name-only`: only `checkoutMessages.ts`,
+  `PaymentSection/utils.ts`, `PaymentSection/supportedPaymentApps.ts`, and
+  the new `PaymentSection/CODComponent/` — nothing in `hooks/`, `state/`,
+  `graphql/`, `AdyenDropIn/`, or `StripeElements/`.
+- beads: front_store-kim created and closed (see issue for full resolution
+  notes).
+
 ## New dependencies
 
 - framer-motion@12.38.0 — card entrance, pill tap, add-to-cart AnimatePresence
