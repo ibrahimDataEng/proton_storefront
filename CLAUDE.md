@@ -700,16 +700,29 @@ rtl:bg-[left_0.75rem_center]` — the chevron's `background-position` has no
   hardcoded strings" violation). Recipient is `info@tawasiplus.com`,
   hardcoded — deliberately NOT reusing `/api/contact`'s `CONTACT_TO_EMAIL`
   env var (which defaults to a different address), per explicit instruction.
-- **Operational finding, worth knowing before testing anything email-related
-  in this project again**: `.env`'s `SMTP_HOST`/`SMTP_USER`/`SMTP_PASS` are
-  configured for the **real production Zoho mailbox** (`info@tawasiplus.com`),
-  not Mailpit, despite a comment above them saying "dev: Mailpit on
-  localhost:1025". Confirmed by testing this feature live — the test
-  request's feedback email actually sent to the real inbox, it did not show
-  up in Mailpit. `/api/contact` shares this exact transporter config, so the
-  same is true there. If local Mailpit catching is wanted for dev, `.env`
-  needs `SMTP_HOST=localhost` / `SMTP_PORT=1025` explicitly — nobody should
-  assume the comment reflects the actual configured values.
+- ~~Operational finding: `.env`'s `SMTP_HOST`/`SMTP_USER`/`SMTP_PASS` are
+  configured for the real production Zoho mailbox~~ — **fixed** in a later
+  session. `.env` now has `SMTP_HOST=localhost`, `SMTP_PORT=1025`,
+  `SMTP_USER`/`SMTP_PASS` empty (Mailpit needs no auth — nodemailer only
+  attempts auth when `SMTP_USER` is set). `/api/contact` shares this
+  transporter config, so both are fixed together. Verified live:
+  `POST /api/contact` now lands correctly in Mailpit
+  (http://localhost:8025), not the real inbox.
+  **⚠️ Before testing anything email-related in this project, send one
+  throwaway test through the path you're about to test and confirm it
+  shows up in Mailpit first.** If Mailpit is empty when you expect an
+  email, STOP — don't assume the feature is broken, and don't create
+  another test hoping it works this time; check `SMTP_HOST`/`SMTP_PORT`
+  (here) and, separately, Saleor's own email config
+  (`saleor_platform/backend.env`'s `EMAIL_URL`, **and** — this is the part
+  that's easy to miss — Saleor's `user_email` plugin doesn't actually read
+  `EMAIL_URL` at all; it reads a **per-channel** `PluginConfiguration`
+  database row, and different channels can have independently different,
+  stale values even after `EMAIL_URL` itself is fixed. See
+  `saleor_platform`'s own README for the full story — this exact gap
+  caused a local test order's confirmation email to silently go to the
+  real `info@tawasiplus.com` inbox in an earlier session, with zero errors
+  anywhere in the logs.
 - New card "Download Your Data" added to `SettingsSection.tsx`, positioned
   between the Security card and the Delete Account card (non-destructive
   styling, same `rounded-2xl ring-1 ring-line-subtle` card shell as
