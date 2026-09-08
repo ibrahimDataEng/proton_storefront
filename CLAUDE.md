@@ -1920,6 +1920,86 @@ and answers the third with live measurement, not assumption.
   `checkout/lib/lastPaymentGateway.ts` — nothing in `hooks/`, `state/`,
   `graphql/`, `AdyenDropIn/`, or `StripeElements/`.
 
+## Admin New-Order Notification (Session — Order Webhook)
+
+`info@tawasiplus.com` previously received no notification when a new order
+was placed (only the customer got an order-confirmation email). Built a
+standalone webhook receiver — a dedicated Saleor App, entirely independent
+of the checkout sub-app.
+
+- **`src/app/api/webhooks/order-created/route.ts`** — new App route (not
+  under `src/checkout/` at all — confirmed via `git diff --name-only`).
+  Verifies `Saleor-Signature` (HMAC-SHA256 over the raw body) against a new
+  `ORDER_WEBHOOK_SECRET` env var **before** parsing/trusting the body,
+  same pattern as `proton-payments`. Sends one plain-English internal
+  notification email (`New Order #{number} — AED {total}`) via the shared
+  nodemailer transporter, listing customer email, shipping address, and
+  line items. Always English regardless of storefront locale — same
+  precedent as the Session 34 account-deletion-feedback email.
+  Fire-and-forget on the actual send (`.catch()`, not awaited) —
+  deliberate, not an oversight: SMTP sends in this environment have been
+  observed taking 6–11 seconds (see the Mailpit-fix session), and Saleor's
+  own webhook delivery has its own timeout/retry-on-non-200 behavior —
+  awaiting the send risks the _webhook response itself_ timing out and
+  triggering a Saleor-side retry (duplicate notification emails) over an
+  unrelated SMTP delay. The route always acknowledges `200` immediately;
+  a failed send is logged, never surfaced as a non-200.
+- **`src/lib/mailer.ts`** (new) — the shared nodemailer transporter,
+  extracted from `/api/contact/route.ts` so both routes use the exact same
+  instance/config rather than duplicating the `createTransport` call.
+  `/api/contact/route.ts` now imports from here; its own behavior is
+  otherwise unchanged.
+- **`src/lib/verifyWebhookSignature.ts`** (new) — the same HMAC-SHA256
+  verification `proton-payments` already uses, reimplemented here since
+  it's a separate repo (can't share code across repos directly).
+- **`ORDER_WEBHOOK_SECRET`** added to `.env.example`.
+- **Research confirmed before writing any code** (per this session's own
+  instruction, not skipped): `ORDER_CREATED` requires exactly
+  `OrderPermissions.MANAGE_ORDERS` (`saleor/webhook/event_types.py`), is
+  genuinely async (`WebhookEventAsyncType`, not `WebhookEventSyncType` —
+  contrast with the payment app's sync events, which need a
+  Pydantic-validated structured response; this just needs a plain `200`),
+  and dispatches via a real Celery task with `retry_backoff=10,
+max_retries=5` — fire-and-forget from Saleor's side too, never blocks the
+  customer's checkout response.
+- **App + Webhook registered on local Saleor** via Django shell (no
+  manifest — this is an internal-only integration): App
+  `com.tawasiplus.order-notifications` (id 22), permission `MANAGE_ORDERS`
+  only, active. Webhook (id 105) subscribes to `ORDER_CREATED` with a
+  query covering `order { id number created total{gross{amount currency}}
+userEmail shippingAddress{...} lines{productName variantName quantity
+unitPrice{gross{amount currency}}} }`. Secret generated via `openssl rand
+-hex 32`, set identically on both sides, read-back verified byte-for-byte
+  equal (same discipline as the payment app's secret setup).
+- **Verified — with one honestly-flagged, deliberately-accepted gap**: the
+  route's own logic was proven correct via a manually HMAC-signed test
+  request (matching Saleor's real signing scheme) — landed in Mailpit with
+  exactly the expected subject/content. Signature rejection tested and
+  confirmed clean `401` for both a missing and a wrong signature, no
+  crash. **Real Saleor-to-route delivery over the network was not
+  verified end-to-end**: the webhook's local target
+  (`host.docker.internal:3003`, since this brand-new route isn't deployed
+  anywhere public yet, unlike `proton-payments`) hit the exact same
+  `HTTP_IP_FILTER_ENABLED` SSRF-filter wall documented in the
+  `proton-payments` sessions (`'Invalid IP address'`, confirmed in worker
+  logs, Saleor correctly retried with backoff and gave up after 5
+  attempts, exactly as designed). Presented the options (Saleor's
+  `webhookDryRun` mutation to resolve the real payload shape with zero
+  network involved, temporarily flipping the SSRF filter off for one
+  local test, or accepting the gap) — decided to accept the gap rather
+  than touch the SSRF filter even transiently. **Before this goes live**:
+  the Webhook row's `target_url` must be updated from the local testing
+  address to `https://tawasiplus.com/api/webhooks/order-created` once
+  this route is actually deployed there (same "local target now, real
+  domain at deploy time" pattern already used for `proton-payments`) —
+  see `saleor_platform`'s README for the explicit reminder.
+- `pnpm tsc --noEmit`: 0 errors. `pnpm lint`: 6 warnings (baseline,
+  pre-existing in `src/checkout/`) — no new warnings. `git diff
+--name-only`: `.env.example`, `src/app/api/contact/route.ts`
+  (transporter-extraction refactor only), plus new
+  `src/app/api/webhooks/order-created/route.ts`, `src/lib/mailer.ts`,
+  `src/lib/verifyWebhookSignature.ts` — nothing under `src/checkout/`.
+
 ## New dependencies
 
 - framer-motion@12.38.0 — card entrance, pill tap, add-to-cart AnimatePresence

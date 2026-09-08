@@ -1,16 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
-import nodemailer from "nodemailer";
+import { transporter } from "@/lib/mailer";
 
 const CONTACT_TO = process.env.CONTACT_TO_EMAIL ?? "tawasiplus2026@gmail.com";
-
-const transporter = nodemailer.createTransport({
-	host: process.env.SMTP_HOST ?? "localhost",
-	port: Number(process.env.SMTP_PORT ?? 1025),
-	secure: process.env.SMTP_SECURE === "true",
-	...(process.env.SMTP_USER
-		? { auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS ?? "" } }
-		: {}),
-});
 
 export async function POST(request: NextRequest) {
 	const body = (await request.json()) as {
