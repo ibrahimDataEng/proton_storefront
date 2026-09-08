@@ -1811,6 +1811,102 @@ codComponent.tsx`) — mirrors `DummyDropIn/dummyComponent.tsx`'s proven
 - beads: front_store-kim created and closed (see issue for full resolution
   notes).
 
+## OrderConfirmation: Dynamic Delivery Date + UX Improvements (Session — Post-Order)
+
+Built on a diagnostic session (real production COD order #23) that found
+three separate gaps: a static "Within 2-3 business days" delivery estimate
+with no connection to Session 39's real cutoff logic; an empty-feeling left
+column; and an unconfirmed RTL question. This session closes the first two
+and answers the third with live measurement, not assumption.
+
+- **`src/lib/delivery.ts`** (new) — `getDeliveryInfo()` extracted verbatim
+  from `CheckoutCountdown.tsx` (same UAE 08:00/20:00 UTC boundary math,
+  zero logic changes) into a framework-agnostic shared module, now
+  accepting an optional `referenceTime: Date = new Date()` parameter
+  instead of always reading `new Date()` internally — required because
+  `CheckoutCountdown` needs "if ordering right now" (default, unchanged
+  call sites) while `OrderConfirmation` needs "given when this order was
+  actually placed" (explicit argument) — a customer revisiting their
+  confirmation later must still see the promise made at order time, not a
+  answer recomputed against their current viewing time.
+  `CheckoutCountdown.tsx` now imports it instead of keeping a private copy.
+- **`order.created` without touching `src/checkout/graphql/`**: confirmed
+  `OrderFragment` has no timestamp field, and unlike CSS/UI-only changes
+  that folder has no session-approval exception — it's an absolute
+  never-touch. Fix: `src/checkout/lib/getOrderCreatedAt.ts`, a standalone
+  raw `fetch()` (query string inline, not a generated Document) against
+  `NEXT_PUBLIC_SALEOR_API_URL` — same precedented pattern already used by
+  `set-password/route.ts`. Confirmed against the Saleor 3.23.1 source
+  first: `Order.created` is a plain public field, no `PermissionsField`,
+  so this works for the anonymous/guest view a real customer uses. Returns
+  `null` on any failure (network, malformed response) — best-effort only.
+- **Fallback strategy, deliberately not "replace and delete"**: the static
+  `estimatedDeliveryValue` copy in `checkoutMessages.ts` was kept, not
+  removed — it's what renders while the `order.created` fetch is in
+  flight or if it fails. Once resolved, the value swaps to
+  `orderConfirmation.deliveryTomorrow`/`deliveryDayAfterTomorrow`
+  (bilingual, wording matches `CheckoutCountdown` exactly — "غداً"/"بعد
+  غد"). New keys in `checkoutMessages.ts`'s `orderConfirmation` namespace:
+  `deliveryTomorrow`, `deliveryDayAfterTomorrow`, `checkSpamFolder`,
+  `codReminder`, `statusReceived`, `statusProcessing`, `statusShipped`,
+  `statusDelivered`.
+- **COD detection — a real, hard permission wall, not just inconvenience**:
+  confirmed against Saleor source that `Order.transactions` and
+  `Order.events` (the only places gateway/payment info lives) both
+  require `MANAGE_ORDERS`/`HANDLE_PAYMENTS` — genuinely unreachable from a
+  guest viewing their own order confirmation, and `OrderFragment` has no
+  gateway field either. **User-confirmed solution**:
+  `src/checkout/lib/lastPaymentGateway.ts` — `CODComponent.tsx` calls
+  `markPaymentGatewayUsed(codGatewayId)` in `sessionStorage` right before
+  `onCheckoutComplete()` (a URL query param was considered and rejected:
+  `useCheckoutComplete`'s redirect uses `replaceWholeQuery: true`, which
+  would wipe it — sessionStorage survives that same-tab
+  `window.location.href` navigation). **Known, accepted limitation**:
+  same-tab/same-session only — revisiting the confirmation link later
+  (a different tab, another device, from the actual confirmation email)
+  will not show the COD reminder. Not a wrong answer in that case, just an
+  absent one — no permission-free way exists to recover the signal after
+  the fact.
+- **UX additions to `OrderConfirmation.tsx`**: a 4-step order-status
+  indicator (Order Received / Processing / Shipped / Delivered — first
+  step always highlighted, the rest greyed; this page is only ever reached
+  immediately post-order, so "Order Received" is always the correct
+  current step, no order-status data wired in); a COD-only reminder box
+  (`💵 Please have AED {total} ready in cash upon delivery.`,
+  `order.total.gross.amount` interpolated, only when the sessionStorage
+  marker matches `codGatewayId`); a "check spam folder" note under the
+  existing "confirmation sent to {email}" line. Together these also
+  address the diagnostic's "empty left column" finding — no grid changes
+  needed, richer content naturally balances the existing 50/50 layout.
+- **RTL — measured live, not assumed** (per this project's established
+  rule): `OrderConfirmation.tsx`'s `<main dir="rtl">` has no explicit
+  `lg:order-1`/`lg:order-2` swap, unlike `Checkout.tsx`. Tested against a
+  real order (#23) in Arabic and read actual `getBoundingClientRect()`
+  coordinates, not just a screenshot: the confirmation-details column
+  (first in DOM) rendered at `x: 664–1200` (right side), the Summary
+  column (second in DOM) at `x: 65–600` (left side) — CSS Grid's
+  direction-aware auto-placement already mirrors correctly under bare
+  `dir="rtl"`. **No order-swap was added** — confirmed unnecessary, not
+  defensively skipped.
+- **Verified live against real production order #23** (created 21:56 UAE,
+  correctly inside the 20:00–08:00 window): "Estimated Delivery" showed
+  "Day after tomorrow" / "بعد غد" (computed from `order.created`, not
+  page-view time), step indicator rendered with step 1 highlighted, spam
+  note rendered, COD reminder correctly absent (no session marker for
+  this externally-viewed order) and correctly appeared with the right
+  interpolated total (`AED 22.99`) once the marker was set to simulate a
+  fresh COD completion. Delivery-boundary math also re-verified via a
+  throwaway script importing the real `src/lib/delivery.ts` directly
+  (10:00 UAE → tomorrow, 22:00 UAE → dayAfterTomorrow, matching Session
+  39's original fixed table).
+- `pnpm tsc --noEmit`: 0 errors. `pnpm lint`: 6 warnings (baseline,
+  pre-existing in `src/checkout/`) — no new warnings. `git diff
+--name-only`: `checkoutMessages.ts`, `CODComponent/codComponent.tsx`,
+  `OrderConfirmation.tsx`, `CheckoutCountdown.tsx`, plus new
+  `src/lib/delivery.ts`, `checkout/lib/getOrderCreatedAt.ts`,
+  `checkout/lib/lastPaymentGateway.ts` — nothing in `hooks/`, `state/`,
+  `graphql/`, `AdyenDropIn/`, or `StripeElements/`.
+
 ## New dependencies
 
 - framer-motion@12.38.0 — card entrance, pill tap, add-to-cart AnimatePresence

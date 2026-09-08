@@ -7,6 +7,7 @@ import { useAlerts } from "@/checkout/hooks/useAlerts";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { useCheckoutComplete } from "@/checkout/hooks/useCheckoutComplete";
 import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
+import { markPaymentGatewayUsed } from "@/checkout/lib/lastPaymentGateway";
 
 export const CODComponent = () => {
 	const { payment } = useCheckoutMessages();
@@ -27,7 +28,10 @@ export const CODComponent = () => {
 			.catch((err) => {
 				console.error("There was a problem with the Cash on Delivery gateway:", err);
 			})
-			.then(() => onCheckoutComplete())
+			.then(() => {
+				markPaymentGatewayUsed(codGatewayId);
+				return onCheckoutComplete();
+			})
 			.then((res) => {
 				if (res?.apiErrors) {
 					res.apiErrors.forEach((error) => {
