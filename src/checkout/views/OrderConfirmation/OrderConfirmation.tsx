@@ -1,15 +1,44 @@
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useLocale } from "next-intl";
 import { Summary, SummarySkeleton } from "@/checkout/sections/Summary";
 import { OrderInfo } from "@/checkout/sections/OrderInfo";
 import { useOrder } from "@/checkout/hooks/useOrder";
 import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
+import { getOrderCreatedAt } from "@/checkout/lib/getOrderCreatedAt";
+import { getLastPaymentGatewayId } from "@/checkout/lib/lastPaymentGateway";
+import { codGatewayId } from "@/checkout/sections/PaymentSection/CODComponent/types";
 import { trackPurchase } from "@/lib/analytics/gtag";
+import { type DeliveryLabel, getDeliveryInfo } from "@/lib/delivery";
 
 export const OrderConfirmation = () => {
 	const { orderConfirmation } = useCheckoutMessages();
 	const { order } = useOrder();
 	const locale = useLocale();
+
+	// null = not yet resolved (or the order.created fetch failed) — falls back
+	// to the static estimatedDeliveryValue copy rather than showing nothing.
+	const [deliveryLabel, setDeliveryLabel] = useState<DeliveryLabel | null>(null);
+	const [isCod, setIsCod] = useState(false);
+
+	useEffect(() => {
+		// Session-local signal set by CODComponent right before completing
+		// checkout — see lastPaymentGateway.ts for why this exists instead of
+		// a GraphQL field (Order.transactions/events both require
+		// MANAGE_ORDERS/HANDLE_PAYMENTS, not available to a guest here).
+		setIsCod(getLastPaymentGatewayId() === codGatewayId);
+	}, []);
+
+	useEffect(() => {
+		if (!order?.id) return;
+		let cancelled = false;
+		void getOrderCreatedAt(order.id).then((created) => {
+			if (cancelled || !created) return;
+			setDeliveryLabel(getDeliveryInfo(created).label);
+		});
+		return () => {
+			cancelled = true;
+		};
+	}, [order?.id]);
 
 	useEffect(() => {
 		// Session 25: clear stale checkout cookie + URL param after order completes
@@ -50,6 +79,20 @@ export const OrderConfirmation = () => {
 		});
 	}, [order?.id, order?.number, order?.total?.gross?.amount, order?.lines]);
 
+	const estimatedDeliveryValue =
+		deliveryLabel === "tomorrow"
+			? orderConfirmation.deliveryTomorrow
+			: deliveryLabel === "dayAfterTomorrow"
+				? orderConfirmation.deliveryDayAfterTomorrow
+				: orderConfirmation.estimatedDeliveryValue;
+
+	const statusSteps = [
+		{ key: "received", label: orderConfirmation.statusReceived },
+		{ key: "processing", label: orderConfirmation.statusProcessing },
+		{ key: "shipped", label: orderConfirmation.statusShipped },
+		{ key: "delivered", label: orderConfirmation.statusDelivered },
+	] as const;
+
 	return (
 		<main className="grid grid-cols-1 gap-x-16 lg:grid-cols-2" dir={locale === "ar" ? "rtl" : "ltr"}>
 			<div>
@@ -66,13 +109,48 @@ export const OrderConfirmation = () => {
 						<p className="text-sm text-neutral-500">
 							{orderConfirmation.description.replace("{email}", order.userEmail ?? "")}
 						</p>
+						<p className="mt-1 text-xs text-neutral-400">{orderConfirmation.checkSpamFolder}</p>
 					</div>
 				</div>
 
+				<ol className="mb-6 flex items-center justify-between">
+					{statusSteps.map((step, index) => (
+						<li key={step.key} className="flex flex-1 items-center last:flex-none">
+							<div className="flex flex-col items-center gap-1">
+								<div
+									className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold ${
+										index === 0 ? "bg-[#2d6a4f] text-white" : "bg-neutral-200 text-neutral-400"
+									}`}
+								>
+									{index + 1}
+								</div>
+								<span
+									className={`whitespace-nowrap text-[11px] ${
+										index === 0 ? "font-semibold text-[#2d6a4f]" : "text-neutral-400"
+									}`}
+								>
+									{step.label}
+								</span>
+							</div>
+							{index < statusSteps.length - 1 && <div className="mx-2 h-px flex-1 bg-neutral-200" />}
+						</li>
+					))}
+				</ol>
+
 				<div className="mb-6 rounded-lg border border-neutral-200 bg-neutral-50 p-4">
 					<p className="text-sm font-semibold text-neutral-700">{orderConfirmation.estimatedDeliveryTitle}</p>
-					<p className="mt-1 text-sm text-neutral-500">{orderConfirmation.estimatedDeliveryValue}</p>
+					<p className="mt-1 text-sm text-neutral-500">{estimatedDeliveryValue}</p>
 				</div>
+
+				{isCod && (
+					<div className="mb-6 rounded-lg bg-[#fff8e6] p-4 text-sm text-[#8a6d1a]">
+						💵{" "}
+						{orderConfirmation.codReminder.replace(
+							"{amount}",
+							order.total?.gross?.amount != null ? order.total.gross.amount.toFixed(2) : "",
+						)}
+					</div>
+				)}
 
 				<OrderInfo />
 
