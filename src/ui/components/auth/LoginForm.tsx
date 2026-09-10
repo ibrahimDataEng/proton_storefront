@@ -7,6 +7,7 @@ import { AuthFormField } from "./AuthFormField";
 import { Button } from "@/ui/components/Button";
 import { useAuth } from "@/ui/context/AuthContext";
 import { type AuthUser } from "@/lib/auth/types";
+import { getPendingPhone, clearPendingPhone } from "@/lib/auth/pendingPhone";
 
 type Props = {
 	onForgotPassword: () => void;
@@ -46,6 +47,32 @@ export function LoginForm({ onForgotPassword }: Props) {
 			}
 
 			if (data.user) setUser(data.user);
+
+			// Best-effort flush of a phone value carried over from a registration that
+			// couldn't write it at the time (see RegisterForm.tsx / pendingPhone.ts —
+			// this covers both the confirmation-required path, which never had a token
+			// to write with, and a prior same-device write that failed). Fire-and-forget
+			// and silent: no banner here, unlike RegisterForm's own failure path — if
+			// this doesn't succeed, PhoneGate takes over the very next time it checks
+			// phone-status for this user, so there is nothing actionable to tell them
+			// right now.
+			const pendingPhone = getPendingPhone(email);
+			if (pendingPhone) {
+				void fetch("/api/identity/set-phone", {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ phone: pendingPhone }),
+				})
+					.then(async (r) => {
+						const d = (await r.json().catch(() => null)) as { outcome?: string } | null;
+						if (r.ok && d?.outcome === "success") clearPendingPhone(email);
+					})
+					.catch(() => {
+						// Network failure reaching our own route — leave the pending entry;
+						// PhoneGate remains the guaranteed fallback regardless.
+					});
+			}
+
 			closeAuthModal();
 			router.push("/");
 			router.refresh();

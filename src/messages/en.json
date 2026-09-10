@@ -538,6 +538,29 @@
 			"unknown": "Something went wrong. Please try again."
 		}
 	},
+	"phoneField": {
+		"label": "Phone / WhatsApp Number",
+		"codeLabel": "Country Code",
+		"codeOther": "Other",
+		"codeOtherPlaceholder": "Country code",
+		"numberPlaceholder": "50 123 4567",
+		"required": "This field is required",
+		"invalid": "Please enter a valid phone number"
+	},
+	"phoneGate": {
+		"title": "Complete your profile",
+		"subtitle": "We need your phone number to keep you updated about your orders.",
+		"submit": "Save phone number",
+		"continueAnyway": "Continue for now — we'll ask again later",
+		"signOutInstead": "Sign out instead",
+		"saveNotice": "We couldn't save your phone number yet — we'll ask you again.",
+		"dismiss": "Dismiss",
+		"errors": {
+			"invalid": "Please enter a valid phone number",
+			"conflict": "This phone number is already registered to a different account",
+			"serviceError": "We couldn't save your phone right now, please try again"
+		}
+	},
 	"checkout": {
 		"securePay": "Secure Payment",
 		"freeReturns": "Free Returns",
