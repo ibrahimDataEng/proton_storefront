@@ -561,6 +561,23 @@
 			"serviceError": "لم نتمكن من حفظ رقم هاتفك الآن، يرجى المحاولة مرة أخرى"
 		}
 	},
+	"phoneLogin": {
+		"tabLabel": "الهاتف",
+		"sendCode": "إرسال الرمز",
+		"resendCode": "إعادة إرسال الرمز",
+		"resendIn": "إعادة الإرسال خلال {seconds} ثانية",
+		"codeLabel": "رمز التحقق",
+		"codeSentTo": "تم إرسال الرمز إلى {phone}",
+		"verifyAndSignIn": "تحقق وسجّل الدخول",
+		"changeNumber": "تغيير الرقم",
+		"switchToEmail": "التبديل إلى تسجيل الدخول بالبريد الإلكتروني",
+		"errors": {
+			"invalidPhone": "الرجاء إدخال رقم هاتف صحيح",
+			"rateLimited": "يرجى الانتظار قبل طلب رمز آخر",
+			"serviceUnavailable": "تسجيل الدخول عبر الهاتف غير متاح مؤقتًا — يرجى المحاولة عبر البريد الإلكتروني",
+			"invalidOrExpiredCode": "الرمز غير صحيح أو منتهي الصلاحية. يرجى المحاولة مرة أخرى."
+		}
+	},
 	"checkout": {
 		"securePay": "دفع آمن",
 		"freeReturns": "إرجاع مجاني",
