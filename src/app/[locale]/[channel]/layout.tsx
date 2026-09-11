@@ -5,6 +5,8 @@ import { executeGraphQL } from "@/lib/graphql";
 import { ChannelsListDocument } from "@/gql/graphql";
 import { AuthProvider } from "@/ui/context/AuthContext";
 import { AuthModal } from "@/ui/components/auth/AuthModal";
+import { PhoneGate } from "@/ui/components/auth/PhoneGate";
+import { PhoneSaveNoticeBanner } from "@/ui/components/auth/PhoneSaveNoticeBanner";
 import { COOKIE_ACCESS_TOKEN } from "@/lib/auth/cookies";
 import { decodeJwtPayload } from "@/lib/auth/jwt";
 import { type AuthUser } from "@/lib/auth/types";
@@ -96,6 +98,8 @@ export default async function ChannelLayout({
 		<AuthProvider initialUser={initialUser}>
 			{children}
 			<AuthModal />
+			<PhoneGate />
+			<PhoneSaveNoticeBanner />
 		</AuthProvider>
 	);
 }
