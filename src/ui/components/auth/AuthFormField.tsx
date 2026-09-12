@@ -1,6 +1,6 @@
 "use client";
 
-import { type InputHTMLAttributes } from "react";
+import { forwardRef, type InputHTMLAttributes } from "react";
 import clsx from "clsx";
 
 interface AuthFormFieldProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -9,9 +9,12 @@ interface AuthFormFieldProps extends InputHTMLAttributes<HTMLInputElement> {
 	error?: string;
 }
 
-export function AuthFormField({ id, label, error, className, ...inputProps }: AuthFormFieldProps) {
+export const AuthFormField = forwardRef<HTMLInputElement, AuthFormFieldProps>(function AuthFormField(
+	{ id, label, error, className, ...inputProps },
+	ref,
+) {
 	return (
-		<div className="flex flex-col gap-1">
+		<div className="flex flex-col gap-1.5">
 			<label htmlFor={id} className="text-sm font-medium text-content-primary">
 				{label}
 				{inputProps.required && (
@@ -21,12 +24,13 @@ export function AuthFormField({ id, label, error, className, ...inputProps }: Au
 				)}
 			</label>
 			<input
+				ref={ref}
 				id={id}
 				dir="auto"
 				className={clsx(
-					"w-full rounded-md border border-line-default bg-surface-raised px-3 py-2 text-sm text-content-primary",
+					"w-full rounded-lg border border-line-default bg-surface-raised px-3.5 py-2.5 text-sm text-content-primary",
 					"placeholder:text-content-secondary",
-					"focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30",
+					"transition-colors focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20",
 					"disabled:cursor-not-allowed disabled:opacity-50",
 					error && "border-red-500 focus:border-red-500 focus:ring-red-500/30",
 					className,
@@ -42,4 +46,4 @@ export function AuthFormField({ id, label, error, className, ...inputProps }: Au
 			)}
 		</div>
 	);
-}
+});

@@ -3,26 +3,21 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { clsx } from "clsx";
+import { AnimatePresence, motion } from "framer-motion";
 import { AuthFormField } from "./AuthFormField";
-import {
-	PhoneField,
-	EMPTY_PHONE_VALUES,
-	combinePhone,
-	validatePhoneFields,
-	type PhoneFieldValues,
-} from "./PhoneField";
+import { PHONE_LIKE_PATTERN } from "./PhoneField";
 import { Button } from "@/ui/components/Button";
 import { useAuth } from "@/ui/context/AuthContext";
 import { type AuthUser } from "@/lib/auth/types";
 import { getPendingPhone, clearPendingPhone } from "@/lib/auth/pendingPhone";
+import { PHONE_LOGIN_ENABLED } from "@/lib/featureFlags";
 
 type Props = {
 	onForgotPassword: () => void;
 };
 
-type LoginMode = "email" | "phone";
 type PhoneStep = "enter-phone" | "enter-code";
+type IdentifierMode = "email" | "phone" | null;
 
 /** Matches proton_identity's own resend-cooldown window exactly — see that service's
  * README for why 60s. Kept as a client-side countdown purely for UX (disabling the
@@ -31,33 +26,54 @@ type PhoneStep = "enter-phone" | "enter-code";
  * client-side guess and the server's actual state ever drift. */
 const RESEND_COOLDOWN_SECONDS = 60;
 
+/** "@" always wins (treat as email) even if the value also happens to look phone-like;
+ * otherwise fall back to the same digits/leading-+ pattern PhoneField itself validates
+ * against, applied to the whole combined field since there's no separate country-code
+ * selector here — proton_identity re-normalizes whatever gets sent, same as before. */
+function detectIdentifierMode(value: string): IdentifierMode {
+	const trimmed = value.trim();
+	if (!trimmed) return null;
+	if (trimmed.includes("@")) return "email";
+	if (PHONE_LIKE_PATTERN.test(trimmed)) return "phone";
+	return null;
+}
+
+const revealTransition = {
+	initial: { height: 0, opacity: 0 },
+	animate: { height: "auto", opacity: 1 },
+	exit: { height: 0, opacity: 0 },
+	transition: { duration: 0.22, ease: "easeInOut" as const },
+};
+
 export function LoginForm({ onForgotPassword }: Props) {
 	const t = useTranslations("auth");
 	const tPhoneLogin = useTranslations("phoneLogin");
-	const tField = useTranslations("phoneField");
 	const router = useRouter();
 	const { closeAuthModal, setUser } = useAuth();
 
-	const [loginMode, setLoginMode] = useState<LoginMode>("email");
-
-	// Email/password state
-	const [email, setEmail] = useState("");
+	// The single "Email or Phone Number" field when the flag is on; a plain email
+	// field when it's off (see identifierType/identifierAutoComplete/identifierLabel
+	// below — those three are the only things that vary by flag on this field, and
+	// keeping them flag-gated is what keeps the off-state byte-identical to before).
+	const [identifier, setIdentifier] = useState("");
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [errorCode, setErrorCode] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
 
-	// Phone/OTP state
+	// Phone/OTP state — unreachable in the UI whenever PHONE_LOGIN_ENABLED is false,
+	// since `mode` can then never be "phone". Left in place (not stripped) so the
+	// flag flips back on with zero code changes, per this session's brief.
 	const [phoneStep, setPhoneStep] = useState<PhoneStep>("enter-phone");
-	const [phone, setPhone] = useState<PhoneFieldValues>(EMPTY_PHONE_VALUES);
-	const [phoneFieldError, setPhoneFieldError] = useState<string | undefined>();
 	const [sendingCode, setSendingCode] = useState(false);
 	const [code, setCode] = useState("");
 	const [verifying, setVerifying] = useState(false);
 	const [phoneError, setPhoneError] = useState<string | null>(null);
-	const [showSwitchToEmail, setShowSwitchToEmail] = useState(false);
+	const [showEmailFallback, setShowEmailFallback] = useState(false);
 	const [cooldown, setCooldown] = useState(0);
 	const sentPhoneRef = useRef("");
+
+	const mode: IdentifierMode = PHONE_LOGIN_ENABLED ? detectIdentifierMode(identifier) : "email";
 
 	useEffect(() => {
 		if (cooldown <= 0) return;
@@ -106,7 +122,7 @@ export function LoginForm({ onForgotPassword }: Props) {
 			const res = await fetch("/api/auth/login", {
 				method: "POST",
 				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({ email, password }),
+				body: JSON.stringify({ email: identifier, password }),
 			});
 
 			const data = (await res.json()) as { user?: AuthUser; error?: string };
@@ -118,7 +134,7 @@ export function LoginForm({ onForgotPassword }: Props) {
 				return;
 			}
 
-			if (data.user) await completeLogin(data.user, email);
+			if (data.user) await completeLogin(data.user, identifier);
 		} catch {
 			setError(t("errors.unknown"));
 		} finally {
@@ -130,7 +146,7 @@ export function LoginForm({ onForgotPassword }: Props) {
 	// both hit the same route the same way, only the trigger differs.
 	async function sendCode(combined: string) {
 		setPhoneError(null);
-		setShowSwitchToEmail(false);
+		setShowEmailFallback(false);
 		setSendingCode(true);
 
 		try {
@@ -148,7 +164,7 @@ export function LoginForm({ onForgotPassword }: Props) {
 				return;
 			}
 			if (data?.outcome === "invalid_phone") {
-				setPhoneFieldError(tField("invalid"));
+				setPhoneError(tPhoneLogin("errors.invalidPhone"));
 				return;
 			}
 			if (data?.outcome === "rate_limited") {
@@ -157,13 +173,13 @@ export function LoginForm({ onForgotPassword }: Props) {
 				return;
 			}
 			// service_error, or anything else unexpected — same non-blocking-of-email
-			// treatment either way: surface a clear message and an escape hatch back to
-			// the email tab, never a dead end.
+			// treatment either way: surface a clear message and an inline "use email
+			// instead" fallback (there's no tab to switch back to anymore).
 			setPhoneError(tPhoneLogin("errors.serviceUnavailable"));
-			setShowSwitchToEmail(true);
+			setShowEmailFallback(true);
 		} catch {
 			setPhoneError(tPhoneLogin("errors.serviceUnavailable"));
-			setShowSwitchToEmail(true);
+			setShowEmailFallback(true);
 		} finally {
 			setSendingCode(false);
 		}
@@ -171,13 +187,7 @@ export function LoginForm({ onForgotPassword }: Props) {
 
 	async function handleSendCodeSubmit(e: React.FormEvent) {
 		e.preventDefault();
-		const validation = validatePhoneFields(phone);
-		if (validation) {
-			setPhoneFieldError(validation === "required" ? tField("required") : tField("invalid"));
-			return;
-		}
-		setPhoneFieldError(undefined);
-		await sendCode(combinePhone(phone));
+		await sendCode(identifier.trim());
 	}
 
 	function handleResend() {
@@ -219,7 +229,7 @@ export function LoginForm({ onForgotPassword }: Props) {
 		setPhoneStep("enter-phone");
 		setCode("");
 		setPhoneError(null);
-		setShowSwitchToEmail(false);
+		setShowEmailFallback(false);
 		// Reset, not preserved: the 60s cooldown is scoped server-side to a specific
 		// phone number, so it must not carry over to whatever number gets entered
 		// next. If it's actually the same number resubmitted too soon, /api/otp/send
@@ -227,47 +237,44 @@ export function LoginForm({ onForgotPassword }: Props) {
 		setCooldown(0);
 	}
 
-	function switchMode(mode: LoginMode) {
-		setLoginMode(mode);
-		// Clear the other mode's stale error state so it doesn't linger if the user
-		// switches back later.
-		setError(null);
-		setErrorCode(null);
-		setPhoneError(null);
-		setPhoneFieldError(undefined);
+	function handleIdentifierChange(value: string) {
+		setIdentifier(value);
+		// Editing the field before anything's been submitted clears stale per-mode
+		// error state, so switching between an email-like and phone-like value never
+		// shows a leftover error from the other path.
+		if (phoneStep === "enter-phone") {
+			setError(null);
+			setErrorCode(null);
+			setPhoneError(null);
+			setShowEmailFallback(false);
+		}
 	}
 
-	const modeTabs: { key: LoginMode; label: string }[] = [
-		{ key: "email", label: t("email") },
-		{ key: "phone", label: tPhoneLogin("tabLabel") },
-	];
+	function handleUseEmailInstead() {
+		setIdentifier("");
+		setPhoneError(null);
+		setShowEmailFallback(false);
+	}
+
+	function handleSubmit(e: React.FormEvent) {
+		if (mode === "phone") return void handleSendCodeSubmit(e);
+		if (mode === "email") return void handleEmailSubmit(e);
+		e.preventDefault();
+	}
+
+	const identifierType = PHONE_LOGIN_ENABLED ? "text" : "email";
+	const identifierAutoComplete = PHONE_LOGIN_ENABLED ? "username" : "email";
+	const identifierInputMode = PHONE_LOGIN_ENABLED && mode === "phone" ? "tel" : undefined;
+	const identifierLabel = PHONE_LOGIN_ENABLED ? tPhoneLogin("identifierLabel") : t("email");
+
+	const showIdentifierStep = !(PHONE_LOGIN_ENABLED && mode === "phone" && phoneStep === "enter-code");
 
 	return (
 		<div className="flex flex-col gap-4">
-			<div role="tablist" className="flex rounded-lg border border-line-default p-1">
-				{modeTabs.map(({ key, label }) => (
-					<button
-						key={key}
-						role="tab"
-						aria-selected={loginMode === key}
-						type="button"
-						onClick={() => switchMode(key)}
-						className={clsx(
-							"flex-1 rounded-md py-2 text-sm font-medium transition-colors",
-							loginMode === key
-								? "bg-brand-primary text-content-inverse"
-								: "text-content-secondary hover:text-content-primary",
-						)}
-					>
-						{label}
-					</button>
-				))}
-			</div>
-
-			{loginMode === "email" ? (
-				<form onSubmit={handleEmailSubmit} noValidate className="flex flex-col gap-4">
-					{error && (
-						<div role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+			{showIdentifierStep && (
+				<form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+					{mode === "email" && error && (
+						<div role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
 							<p>{error}</p>
 							{errorCode === "LOGIN_ATTEMPT_DELAYED" && (
 								<button
@@ -280,44 +287,13 @@ export function LoginForm({ onForgotPassword }: Props) {
 							)}
 						</div>
 					)}
-					<AuthFormField
-						id="login-email"
-						label={t("email")}
-						type="email"
-						autoComplete="email"
-						required
-						value={email}
-						onChange={(e) => setEmail(e.target.value)}
-					/>
-					<AuthFormField
-						id="login-password"
-						label={t("password")}
-						type="password"
-						autoComplete="current-password"
-						required
-						value={password}
-						onChange={(e) => setPassword(e.target.value)}
-					/>
-					<button
-						type="button"
-						onClick={onForgotPassword}
-						className="self-start text-xs text-content-secondary underline-offset-2 hover:underline"
-					>
-						{t("forgotPassword")}
-					</button>
-					<Button type="submit" variant="primary" size="md" loading={loading} className="w-full">
-						{t("login")}
-					</Button>
-				</form>
-			) : phoneStep === "enter-phone" ? (
-				<form onSubmit={handleSendCodeSubmit} noValidate className="flex flex-col gap-4">
-					{phoneError && (
-						<div role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+					{mode === "phone" && phoneError && (
+						<div role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
 							<p>{phoneError}</p>
-							{showSwitchToEmail && (
+							{showEmailFallback && (
 								<button
 									type="button"
-									onClick={() => switchMode("email")}
+									onClick={handleUseEmailInstead}
 									className="mt-1 font-semibold text-red-800 underline underline-offset-2 hover:text-red-900"
 								>
 									{tPhoneLogin("switchToEmail")}
@@ -325,22 +301,62 @@ export function LoginForm({ onForgotPassword }: Props) {
 							)}
 						</div>
 					)}
-					<PhoneField id="login-phone" values={phone} onChange={setPhone} error={phoneFieldError} required />
-					<Button
-						type="submit"
-						variant="primary"
-						size="md"
-						loading={sendingCode}
-						disabled={cooldown > 0}
-						className="w-full"
-					>
-						{tPhoneLogin("sendCode")}
-					</Button>
+
+					<AuthFormField
+						id="login-identifier"
+						label={identifierLabel}
+						type={identifierType}
+						autoComplete={identifierAutoComplete}
+						inputMode={identifierInputMode}
+						required
+						value={identifier}
+						onChange={(e) => handleIdentifierChange(e.target.value)}
+					/>
+
+					<AnimatePresence initial={false}>
+						{mode === "email" && (
+							<motion.div key="password-reveal" {...revealTransition} className="overflow-hidden">
+								<div className="flex flex-col gap-4 pt-0.5">
+									<AuthFormField
+										id="login-password"
+										label={t("password")}
+										type="password"
+										autoComplete="current-password"
+										required
+										value={password}
+										onChange={(e) => setPassword(e.target.value)}
+									/>
+									<button
+										type="button"
+										onClick={onForgotPassword}
+										className="self-start text-xs text-content-secondary underline-offset-2 hover:underline"
+									>
+										{t("forgotPassword")}
+									</button>
+								</div>
+							</motion.div>
+						)}
+					</AnimatePresence>
+
+					{mode !== null && (
+						<Button
+							type="submit"
+							variant="primary"
+							size="md"
+							loading={mode === "email" ? loading : sendingCode}
+							disabled={mode === "phone" && cooldown > 0}
+							className="w-full"
+						>
+							{mode === "phone" ? tPhoneLogin("sendCode") : t("login")}
+						</Button>
+					)}
 				</form>
-			) : (
+			)}
+
+			{PHONE_LOGIN_ENABLED && mode === "phone" && phoneStep === "enter-code" && (
 				<form onSubmit={handleVerifyCode} noValidate className="flex flex-col gap-4">
 					{phoneError && (
-						<div role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+						<div role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
 							{phoneError}
 						</div>
 					)}

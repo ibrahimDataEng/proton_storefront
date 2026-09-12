@@ -524,6 +524,8 @@
 		"passwordChanged": "تم تحديث كلمة المرور بنجاح.",
 		"signOut": "تسجيل الخروج",
 		"myAccount": "حسابي",
+		"splitWelcomeTitle": "أهلاً بك في تواصي بلس",
+		"splitWelcomeSubtitle": "مكسرات وبهارات ومنتجات مجففة فاخرة — بعناية فائقة وتوصيل سريع.",
 		"errors": {
 			"INVALID_CREDENTIALS": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
 			"ACCOUNT_NOT_CONFIRMED": "يرجى تأكيد بريدك الإلكتروني قبل تسجيل الدخول.",
@@ -563,6 +565,7 @@
 	},
 	"phoneLogin": {
 		"tabLabel": "الهاتف",
+		"identifierLabel": "البريد الإلكتروني أو رقم الهاتف",
 		"sendCode": "إرسال الرمز",
 		"resendCode": "إعادة إرسال الرمز",
 		"resendIn": "إعادة الإرسال خلال {seconds} ثانية",
@@ -570,7 +573,7 @@
 		"codeSentTo": "تم إرسال الرمز إلى {phone}",
 		"verifyAndSignIn": "تحقق وسجّل الدخول",
 		"changeNumber": "تغيير الرقم",
-		"switchToEmail": "التبديل إلى تسجيل الدخول بالبريد الإلكتروني",
+		"switchToEmail": "استخدام البريد الإلكتروني بدلاً من ذلك",
 		"errors": {
 			"invalidPhone": "الرجاء إدخال رقم هاتف صحيح",
 			"rateLimited": "يرجى الانتظار قبل طلب رمز آخر",

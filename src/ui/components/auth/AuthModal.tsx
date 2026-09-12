@@ -78,7 +78,7 @@ export function AuthModal() {
 			<div
 				ref={panelRef}
 				tabIndex={-1}
-				className="relative z-10 w-full max-w-md rounded-2xl bg-surface-base p-6 shadow-xl focus:outline-none"
+				className="relative z-10 w-full max-w-md rounded-2xl border border-line-subtle bg-surface-raised p-6 shadow-elevated focus:outline-none sm:p-8"
 			>
 				<AuthFormWrapper mode={authModalMode} onModeChange={setAuthModalMode} />
 			</div>

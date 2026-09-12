@@ -21,6 +21,16 @@ export const EMPTY_PHONE_VALUES: PhoneFieldValues = {
 	phoneNumber: "",
 };
 
+/** Digits/spaces/dashes, 5+ chars — the bare-number half of validatePhoneFields below. */
+const PHONE_DIGITS_PATTERN = /^[0-9\s-]{5,}$/;
+
+/**
+ * Same shape as PHONE_DIGITS_PATTERN but also allows a leading "+", for detecting a
+ * phone-like value typed into a single combined field (no separate country-code
+ * selector) — see the smart identifier field in LoginForm.tsx.
+ */
+export const PHONE_LIKE_PATTERN = /^\+?[0-9\s-]{5,}$/;
+
 export function resolvePhoneCode(values: PhoneFieldValues): string {
 	return values.phoneCode === "other" ? values.phoneCodeOther : values.phoneCode;
 }
@@ -38,7 +48,7 @@ export function combinePhone(values: PhoneFieldValues): string {
 export function validatePhoneFields(values: PhoneFieldValues): "required" | "invalid" | undefined {
 	if (!values.phoneNumber.trim()) return "required";
 	if (values.phoneCode === "other" && !values.phoneCodeOther.trim()) return "invalid";
-	return /^[0-9\s-]{5,}$/.test(values.phoneNumber) ? undefined : "invalid";
+	return PHONE_DIGITS_PATTERN.test(values.phoneNumber) ? undefined : "invalid";
 }
 
 type Props = {
