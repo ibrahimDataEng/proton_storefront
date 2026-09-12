@@ -48,7 +48,7 @@ export const CODComponent = () => {
 			{isInProgress ? (
 				<Button variant="primary" disabled={true} label={payment.processingPayment} />
 			) : (
-				<Button variant="primary" onClick={onInitalizeClick} label={payment.confirmCashOnDelivery} />
+				<Button variant="primary" onClick={onInitalizeClick} label={payment.confirmOrder} />
 			)}
 		</div>
 	);
