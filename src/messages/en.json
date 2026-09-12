@@ -524,6 +524,8 @@
 		"passwordChanged": "Password updated successfully.",
 		"signOut": "Sign Out",
 		"myAccount": "My Account",
+		"splitWelcomeTitle": "Welcome to Tawasi Plus",
+		"splitWelcomeSubtitle": "Premium nuts, spices & dried goods — sourced with care, delivered fast.",
 		"errors": {
 			"INVALID_CREDENTIALS": "Incorrect email or password.",
 			"ACCOUNT_NOT_CONFIRMED": "Please confirm your email before signing in.",
@@ -563,6 +565,7 @@
 	},
 	"phoneLogin": {
 		"tabLabel": "Phone",
+		"identifierLabel": "Email or Phone Number",
 		"sendCode": "Send code",
 		"resendCode": "Resend code",
 		"resendIn": "Resend code in {seconds}s",
@@ -570,7 +573,7 @@
 		"codeSentTo": "Code sent to {phone}",
 		"verifyAndSignIn": "Verify & Sign In",
 		"changeNumber": "Change number",
-		"switchToEmail": "Switch to email login",
+		"switchToEmail": "Use email instead",
 		"errors": {
 			"invalidPhone": "Please enter a valid phone number",
 			"rateLimited": "Please wait before requesting another code",

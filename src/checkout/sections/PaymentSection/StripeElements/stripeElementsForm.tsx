@@ -2,12 +2,13 @@ import { type FormEventHandler, useEffect, useState } from "react";
 import { PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
 import { type StripePaymentElementOptions } from "@stripe/stripe-js";
 import { getUrlForTransactionInitialize } from "../utils";
+import { useTransactionProcessMutation } from "@/checkout/graphql";
 import { useAlerts } from "@/checkout/hooks/useAlerts";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { useCheckoutComplete } from "@/checkout/hooks/useCheckoutComplete";
 import { useEvent } from "@/checkout/hooks/useEvent";
 import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
-import { getQueryParams } from "@/checkout/lib/utils/url";
+import { clearQueryParams, getQueryParams } from "@/checkout/lib/utils/url";
 import { usePaymentProcessingScreen } from "@/checkout/sections/PaymentSection/PaymentProcessingScreen";
 import {
 	anyFormsValidating,
@@ -46,6 +47,43 @@ export function CheckoutForm() {
 	const { validationState } = useCheckoutValidationState();
 	const { setIsProcessingPayment } = usePaymentProcessingScreen();
 	const { onCheckoutComplete, completingCheckout } = useCheckoutComplete();
+	const [, transactionProcess] = useTransactionProcessMutation();
+
+	// Reconciles Stripe's confirmed PaymentIntent status back into Saleor's
+	// own transaction state (transactionProcess) — the step the previous
+	// version of this code skipped entirely, which left Saleor unaware
+	// payment succeeded even though Stripe had already processed it. Only a
+	// genuine CHARGE_SUCCESS/AUTHORIZATION_SUCCESS result completes the
+	// checkout; anything else surfaces as an error instead.
+	const handleTransactionProcess = useEvent(async (transactionId: string) => {
+		const result = await transactionProcess({ id: transactionId }).catch((err) => {
+			console.error(err);
+			return null;
+		});
+
+		clearQueryParams("transaction");
+
+		const processResult = result?.data?.transactionProcess;
+
+		if (!processResult || processResult.errors.length > 0) {
+			setIsProcessingPayment(false);
+			showCustomErrors([{ message: payment.unexpectedError }]);
+			return;
+		}
+
+		const eventType = processResult.transactionEvent?.type;
+		const isSuccess = eventType === "CHARGE_SUCCESS" || eventType === "AUTHORIZATION_SUCCESS";
+
+		if (!isSuccess) {
+			setIsProcessingPayment(false);
+			showCustomErrors([
+				{ message: processResult.transactionEvent?.message || payment.paymentProcessingError },
+			]);
+			return;
+		}
+
+		return onCheckoutComplete();
+	});
 
 	const onSubmitInitialize: FormEventHandler<HTMLFormElement> = useEvent(async (e) => {
 		e.preventDefault();
@@ -56,16 +94,30 @@ export function CheckoutForm() {
 	});
 
 	useEffect(() => {
-		const { paymentIntent, paymentIntentClientSecret, processingPayment } = getQueryParams();
+		const { paymentIntent, paymentIntentClientSecret, processingPayment, transaction } = getQueryParams();
 
 		if (!paymentIntent || !paymentIntentClientSecret || !processingPayment) {
 			return;
 		}
 
-		if (!completingCheckout) {
-			void onCheckoutComplete();
+		if (completingCheckout) {
+			return;
 		}
-	}, [completingCheckout, onCheckoutComplete]);
+
+		if (typeof transaction !== "string" || !transaction) {
+			setIsProcessingPayment(false);
+			showCustomErrors([{ message: payment.unexpectedError }]);
+			return;
+		}
+
+		void handleTransactionProcess(transaction);
+	}, [
+		completingCheckout,
+		handleTransactionProcess,
+		payment.unexpectedError,
+		setIsProcessingPayment,
+		showCustomErrors,
+	]);
 
 	useEffect(() => {
 		const validating = anyFormsValidating(validationState);
@@ -123,7 +175,19 @@ export function CheckoutForm() {
 					return;
 				}
 
-				return onCheckoutComplete();
+				// Stripe confirmed the PaymentIntent without a redirect (e.g. no
+				// 3DS challenge needed) — reconcile with Saleor via
+				// transactionProcess before completing, same as the
+				// redirect-return path above does.
+				const { transaction } = getQueryParams();
+
+				if (typeof transaction !== "string" || !transaction) {
+					setIsProcessingPayment(false);
+					showCustomErrors([{ message: payment.unexpectedError }]);
+					return;
+				}
+
+				return handleTransactionProcess(transaction);
 			})
 			.catch((err) => {
 				console.error(err);
@@ -145,7 +209,7 @@ export function CheckoutForm() {
 		checkoutUpdateState.submitInProgress,
 		elements,
 		finishedApiChangesWithNoError,
-		onCheckoutComplete,
+		handleTransactionProcess,
 		payment.paymentProcessingError,
 		payment.unexpectedError,
 		setIsProcessingPayment,

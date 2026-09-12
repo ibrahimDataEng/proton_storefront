@@ -172,7 +172,7 @@ export function RegisterForm({ onConfirmationRequired }: Props) {
 	return (
 		<form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
 			{errors.form && (
-				<p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+				<p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
 					{errors.form}
 				</p>
 			)}

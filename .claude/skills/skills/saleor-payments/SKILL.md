@@ -23,8 +23,8 @@ src/checkout/sections/PaymentSection/StripeElements/ — NEVER TOUCH
 
 ## Payment methods
 
-- **Cash on Delivery** is the only live payment method today.
-- **Stripe** integration is planned, explicitly post-production — do not implement it speculatively; when it does happen, it lands inside the off-limits `StripeElements/` adapter, which is exactly why that directory stays locked down even in advance of the work.
+- **Cash on Delivery** is live in production.
+- **Stripe** backend is live too (gateway id `com.tawasiplus.stripe_payment`, proton-payments' own registration — see CLAUDE.md's Checkout Sub-App section for the exact fix history and field names). `StripeElements/` stays in the permanently-off-limits list below regardless — any further change there still needs explicit session approval, the same as before.
 - Payment method icons shown in the UI (Visa, Mastercard, Apple Pay, Amex, COD) are decorative/trust-signal only — they don't imply those gateways are wired up.
 
 ## Auth architecture — two separate systems, don't assume they're bridged

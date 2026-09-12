@@ -66,7 +66,7 @@ export function AuthFormWrapper({ mode, onModeChange = () => {} }: Props) {
 	return (
 		<div className="flex flex-col gap-6">
 			{/* Tab switcher */}
-			<div role="tablist" className="flex rounded-lg border border-line-default p-1">
+			<div role="tablist" className="flex rounded-xl border border-line-default bg-surface-sunken p-1">
 				{tabs.map(({ key, label }) => (
 					<button
 						key={key}
@@ -78,9 +78,9 @@ export function AuthFormWrapper({ mode, onModeChange = () => {} }: Props) {
 							onModeChange(key);
 						}}
 						className={clsx(
-							"flex-1 rounded-md py-2 text-sm font-medium transition-colors",
+							"flex-1 rounded-lg py-2 text-sm font-medium transition-colors",
 							mode === key
-								? "bg-brand-primary text-content-inverse"
+								? "bg-brand-primary text-content-inverse shadow-sm"
 								: "text-content-secondary hover:text-content-primary",
 						)}
 					>
