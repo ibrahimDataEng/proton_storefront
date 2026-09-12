@@ -56,7 +56,9 @@ export const CheckoutForm = () => {
 	const locale = useLocale();
 
 	const [showOnlyContact, setShowOnlyContact] = useState(!!passwordResetToken);
-	const [currentStep, setCurrentStep] = useState<Step>("contact");
+	const [currentStep, setCurrentStep] = useState<Step>(() =>
+		getQueryParams().processingPayment ? "payment" : "contact",
+	);
 	const [direction, setDirection] = useState<"forward" | "back">("forward");
 	const [checkoutError, setCheckoutError] = useState<string | null>(null);
 
