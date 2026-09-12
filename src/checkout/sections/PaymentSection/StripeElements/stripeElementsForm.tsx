@@ -11,18 +11,11 @@ import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 import { clearQueryParams, getQueryParams } from "@/checkout/lib/utils/url";
 import { usePaymentProcessingScreen } from "@/checkout/sections/PaymentSection/PaymentProcessingScreen";
 import {
-	anyFormsValidating,
-	areAllFormsValid,
-	useCheckoutValidationActions,
-	useCheckoutValidationState,
-} from "@/checkout/state/checkoutValidationStateStore";
-import {
 	areAnyRequestsInProgress,
 	hasFinishedApiChangesWithNoError,
 	useCheckoutUpdateState,
 	useCheckoutUpdateStateActions,
 } from "@/checkout/state/updateStateStore";
-import { useUser } from "@/checkout/hooks/useUser";
 
 const paymentElementOptions: StripePaymentElementOptions = {
 	layout: "tabs",
@@ -37,14 +30,11 @@ export function CheckoutForm() {
 	const stripe = useStripe();
 	const elements = useElements();
 	const { checkout } = useCheckout();
-	const { authenticated } = useUser();
 	const { showCustomErrors } = useAlerts();
 	const checkoutUpdateState = useCheckoutUpdateState();
 	const anyRequestsInProgress = areAnyRequestsInProgress(checkoutUpdateState);
 	const finishedApiChangesWithNoError = hasFinishedApiChangesWithNoError(checkoutUpdateState);
 	const { setSubmitInProgress, setShouldRegisterUser } = useCheckoutUpdateStateActions();
-	const { validateAllForms } = useCheckoutValidationActions();
-	const { validationState } = useCheckoutValidationState();
 	const { setIsProcessingPayment } = usePaymentProcessingScreen();
 	const { onCheckoutComplete, completingCheckout } = useCheckoutComplete();
 	const [, transactionProcess] = useTransactionProcessMutation();
@@ -88,7 +78,6 @@ export function CheckoutForm() {
 	const onSubmitInitialize: FormEventHandler<HTMLFormElement> = useEvent(async (e) => {
 		e.preventDefault();
 		setIsLoading(true);
-		validateAllForms(authenticated);
 		setShouldRegisterUser(true);
 		setSubmitInProgress(true);
 	});
@@ -120,10 +109,7 @@ export function CheckoutForm() {
 	]);
 
 	useEffect(() => {
-		const validating = anyFormsValidating(validationState);
-		const allFormsValid = areAllFormsValid(validationState);
-
-		if (!checkoutUpdateState.submitInProgress || validating || anyRequestsInProgress) {
+		if (!checkoutUpdateState.submitInProgress || anyRequestsInProgress) {
 			return;
 		}
 		if (!stripe || !elements) {
@@ -132,7 +118,7 @@ export function CheckoutForm() {
 
 		setSubmitInProgress(false);
 
-		if (!finishedApiChangesWithNoError || !allFormsValid) {
+		if (!finishedApiChangesWithNoError) {
 			setIsLoading(false);
 			return;
 		}
@@ -216,7 +202,6 @@ export function CheckoutForm() {
 		setSubmitInProgress,
 		showCustomErrors,
 		stripe,
-		validationState,
 	]);
 
 	return (
