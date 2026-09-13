@@ -3,6 +3,7 @@ import { useAlerts } from "@/checkout/hooks/useAlerts";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { useCheckoutComplete } from "@/checkout/hooks/useCheckoutComplete";
 import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
+import { usePaymentProcessingScreen } from "@/checkout/sections/PaymentSection/PaymentProcessingScreen";
 import { type PaymentStatus } from "@/checkout/sections/PaymentSection/types";
 import { usePaymentGatewaysInitialize } from "@/checkout/sections/PaymentSection/usePaymentGatewaysInitialize";
 import { usePaymentStatus } from "@/checkout/sections/PaymentSection/utils";
@@ -18,6 +19,14 @@ export const usePayments = () => {
 	const { onCheckoutComplete, completingCheckout } = useCheckoutComplete();
 	const { showCustomErrors } = useAlerts();
 	const { payment } = useCheckoutMessages();
+	// This effect can be the ONLY thing that ever runs onCheckoutComplete
+	// after a redirect-return lands mid-processing (see stripeElementsForm.tsx
+	// and useAdyenDropin.ts for the other two callers of this same context) —
+	// on failure it must dismiss the "Almost done..." overlay itself, exactly
+	// like those two already do on their own error paths, or the customer is
+	// left staring at that overlay forever with no visible way to act on the
+	// error toast underneath it.
+	const { setIsProcessingPayment } = usePaymentProcessingScreen();
 
 	// Stops this effect from retrying forever once checkoutComplete has
 	// rejected the checkout: paymentStatus is derived only from
@@ -43,6 +52,7 @@ export const usePayments = () => {
 			}
 
 			setCompletionFailed(true);
+			setIsProcessingPayment(false);
 
 			if (result.apiErrors?.length) {
 				result.apiErrors.forEach((error) => showCustomErrors([{ message: error.message }]));
@@ -50,7 +60,15 @@ export const usePayments = () => {
 				showCustomErrors([{ message: payment.unexpectedError }]);
 			}
 		});
-	}, [completingCheckout, completionFailed, onCheckoutComplete, paymentStatus, showCustomErrors, payment]);
+	}, [
+		completingCheckout,
+		completionFailed,
+		onCheckoutComplete,
+		paymentStatus,
+		setIsProcessingPayment,
+		showCustomErrors,
+		payment,
+	]);
 
 	return { fetching, availablePaymentGateways };
 };
