@@ -6,6 +6,7 @@ import { stripeGatewayId } from "@/checkout/sections/PaymentSection/StripeElemen
 import { PaymentSectionSkeleton } from "@/checkout/sections/PaymentSection/PaymentSectionSkeleton";
 import { usePayments } from "@/checkout/sections/PaymentSection/usePayments";
 import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
+import { getQueryParams } from "@/checkout/lib/utils/url";
 import { useCheckoutUpdateState } from "@/checkout/state/updateStateStore";
 
 /**
@@ -55,6 +56,24 @@ export const PaymentMethods = () => {
 
 	useEffect(() => {
 		if (selectedGatewayId && gatewaysWithDefinedComponent.some(({ id }) => id === selectedGatewayId)) {
+			return;
+		}
+
+		// Returning from a payment redirect overrides the "first available"
+		// default — Stripe's own return_url carries payment_intent/
+		// payment_intent_client_secret (Adyen's equivalent uses
+		// redirectResult/resultCode instead, and COD never redirects at all —
+		// see src/checkout/lib/utils/url.ts's queryParamsMap), so this pair's
+		// mere presence unambiguously means Stripe's reconciliation needs to
+		// run, regardless of which gateway would otherwise sort first. Without
+		// this, a fresh page load after Stripe's redirect silently re-defaults
+		// to COD (or whatever sorts first) and StripeComponent — the only code
+		// that reads these params and calls transactionProcess — never mounts,
+		// leaving the "Almost done..." overlay stuck forever even though
+		// Stripe already confirmed the payment.
+		const { paymentIntent } = getQueryParams();
+		if (paymentIntent && gatewaysWithDefinedComponent.some(({ id }) => id === stripeGatewayId)) {
+			setSelectedGatewayId(stripeGatewayId);
 			return;
 		}
 
