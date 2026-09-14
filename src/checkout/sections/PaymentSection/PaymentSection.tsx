@@ -5,6 +5,7 @@ import { Button } from "@/checkout/components/Button";
 import { Divider } from "@/checkout/components/Divider";
 import { Title } from "@/checkout/components/Title";
 import {
+	createReadinessDeadline,
 	getReadinessMessage,
 	getStepForProblems,
 	useCheckoutReadiness,
@@ -20,9 +21,11 @@ type ReadinessGate =
 
 interface PaymentSectionProps {
 	onNavigateBack?: (step: "contact" | "shipping") => void;
+	// Deadline of the Continue click that opened this step (shared budget).
+	readinessDeadline?: number;
 }
 
-export const PaymentSection = ({ onNavigateBack }: PaymentSectionProps) => {
+export const PaymentSection = ({ onNavigateBack, readinessDeadline }: PaymentSectionProps) => {
 	const { payment, readiness, wizard } = useCheckoutMessages();
 	const { verify } = useCheckoutReadiness();
 
@@ -41,39 +44,50 @@ export const PaymentSection = ({ onNavigateBack }: PaymentSectionProps) => {
 		isRedirectReturn ? { status: "ready" } : { status: "checking" },
 	);
 
-	const checkReadiness = useCallback(async () => {
-		setGate({ status: "checking" });
-
-		// No settle window: the Shipping forms are unmounted by now, so only
-		// saves already in flight can still land — verify() waits for those.
-		const result = await verify("payment");
-
-		switch (result.status) {
-			case "cancelled":
-				return;
-			case "ready":
+	const checkReadiness = useCallback(
+		async (deadline: number) => {
+			// The Continue click that got here already spent the whole budget: its
+			// step check either just confirmed the checkout or already failed open
+			// (and recorded that), so a second wait would only double the delay.
+			if (Date.now() >= deadline) {
 				setGate({ status: "ready" });
 				return;
-			case "notReady":
-				setGate({
-					status: "blocked",
-					message: getReadinessMessage(result, readiness),
-					backTo: getStepForProblems(result.problems),
-				});
-				return;
-			case "checkoutGone":
-				setGate({ status: "error", message: getReadinessMessage(result, readiness) });
-				return;
-			default:
-				// "error": the check itself couldn't complete. Fail open, exactly as
-				// goNext does — a broken check must not block every payment.
-				setGate({ status: "ready" });
-		}
-	}, [readiness, verify]);
+			}
+
+			setGate({ status: "checking" });
+
+			// No settle window: the Shipping forms are unmounted by now, so only
+			// saves already in flight can still land — verify() waits for those.
+			const result = await verify("payment", { deadline });
+
+			switch (result.status) {
+				case "cancelled":
+					return;
+				case "ready":
+					setGate({ status: "ready" });
+					return;
+				case "notReady":
+					setGate({
+						status: "blocked",
+						message: getReadinessMessage(result, readiness),
+						backTo: getStepForProblems(result.problems),
+					});
+					return;
+				case "checkoutGone":
+					setGate({ status: "error", message: getReadinessMessage(result, readiness) });
+					return;
+				default:
+					// "error": the check itself couldn't complete. Fail open, exactly as
+					// goNext does — a broken check must not block every payment.
+					setGate({ status: "ready" });
+			}
+		},
+		[readiness, verify],
+	);
 
 	useEffect(() => {
 		if (!isRedirectReturn) {
-			void checkReadiness();
+			void checkReadiness(readinessDeadline ?? createReadinessDeadline());
 		}
 		// Once per mount on purpose: after the gate opens it must never re-close
 		// while a payment is being entered or confirmed.
@@ -111,7 +125,7 @@ export const PaymentSection = ({ onNavigateBack }: PaymentSectionProps) => {
 								<Button
 									variant="secondary"
 									label={readiness.tryAgain}
-									onClick={() => void checkReadiness()}
+									onClick={() => void checkReadiness(createReadinessDeadline())}
 								/>
 							)}
 						</div>

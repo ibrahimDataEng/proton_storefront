@@ -21,6 +21,7 @@ import { CheckoutErrorBanner } from "@/checkout/components/CheckoutErrorBanner";
 import { Button } from "@/checkout/components/Button";
 import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 import {
+	createReadinessDeadline,
 	getReadinessMessage,
 	reportReadinessFailOpen,
 	useCheckoutReadiness,
@@ -72,6 +73,9 @@ export const CheckoutForm = () => {
 	);
 	const [direction, setDirection] = useState<"forward" | "back">("forward");
 	const [checkoutError, setCheckoutError] = useState<string | null>(null);
+	// Deadline of the Continue click that opened the Payment step, so the
+	// Payment guard spends what's left of that click's budget instead of its own.
+	const [paymentReadinessDeadline, setPaymentReadinessDeadline] = useState<number | undefined>();
 
 	useEffect(() => {
 		if (!checkout) return;
@@ -139,14 +143,33 @@ export const CheckoutForm = () => {
 			return null;
 		}
 
+		// One budget for everything this click waits on: commits, the step check
+		// and (when advancing to Payment) the Payment guard.
+		const deadline = createReadinessDeadline();
+
 		setCheckoutError(null);
 		setVerifying(true);
 		lastErrorToast.current = null;
 
 		// Commit-on-advance (front_store-bwh): every form on this step saves its
 		// current values now, and the wizard waits for those saves — autosave's
-		// 2s debounce is no longer relied on for correctness.
-		const committed = await commitMountedStepForms();
+		// 2s debounce is no longer relied on for correctness. Saves that haven't
+		// answered by the deadline aren't confirmed, so they block (below)
+		// rather than leaving the customer on a spinner.
+		let deadlineTimer: ReturnType<typeof setTimeout> | undefined;
+		const committed = await Promise.race([
+			commitMountedStepForms(),
+			new Promise<"timeout">((resolve) => {
+				deadlineTimer = setTimeout(() => resolve("timeout"), Math.max(0, deadline - Date.now()));
+			}),
+		]).finally(() => clearTimeout(deadlineTimer));
+
+		if (committed === "timeout") {
+			setVerifying(false);
+			setCheckoutError(readiness.verifyFailed);
+			window.scrollTo({ top: 0, behavior: "smooth" });
+			return null;
+		}
 
 		// Then the Phase 1 backstop: re-read the checkout from the network and
 		// check the fields the next step depends on.
@@ -155,6 +178,7 @@ export const CheckoutForm = () => {
 			followOnSavesMounted: next === "payment",
 			// Recorded below, only if this advance actually fails open.
 			reportFailOpen: false,
+			deadline,
 		});
 		setVerifying(false);
 
@@ -190,6 +214,9 @@ export const CheckoutForm = () => {
 			});
 		}
 
+		if (next === "payment") {
+			setPaymentReadinessDeadline(deadline);
+		}
 		setDirection("forward");
 		setCurrentStep(next);
 		return { verifiedCheckout: result.status === "ready" ? result.checkout : undefined };
@@ -339,7 +366,7 @@ export const CheckoutForm = () => {
 		stepContent = (
 			<>
 				<Suspense fallback={<PaymentSectionSkeleton />}>
-					<PaymentSection onNavigateBack={goBack} />
+					<PaymentSection onNavigateBack={goBack} readinessDeadline={paymentReadinessDeadline} />
 				</Suspense>
 				<div className="mt-4">
 					<Button
