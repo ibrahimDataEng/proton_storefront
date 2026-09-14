@@ -20,6 +20,7 @@ import { CheckoutStepper } from "@/checkout/components/CheckoutStepper";
 import { CheckoutErrorBanner } from "@/checkout/components/CheckoutErrorBanner";
 import { Button } from "@/checkout/components/Button";
 import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
+import { getReadinessMessage, useCheckoutReadiness } from "@/checkout/hooks/useCheckoutReadiness";
 import {
 	trackBeginCheckout,
 	trackAddShippingInfo,
@@ -52,8 +53,10 @@ export const CheckoutForm = () => {
 	const { user } = useUser();
 	const { checkout } = useCheckout();
 	const { passwordResetToken } = getQueryParams();
-	const { wizard } = useCheckoutMessages();
+	const { wizard, readiness } = useCheckoutMessages();
 	const locale = useLocale();
+	const { verify } = useCheckoutReadiness();
+	const [verifying, setVerifying] = useState(false);
 
 	const [showOnlyContact, setShowOnlyContact] = useState(!!passwordResetToken);
 	const [currentStep, setCurrentStep] = useState<Step>(() =>
@@ -93,7 +96,13 @@ export const CheckoutForm = () => {
 		setCheckoutError(null);
 	}, [currentStep]);
 
-	const goNext = (next: Step) => {
+	// Resolves to the server-verified checkout on success, or null when the step
+	// must not advance (the reason is already shown in the error banner).
+	const goNext = async (next: Exclude<Step, "contact">) => {
+		if (verifying) {
+			return null;
+		}
+
 		// When advancing from contact step as a guest, validate email via regex
 		// (TextInput renders type="text" so native checkValidity() won't catch format errors)
 		if (next === "shipping" && !user) {
@@ -107,7 +116,7 @@ export const CheckoutForm = () => {
 						locale === "ar" ? "يرجى إدخال بريد إلكتروني صحيح" : "Please enter a valid email address",
 					);
 					window.scrollTo({ top: 0, behavior: "smooth" });
-					return;
+					return null;
 				}
 			}
 		}
@@ -115,27 +124,71 @@ export const CheckoutForm = () => {
 		const form = document.querySelector("form");
 		if (form && !form.checkValidity()) {
 			form.reportValidity();
-			return;
+			return null;
 		}
+
+		// What the form shows is not proof Saleor saved it (saves are debounced
+		// and canceled on step unmount — front_store-9ze), so re-read the
+		// checkout from the network and refuse to advance without the fields
+		// the next step depends on.
+		setCheckoutError(null);
+		setVerifying(true);
+		const result = await verify(next === "shipping" ? "contact" : "payment", {
+			settleMs: 2500,
+			followOnSavesMounted: next === "payment",
+		});
+		setVerifying(false);
+
+		if (result.status === "cancelled" || result.status === "checkoutGone") {
+			return null;
+		}
+
+		if (result.status !== "ready") {
+			setCheckoutError(getReadinessMessage(result, readiness));
+			window.scrollTo({ top: 0, behavior: "smooth" });
+			return null;
+		}
+
 		setDirection("forward");
 		setCurrentStep(next);
+		return result.checkout;
 	};
 
 	const goBack = (prev: Step) => {
+		if (verifying) {
+			return;
+		}
 		setDirection("back");
 		setCurrentStep(prev);
 	};
 
-	const handleContinueToPayment = () => {
+	const handleContinueToPayment = async () => {
+		const verifiedCheckout = await goNext("payment");
+		if (!verifiedCheckout) {
+			return;
+		}
+
+		// Lines can't change on the Shipping step, so the cached checkout's items
+		// are accurate; value and shipping tier come from the verified read,
+		// which includes the delivery method that may have only just saved.
 		const items = getCheckoutItems(checkout);
-		const value = checkout?.totalPrice?.gross?.amount ?? 0;
-		const selectedShippingMethod = checkout?.shippingMethods?.find(
-			(method) => method.id === checkout?.deliveryMethod?.id,
+		const value = verifiedCheckout.totalPrice?.gross?.amount ?? 0;
+		const selectedShippingMethod = verifiedCheckout.shippingMethods?.find(
+			(method) => method.id === verifiedCheckout.deliveryMethod?.id,
 		);
 		trackAddShippingInfo({ value, items, shipping_tier: selectedShippingMethod?.name });
 		trackAddPaymentInfo({ value, items });
-		goNext("payment");
 	};
+
+	const checkingLabel = (
+		<span className="flex items-center gap-2" aria-live="polite">
+			<svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+				<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth={4} />
+				<path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
+			</svg>
+			{readiness.checking}
+		</span>
+	);
 
 	let stepContent: React.ReactNode;
 
@@ -148,21 +201,27 @@ export const CheckoutForm = () => {
 				{!showOnlyContact && (
 					<div className="mt-6">
 						<Button
-							onClick={() => goNext("shipping")}
+							onClick={() => void goNext("shipping")}
 							variant="primary"
+							disabled={verifying}
+							aria-busy={verifying}
 							label={
-								<span className="flex items-center gap-2">
-									{wizard.continueToShipping}
-									<svg
-										className="h-4 w-4"
-										fill="none"
-										viewBox="0 0 24 24"
-										stroke="currentColor"
-										strokeWidth={2}
-									>
-										<path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-									</svg>
-								</span>
+								verifying ? (
+									checkingLabel
+								) : (
+									<span className="flex items-center gap-2">
+										{wizard.continueToShipping}
+										<svg
+											className="h-4 w-4"
+											fill="none"
+											viewBox="0 0 24 24"
+											stroke="currentColor"
+											strokeWidth={2}
+										>
+											<path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+										</svg>
+									</span>
+								)
 							}
 							className="w-full justify-center"
 						/>
@@ -189,6 +248,7 @@ export const CheckoutForm = () => {
 					<Button
 						onClick={() => goBack("contact")}
 						variant="secondary"
+						disabled={verifying}
 						label={
 							<span className="flex items-center gap-2">
 								<svg
@@ -206,21 +266,27 @@ export const CheckoutForm = () => {
 						className="flex-1 justify-center"
 					/>
 					<Button
-						onClick={handleContinueToPayment}
+						onClick={() => void handleContinueToPayment()}
 						variant="primary"
+						disabled={verifying}
+						aria-busy={verifying}
 						label={
-							<span className="flex items-center gap-2">
-								{wizard.continueToPayment}
-								<svg
-									className="h-4 w-4"
-									fill="none"
-									viewBox="0 0 24 24"
-									stroke="currentColor"
-									strokeWidth={2}
-								>
-									<path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-								</svg>
-							</span>
+							verifying ? (
+								checkingLabel
+							) : (
+								<span className="flex items-center gap-2">
+									{wizard.continueToPayment}
+									<svg
+										className="h-4 w-4"
+										fill="none"
+										viewBox="0 0 24 24"
+										stroke="currentColor"
+										strokeWidth={2}
+									>
+										<path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+									</svg>
+								</span>
+							)
 						}
 						className="flex-1 justify-center"
 					/>
@@ -231,7 +297,7 @@ export const CheckoutForm = () => {
 		stepContent = (
 			<>
 				<Suspense fallback={<PaymentSectionSkeleton />}>
-					<PaymentSection />
+					<PaymentSection onNavigateBack={goBack} />
 				</Suspense>
 				<div className="mt-4">
 					<Button

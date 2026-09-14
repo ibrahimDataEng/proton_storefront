@@ -150,6 +150,24 @@ const checkoutMessages = {
 			continueToPayment: "Continue to Review & Pay",
 			back: "Back",
 			backToShipping: "Back to Shipping",
+			backToContact: "Back to Contact",
+		},
+		// Server-verified step gating (see useCheckoutReadiness.ts) — each
+		// message names exactly one thing Saleor's own checkout record is missing.
+		readiness: {
+			checking: "Checking your details…",
+			email: "Please enter your email address.",
+			// The usual cause today is the emirate select showing a first option it
+			// never actually set (Phase 2 fixes that), so this names it explicitly.
+			shippingAddress:
+				"Please complete your shipping address, including choosing your emirate from the list, even if one already appears selected.",
+			streetAddress: "Please enter your street address.",
+			emirate: "Please select your emirate from the list, even if one already appears selected.",
+			billingAddress: "Please complete your billing address.",
+			deliveryMethod: "Please choose a delivery method.",
+			verifyFailed: "We couldn't verify your details. Please check your connection and try again.",
+			paymentNotReadyTitle: "A few details are missing before you can pay",
+			tryAgain: "Try again",
 		},
 		orderInfo: {
 			contactDetails: "Contact details",
@@ -400,6 +418,20 @@ const checkoutMessages = {
 			continueToPayment: "المتابعة للمراجعة والدفع",
 			back: "رجوع",
 			backToShipping: "العودة للشحن",
+			backToContact: "العودة للتواصل",
+		},
+		readiness: {
+			checking: "جارٍ التحقق من بياناتك…",
+			email: "يرجى إدخال بريدك الإلكتروني.",
+			shippingAddress:
+				"يرجى استكمال عنوان الشحن، بما في ذلك اختيار الإمارة من القائمة، حتى وإن بدت إحداها محددة مسبقًا.",
+			streetAddress: "يرجى إدخال عنوان الشارع.",
+			emirate: "يرجى اختيار الإمارة من القائمة، حتى وإن بدت إحداها محددة مسبقًا.",
+			billingAddress: "يرجى استكمال عنوان الفواتير.",
+			deliveryMethod: "يرجى اختيار طريقة التوصيل.",
+			verifyFailed: "تعذّر التحقق من بياناتك. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.",
+			paymentNotReadyTitle: "بعض البيانات ناقصة قبل إتمام الدفع",
+			tryAgain: "إعادة المحاولة",
 		},
 		orderInfo: {
 			contactDetails: "بيانات التواصل",
