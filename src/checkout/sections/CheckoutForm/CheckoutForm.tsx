@@ -20,7 +20,11 @@ import { CheckoutStepper } from "@/checkout/components/CheckoutStepper";
 import { CheckoutErrorBanner } from "@/checkout/components/CheckoutErrorBanner";
 import { Button } from "@/checkout/components/Button";
 import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
-import { getReadinessMessage, useCheckoutReadiness } from "@/checkout/hooks/useCheckoutReadiness";
+import {
+	getReadinessMessage,
+	reportReadinessFailOpen,
+	useCheckoutReadiness,
+} from "@/checkout/hooks/useCheckoutReadiness";
 import { commitMountedStepForms } from "@/checkout/hooks/useStepCommit";
 import {
 	trackBeginCheckout,
@@ -56,7 +60,7 @@ export const CheckoutForm = () => {
 	const { passwordResetToken } = getQueryParams();
 	const { wizard, readiness } = useCheckoutMessages();
 	const locale = useLocale();
-	const { verify } = useCheckoutReadiness();
+	const { verify, checkoutId } = useCheckoutReadiness();
 	const [verifying, setVerifying] = useState(false);
 	// Most recent error toast (e.g. a save's API error), so a failed commit
 	// keeps that specific message instead of a generic one.
@@ -146,8 +150,11 @@ export const CheckoutForm = () => {
 
 		// Then the Phase 1 backstop: re-read the checkout from the network and
 		// check the fields the next step depends on.
-		const result = await verify(next === "shipping" ? "contact" : "payment", {
+		const stage = next === "shipping" ? "contact" : "payment";
+		const result = await verify(stage, {
 			followOnSavesMounted: next === "payment",
+			// Recorded below, only if this advance actually fails open.
+			reportFailOpen: false,
 		});
 		setVerifying(false);
 
@@ -168,6 +175,19 @@ export const CheckoutForm = () => {
 			setCheckoutError(message);
 			window.scrollTo({ top: 0, behavior: "smooth" });
 			return null;
+		}
+
+		if (result.status === "error") {
+			const { reason, message, attempts, elapsedMs } = result;
+			reportReadinessFailOpen({
+				reason,
+				message,
+				attempts,
+				elapsedMs,
+				stage,
+				checkoutId,
+				source: "step-advance",
+			});
 		}
 
 		setDirection("forward");
