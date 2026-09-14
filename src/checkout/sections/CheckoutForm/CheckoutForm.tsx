@@ -1,4 +1,4 @@
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { toast } from "react-toastify";
 import { useLocale } from "next-intl";
@@ -21,6 +21,7 @@ import { CheckoutErrorBanner } from "@/checkout/components/CheckoutErrorBanner";
 import { Button } from "@/checkout/components/Button";
 import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 import { getReadinessMessage, useCheckoutReadiness } from "@/checkout/hooks/useCheckoutReadiness";
+import { commitMountedStepForms } from "@/checkout/hooks/useStepCommit";
 import {
 	trackBeginCheckout,
 	trackAddShippingInfo,
@@ -57,6 +58,9 @@ export const CheckoutForm = () => {
 	const locale = useLocale();
 	const { verify } = useCheckoutReadiness();
 	const [verifying, setVerifying] = useState(false);
+	// Most recent error toast (e.g. a save's API error), so a failed commit
+	// keeps that specific message instead of a generic one.
+	const lastErrorToast = useRef<string | null>(null);
 
 	const [showOnlyContact, setShowOnlyContact] = useState(!!passwordResetToken);
 	const [currentStep, setCurrentStep] = useState<Step>(() =>
@@ -86,7 +90,10 @@ export const CheckoutForm = () => {
 					const el = content as { props?: { children?: unknown } };
 					if (el.props?.children) message = String(el.props.children);
 				}
-				if (message) setCheckoutError(message);
+				if (message) {
+					lastErrorToast.current = message;
+					setCheckoutError(message);
+				}
 			}
 		});
 		return unsubscribe;
@@ -96,8 +103,9 @@ export const CheckoutForm = () => {
 		setCheckoutError(null);
 	}, [currentStep]);
 
-	// Resolves to the server-verified checkout on success, or null when the step
-	// must not advance (the reason is already shown in the error banner).
+	// Resolves to { verifiedCheckout } when the wizard advanced (undefined when
+	// the check failed open), or null when the step must not advance (the
+	// reason is already shown in the error banner).
 	const goNext = async (next: Exclude<Step, "contact">) => {
 		if (verifying) {
 			return null;
@@ -127,31 +135,44 @@ export const CheckoutForm = () => {
 			return null;
 		}
 
-		// What the form shows is not proof Saleor saved it (saves are debounced
-		// and canceled on step unmount — front_store-9ze), so re-read the
-		// checkout from the network and refuse to advance without the fields
-		// the next step depends on.
 		setCheckoutError(null);
 		setVerifying(true);
+		lastErrorToast.current = null;
+
+		// Commit-on-advance (front_store-bwh): every form on this step saves its
+		// current values now, and the wizard waits for those saves — autosave's
+		// 2s debounce is no longer relied on for correctness.
+		const committed = await commitMountedStepForms();
+
+		// Then the Phase 1 backstop: re-read the checkout from the network and
+		// check the fields the next step depends on.
 		const result = await verify(next === "shipping" ? "contact" : "payment", {
-			settleMs: 2500,
 			followOnSavesMounted: next === "payment",
 		});
 		setVerifying(false);
 
-		if (result.status === "cancelled" || result.status === "checkoutGone") {
+		if (result.status === "cancelled") {
 			return null;
 		}
 
-		if (result.status !== "ready") {
-			setCheckoutError(getReadinessMessage(result, readiness));
+		// Blocks on a failed save or a definitive answer from Saleor. If only the
+		// check itself couldn't complete ("error") the wizard fails open — a
+		// broken check must never be able to take checkout down.
+		if (!committed || result.status === "notReady" || result.status === "checkoutGone") {
+			const message =
+				result.status === "notReady" || result.status === "checkoutGone"
+					? getReadinessMessage(result, readiness)
+					: // A save failed although Saleor still holds complete (older) data:
+						// keep an API error already shown, otherwise point at the fields.
+						lastErrorToast.current ?? readiness.fixHighlightedFields;
+			setCheckoutError(message);
 			window.scrollTo({ top: 0, behavior: "smooth" });
 			return null;
 		}
 
 		setDirection("forward");
 		setCurrentStep(next);
-		return result.checkout;
+		return { verifiedCheckout: result.status === "ready" ? result.checkout : undefined };
 	};
 
 	const goBack = (prev: Step) => {
@@ -163,18 +184,19 @@ export const CheckoutForm = () => {
 	};
 
 	const handleContinueToPayment = async () => {
-		const verifiedCheckout = await goNext("payment");
-		if (!verifiedCheckout) {
+		const advanced = await goNext("payment");
+		if (!advanced) {
 			return;
 		}
 
 		// Lines can't change on the Shipping step, so the cached checkout's items
-		// are accurate; value and shipping tier come from the verified read,
-		// which includes the delivery method that may have only just saved.
+		// are accurate; value and shipping tier prefer the verified read, which
+		// includes a delivery method that may have only just saved.
+		const source = advanced.verifiedCheckout ?? checkout;
 		const items = getCheckoutItems(checkout);
-		const value = verifiedCheckout.totalPrice?.gross?.amount ?? 0;
-		const selectedShippingMethod = verifiedCheckout.shippingMethods?.find(
-			(method) => method.id === verifiedCheckout.deliveryMethod?.id,
+		const value = source?.totalPrice?.gross?.amount ?? 0;
+		const selectedShippingMethod = source?.shippingMethods?.find(
+			(method) => method.id === source?.deliveryMethod?.id,
 		);
 		trackAddShippingInfo({ value, items, shipping_tier: selectedShippingMethod?.name });
 		trackAddPaymentInfo({ value, items });

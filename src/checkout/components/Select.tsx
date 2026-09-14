@@ -1,4 +1,4 @@
-import { type SelectHTMLAttributes, type ChangeEvent, type ReactNode, useState } from "react";
+import { type SelectHTMLAttributes, type ChangeEvent, type FocusEvent, type ReactNode } from "react";
 import { useField } from "@/checkout/hooks/useForm/useField";
 
 export interface Option<TData extends string = string> {
@@ -22,22 +22,33 @@ export const Select = <TName extends string, TData extends string>({
 	name,
 	placeholder,
 	onChange,
+	onBlur,
 	options,
 	label,
 	...rest
 }: SelectProps<TName, TData>) => {
 	const { error, handleBlur, ...fieldProps } = useField(name);
 
-	const [showPlaceholder, setShowPlaceholder] = useState(!!placeholder);
+	// Derived from the value, never remembered: whenever the value is empty an
+	// empty option must exist and be selected. Without one, the browser falls
+	// back to displaying the FIRST real option (e.g. "Abu Dhabi") while the
+	// form value stays "" — a selection the customer sees but never made, and
+	// can't "re-select" because choosing the displayed option fires no change.
+	const hasValue = fieldProps.value !== undefined && fieldProps.value !== null && fieldProps.value !== "";
 
+	// Handlers passed in (e.g. AddressForm's autosave handlers) replace the
+	// form-context ones, same as TextInput — the old `onBlur={handleBlur}` placed
+	// after `{...rest}` silently dropped a passed onBlur.
 	const handleChange = (event: ChangeEvent<HTMLSelectElement>) => {
 		if (!event.currentTarget.value) {
 			return;
 		}
 
-		setShowPlaceholder(false);
-		onChange?.(event);
-		fieldProps.onChange(event);
+		(onChange ?? fieldProps.onChange)(event);
+	};
+
+	const handleSelectBlur = (event: FocusEvent<HTMLSelectElement>) => {
+		(onBlur ?? handleBlur)(event);
 	};
 
 	return (
@@ -47,13 +58,14 @@ export const Select = <TName extends string, TData extends string>({
 				<select
 					{...fieldProps}
 					{...rest}
-					onBlur={handleBlur}
+					value={hasValue ? (fieldProps.value as string) : ""}
+					onBlur={handleSelectBlur}
 					onChange={handleChange}
 					className="mt-1 block w-full rounded-md border-neutral-200 shadow-sm focus:border-[#2d6a4f] focus:ring focus:ring-[#2d6a4f] focus:ring-opacity-30"
 				>
-					{showPlaceholder && (
+					{!hasValue && (
 						<option disabled value="">
-							{placeholder}
+							{placeholder ?? label ?? ""}
 						</option>
 					)}
 					{options.map(({ label, value, disabled = false }) => (

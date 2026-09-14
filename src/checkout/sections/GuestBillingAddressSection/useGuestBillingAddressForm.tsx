@@ -15,6 +15,7 @@ import {
 	useAutoSaveAddressForm,
 } from "@/checkout/hooks/useAutoSaveAddressForm";
 import { useSetCheckoutFormValidationState } from "@/checkout/hooks/useSetCheckoutFormValidationState";
+import { STEP_COMMIT_ORDER } from "@/checkout/hooks/useStepCommit";
 import { useCheckoutUpdateStateActions } from "@/checkout/state/updateStateStore";
 
 interface GuestBillingAddressFormProps {
@@ -70,6 +71,10 @@ export const useGuestBillingAddressForm = ({ skipValidation }: GuestBillingAddre
 		initialValues: getAddressFormDataFromAddress(billingAddress),
 		validationSchema,
 		scope: "checkoutBillingUpdate",
+		savedAddress: billingAddress,
+		commitOrder: STEP_COMMIT_ORDER.billingAddress,
+		// Hidden behind "same as shipping" -> useBillingSameAsShippingForm commits billing instead.
+		commitEnabled: !skipValidation,
 	});
 
 	useCheckoutFormValidationTrigger({

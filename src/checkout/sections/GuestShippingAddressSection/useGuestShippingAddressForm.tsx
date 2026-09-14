@@ -14,6 +14,7 @@ import {
 	useAutoSaveAddressForm,
 } from "@/checkout/hooks/useAutoSaveAddressForm";
 import { useSetCheckoutFormValidationState } from "@/checkout/hooks/useSetCheckoutFormValidationState";
+import { STEP_COMMIT_ORDER } from "@/checkout/hooks/useStepCommit";
 
 export const useGuestShippingAddressForm = () => {
 	const {
@@ -49,6 +50,8 @@ export const useGuestShippingAddressForm = () => {
 		onSubmit,
 		initialValues: getAddressFormDataFromAddress(shippingAddress),
 		scope: "checkoutShippingUpdate",
+		savedAddress: shippingAddress,
+		commitOrder: STEP_COMMIT_ORDER.shippingAddress,
 	});
 
 	useCheckoutFormValidationTrigger({

@@ -61,8 +61,13 @@ export const PaymentSection = ({ onNavigateBack }: PaymentSectionProps) => {
 					backTo: getStepForProblems(result.problems),
 				});
 				return;
+			case "checkoutGone":
+				setGate({ status: "error", message: getReadinessMessage(result, readiness) });
+				return;
 			default:
-				setGate({ status: "error", message: readiness.verifyFailed });
+				// "error": the check itself couldn't complete. Fail open, exactly as
+				// goNext does — a broken check must not block every payment.
+				setGate({ status: "ready" });
 		}
 	}, [readiness, verify]);
 
