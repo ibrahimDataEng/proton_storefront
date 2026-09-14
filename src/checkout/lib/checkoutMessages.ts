@@ -56,6 +56,7 @@ const checkoutMessages = {
 			postal: "Postal code",
 			postTown: "Post town",
 			prefecture: "Prefecture",
+			emirate: "Emirate",
 		},
 		delivery: {
 			title: "Delivery methods",
@@ -166,6 +167,9 @@ const checkoutMessages = {
 			billingAddress: "Please complete your billing address.",
 			deliveryMethod: "Please choose a delivery method.",
 			verifyFailed: "We couldn't verify your details. Please check your connection and try again.",
+			checkoutGone:
+				"This checkout is no longer available — it may already have been completed. Please return to your cart.",
+			fixHighlightedFields: "Please check the highlighted fields and try again.",
 			paymentNotReadyTitle: "A few details are missing before you can pay",
 			tryAgain: "Try again",
 		},
@@ -323,6 +327,7 @@ const checkoutMessages = {
 			postal: "الرمز البريدي",
 			postTown: "المدينة البريدية",
 			prefecture: "المحافظة",
+			emirate: "الإمارة",
 		},
 		delivery: {
 			title: "طرق التوصيل",
@@ -430,6 +435,8 @@ const checkoutMessages = {
 			billingAddress: "يرجى استكمال عنوان الفواتير.",
 			deliveryMethod: "يرجى اختيار طريقة التوصيل.",
 			verifyFailed: "تعذّر التحقق من بياناتك. يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.",
+			checkoutGone: "عملية الدفع هذه لم تعد متاحة، وربما تم إتمامها بالفعل. يرجى العودة إلى سلة التسوق.",
+			fixHighlightedFields: "يرجى مراجعة الحقول المظللة والمحاولة مرة أخرى.",
 			paymentNotReadyTitle: "بعض البيانات ناقصة قبل إتمام الدفع",
 			tryAgain: "إعادة المحاولة",
 		},

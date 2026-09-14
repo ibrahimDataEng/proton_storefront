@@ -18,15 +18,39 @@ export type LocalizedAddressFieldLabel =
 	| "zip"
 	| "postal"
 	| "postTown"
-	| "prefecture";
+	| "prefecture"
+	| "emirate";
+
+const ARABIC_SCRIPT = /[؀-ۿ]/;
 
 export const useAddressFormUtils = (countryCode: CountryCode = defaultCountry) => {
-	const { address } = useCheckoutMessages();
+	const { address, locale } = useCheckoutMessages();
 	const [{ data }] = useAddressValidationRulesQuery({
 		variables: { countryCode },
 	});
 
 	const validationRules = data?.addressValidationRules as ValidationRulesFragment;
+
+	// Saleor returns each choice once per label language with the same `raw`
+	// value (e.g. AE: "Abu Dhabi" and "أبو ظبي" both -> "أبو ظبي"), which showed
+	// every emirate twice. Keep one option per value, labelled in the page's
+	// language when both are present.
+	const countryAreaChoices = useMemo(() => {
+		const byValue = new Map<string, { raw?: string | null; verbose?: string | null }>();
+
+		for (const choice of validationRules?.countryAreaChoices ?? []) {
+			const key = choice.raw ?? choice.verbose ?? "";
+			const existing = byValue.get(key);
+			const isArabicLabel = ARABIC_SCRIPT.test(choice.verbose ?? "");
+			const prefersThisLabel = locale === "ar" ? isArabicLabel : !isArabicLabel;
+
+			if (!existing || (prefersThisLabel && ARABIC_SCRIPT.test(existing.verbose ?? "") !== isArabicLabel)) {
+				byValue.set(key, choice);
+			}
+		}
+
+		return [...byValue.values()];
+	}, [locale, validationRules?.countryAreaChoices]);
 
 	const { countryAreaType, postalCodeType, cityType } = validationRules || {};
 
@@ -77,6 +101,7 @@ export const useAddressFormUtils = (countryCode: CountryCode = defaultCountry) =
 				postal: address.postal,
 				postTown: address.postTown,
 				prefecture: address.prefecture,
+				emirate: address.emirate,
 			};
 			const addressFieldMessages: Record<AddressFieldLabel, string> = {
 				city: address.city,
@@ -91,14 +116,20 @@ export const useAddressFormUtils = (countryCode: CountryCode = defaultCountry) =
 				streetAddress2: address.streetAddress2,
 				phone: address.phone,
 			};
-			try {
-				const translatedLabel =
-					localizedAddressFieldMessages[camelCase(localizedField) as LocalizedAddressFieldLabel];
+			// A plain object lookup never throws, so the old try/catch fallback
+			// never ran: any type missing from the map (AE's "emirate" among them)
+			// produced an `undefined` label — no label, no placeholder, and a
+			// Select that displayed its first option while its value stayed "".
+			// Fall back to the generic field label whenever there's no mapping.
+			const translatedLabel =
+				localizedAddressFieldMessages[camelCase(localizedField) as LocalizedAddressFieldLabel];
+
+			if (translatedLabel) {
 				return translatedLabel;
-			} catch (e) {
-				console.warn(`Missing translation: ${localizedField}`);
-				return addressFieldMessages[camelCase(field) as AddressFieldLabel];
 			}
+
+			console.warn(`Missing translation: ${localizedField}`);
+			return addressFieldMessages[camelCase(field) as AddressFieldLabel];
 		},
 		[address],
 	);
@@ -143,6 +174,7 @@ export const useAddressFormUtils = (countryCode: CountryCode = defaultCountry) =
 		hasAllRequiredFields,
 		getMissingFieldsFromAddress,
 		...validationRules,
+		countryAreaChoices,
 		allowedFields: validationRules?.allowedFields as AddressField[] | undefined,
 	};
 };

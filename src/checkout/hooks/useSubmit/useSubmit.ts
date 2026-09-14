@@ -115,13 +115,16 @@ export const useSubmit = <
 			);
 
 			const { success, data } = extractMutationData(result);
+			// `data` is also returned below (beyond the declared error fields) so
+			// step commits can hand the freshly saved checkout to the next commit —
+			// see getCheckoutFromSubmitResult in useStepCommit.ts.
 
 			if (!hasErrors && success) {
 				onSuccess?.({ ...callbackProps, data });
 				setCheckoutUpdateState("success");
 
 				onFinished?.();
-				return { hasErrors, apiErrors, ...errorsRest };
+				return { hasErrors, apiErrors, ...errorsRest, data };
 			}
 
 			onError?.({ ...callbackProps, errors: apiErrors, ...errorsRest });
@@ -133,7 +136,7 @@ export const useSubmit = <
 			}
 
 			onFinished?.();
-			return { hasErrors, apiErrors, ...errorsRest };
+			return { hasErrors, apiErrors, ...errorsRest, data };
 		},
 		[
 			onStart,

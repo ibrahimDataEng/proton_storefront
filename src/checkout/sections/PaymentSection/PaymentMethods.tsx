@@ -7,6 +7,7 @@ import { PaymentSectionSkeleton } from "@/checkout/sections/PaymentSection/Payme
 import { usePayments } from "@/checkout/sections/PaymentSection/usePayments";
 import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 import { getQueryParams } from "@/checkout/lib/utils/url";
+import { clearUnclaimedPaymentGateway } from "@/checkout/lib/lastPaymentGateway";
 import { useCheckoutUpdateState } from "@/checkout/state/updateStateStore";
 
 /**
@@ -79,6 +80,15 @@ export const PaymentMethods = () => {
 
 		setSelectedGatewayId(gatewaysWithDefinedComponent[0]?.id);
 	}, [gatewaysWithDefinedComponent, selectedGatewayId]);
+
+	// A COD marker nobody has claimed yet (e.g. a COD attempt that failed) must
+	// not follow the customer into a card payment — otherwise that order's
+	// confirmation shows the cash-on-delivery reminder. See lastPaymentGateway.ts.
+	useEffect(() => {
+		if (selectedGatewayId && selectedGatewayId !== codGatewayId) {
+			clearUnclaimedPaymentGateway();
+		}
+	}, [selectedGatewayId]);
 
 	// delivery methods change total price so we want to wait until the change is done
 	if (changingBillingCountry || fetching || checkoutDeliveryMethodUpdate === "loading") {

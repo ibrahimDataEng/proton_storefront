@@ -121,14 +121,16 @@ export const useGuestUserForm = ({ initialEmail }: GuestUserFormProps) => {
 	useCheckoutEmailUpdate({ email });
 
 	// since we use debounced submit, set update
-	// state as "loading" right away
+	// state as "loading" right away — but only for a valid email, the only
+	// kind the debounced submit will actually send (it was inverted before,
+	// flagging "loading" exactly while the email was invalid)
 	const onChange: ChangeHandler = async (event) => {
 		handleChange(event);
 
 		// eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-		const error = await isValidEmail(event.target.value as string);
+		const isValid = await isValidEmail(event.target.value as string);
 
-		if (!error) {
+		if (isValid) {
 			setCheckoutUpdateState("loading");
 		}
 	};

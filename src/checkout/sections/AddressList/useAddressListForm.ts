@@ -5,8 +5,9 @@ import { getByMatchingAddress, isMatchingAddress } from "@/checkout/components/A
 import { type AddressFragment } from "@/checkout/graphql";
 import { useAddressAvailability } from "@/checkout/hooks/useAddressAvailability";
 import { useDebouncedSubmit } from "@/checkout/hooks/useDebouncedSubmit";
-import { useForm } from "@/checkout/hooks/useForm";
+import { type FormHelpers, useForm } from "@/checkout/hooks/useForm";
 import { type FormSubmitFn } from "@/checkout/hooks/useFormSubmit";
+import { getCheckoutFromSubmitResult, useRegisterStepCommit } from "@/checkout/hooks/useStepCommit";
 import { useUser } from "@/checkout/hooks/useUser";
 import { getById, getByUnmatchingId } from "@/checkout/lib/utils/common";
 
@@ -20,6 +21,11 @@ interface UseAddressListProps {
 	checkoutAddress: OptionalAddress;
 	defaultAddress: OptionalAddress;
 	checkAddressAvailability?: boolean;
+	// Position in the commit-on-advance chain (STEP_COMMIT_ORDER).
+	commitOrder: number;
+	// Puts whatever "in progress" flag the caller raised back to idle when a
+	// pending save is dropped or resolved by a commit.
+	onSaveSettled?: () => void;
 }
 
 export const useAddressListForm = ({
@@ -27,6 +33,8 @@ export const useAddressListForm = ({
 	checkoutAddress,
 	defaultAddress,
 	checkAddressAvailability = false,
+	commitOrder,
+	onSaveSettled,
 }: UseAddressListProps) => {
 	const { user } = useUser();
 
@@ -48,7 +56,31 @@ export const useAddressListForm = ({
 
 	const { values, setValues, setFieldValue, handleSubmit } = form;
 
-	const debouncedSubmit = useDebouncedSubmit(handleSubmit);
+	const debouncedSubmit = useDebouncedSubmit(handleSubmit, { onPendingCancelledOnUnmount: onSaveSettled });
+
+	const latestValues = useRef(values);
+	latestValues.current = values;
+
+	// Commit-on-advance: save the currently selected address immediately.
+	// onSubmit's own shouldAbort skips it when nothing is selected or it already
+	// matches the checkout; a missing address is left for the readiness check.
+	useRegisterStepCommit(commitOrder, async (context) => {
+		debouncedSubmit.cancel();
+
+		const { selectedAddressId: currentSelection } = latestValues.current;
+		if (!currentSelection) {
+			onSaveSettled?.();
+			return true;
+		}
+
+		const result = await onSubmit(latestValues.current, form as unknown as FormHelpers<AddressListFormData>);
+		const savedCheckout = getCheckoutFromSubmitResult(result);
+		if (savedCheckout) {
+			context.checkout = savedCheckout;
+		}
+		onSaveSettled?.();
+		return !result.hasErrors;
+	});
 
 	const { addressList, selectedAddressId } = values;
 	const selectedAddress = addressList.find(getById(selectedAddressId));

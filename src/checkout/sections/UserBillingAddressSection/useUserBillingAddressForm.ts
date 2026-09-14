@@ -9,6 +9,7 @@ import { type AddressFragment, useCheckoutBillingAddressUpdateMutation } from "@
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { type ChangeHandler } from "@/checkout/hooks/useForm";
 import { useFormSubmit } from "@/checkout/hooks/useFormSubmit";
+import { STEP_COMMIT_ORDER } from "@/checkout/hooks/useStepCommit";
 import { useUser } from "@/checkout/hooks/useUser";
 import { getById } from "@/checkout/lib/utils/common";
 import {
@@ -51,6 +52,12 @@ export const useUserBillingAddressForm = () => {
 		onSubmit,
 		defaultAddress: user?.defaultBillingAddress,
 		checkoutAddress: checkout.billingAddress,
+		// Before useBillingSameAsShippingForm's commit, so a checked
+		// "same as shipping" box has the final say.
+		commitOrder: STEP_COMMIT_ORDER.billingAddress,
+		// onChange below raises changingBillingCountry, which PaymentMethods waits
+		// on — never leave it raised when no save is pending any more.
+		onSaveSettled: () => setChangingBillingCountry(false),
 	});
 
 	const onChange: ChangeHandler = (event) => {

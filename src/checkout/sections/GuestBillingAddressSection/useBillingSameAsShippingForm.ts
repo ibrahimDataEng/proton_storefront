@@ -8,12 +8,22 @@ import {
 	isMatchingAddress,
 	isMatchingAddressData,
 } from "@/checkout/components/AddressForm/utils";
-import { type AddressFragment, useCheckoutBillingAddressUpdateMutation } from "@/checkout/graphql";
+import {
+	type AddressFragment,
+	type CheckoutFragment,
+	useCheckoutBillingAddressUpdateMutation,
+} from "@/checkout/graphql";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { type ChangeHandler, useForm } from "@/checkout/hooks/useForm";
 import { useFormSubmit } from "@/checkout/hooks/useFormSubmit";
+import { STEP_COMMIT_ORDER, useRegisterStepCommit } from "@/checkout/hooks/useStepCommit";
+import { getCheckoutLanguageCode, useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 import { type MightNotExist } from "@/checkout/lib/globalTypes";
-import { useCheckoutUpdateStateActions } from "@/checkout/state/updateStateStore";
+import {
+	useCheckoutUpdateState,
+	useCheckoutUpdateStateActions,
+	useCheckoutUpdateStateChange,
+} from "@/checkout/state/updateStateStore";
 
 interface BillingSameAsShippingFormData {
 	billingSameAsShipping: boolean;
@@ -37,6 +47,9 @@ export const useBillingSameAsShippingForm = (
 		useState<MightNotExist<AddressFragment>>(billingAddress);
 
 	const [, checkoutBillingAddressUpdate] = useCheckoutBillingAddressUpdateMutation();
+	const { setCheckoutUpdateState: setBillingUpdateState } =
+		useCheckoutUpdateStateChange("checkoutBillingUpdate");
+	const { locale } = useCheckoutMessages();
 
 	const onSubmit = useFormSubmit<BillingSameAsShippingFormData, typeof checkoutBillingAddressUpdate>({
 		scope: "checkoutBillingUpdate",
@@ -137,12 +150,31 @@ export const useBillingSameAsShippingForm = (
 		shippingAddress,
 	]);
 
-	// once billing address in api and form don't match, submit
+	// once billing address in api and form don't match, submit — but not while a
+	// billing save or a checkout refetch is still in flight: during that window
+	// the rendered `billingAddress` lags behind what was just sent, so the
+	// mismatch is stale and re-submitting only re-sends the same address (a
+	// rushed Shipping step produced 7 identical billing writes in 3s).
+	const { updateState, loadingCheckout } = useCheckoutUpdateState();
+	const billingSaveInFlight = updateState.checkoutBillingUpdate === "loading";
+
 	useEffect(() => {
+		if (billingSaveInFlight || loadingCheckout) {
+			return;
+		}
+
 		if (formBillingAddress && !isMatchingAddress(billingAddress, formBillingAddress)) {
 			handleSubmit();
 		}
-	}, [billingAddress, billingSameAsShipping, formBillingAddress, handleSubmit, shippingAddress]);
+	}, [
+		billingAddress,
+		billingSameAsShipping,
+		billingSaveInFlight,
+		formBillingAddress,
+		handleSubmit,
+		loadingCheckout,
+		shippingAddress,
+	]);
 
 	// when shipping address changes in the api, set it as billing address
 	useEffect(() => {
@@ -171,6 +203,46 @@ export const useBillingSameAsShippingForm = (
 			void setFieldValue("billingSameAsShipping", false);
 		}
 	}, [isShippingRequired, setFieldValue]);
+
+	// Commit-on-advance: with "same as shipping" checked, billing must equal the
+	// shipping address Saleor has *now* — including one saved moments ago by
+	// the shipping commit in this same run (context.checkout), which this
+	// render's `shippingAddress` doesn't reflect yet.
+	useRegisterStepCommit(STEP_COMMIT_ORDER.billingSameAsShipping, async (context) => {
+		if (!isShippingRequired || !billingSameAsShipping) {
+			return true;
+		}
+
+		const latestCheckout: Pick<CheckoutFragment, "shippingAddress" | "billingAddress"> =
+			context.checkout ?? checkout;
+		const target = latestCheckout.shippingAddress;
+
+		// Nothing to mirror yet; the readiness check reports the missing address.
+		if (!target || isMatchingAddressData(latestCheckout.billingAddress, target)) {
+			return true;
+		}
+
+		// Align the form state first so the auto-submit effect above can't
+		// re-send an older address once this lands.
+		setFormBillingAddress(target);
+		setBillingUpdateState("loading");
+
+		const result = await checkoutBillingAddressUpdate({
+			checkoutId: checkout.id,
+			languageCode: getCheckoutLanguageCode(locale),
+			billingAddress: getAddressInputDataFromAddress(target),
+			validationRules: getAddressValidationRulesVariables({ autoSave }),
+		});
+		const payload = result.data?.checkoutBillingAddressUpdate;
+		const failed = !!result.error || !!payload?.errors?.length;
+
+		setBillingUpdateState(failed ? "error" : "success");
+		if (payload?.checkout) {
+			context.checkout = payload.checkout as CheckoutFragment;
+		}
+
+		return !failed;
+	});
 
 	return {
 		...form,

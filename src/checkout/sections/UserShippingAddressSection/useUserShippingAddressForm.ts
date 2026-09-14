@@ -8,6 +8,7 @@ import {
 import { type AddressFragment, useCheckoutShippingAddressUpdateMutation } from "@/checkout/graphql";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { useFormSubmit } from "@/checkout/hooks/useFormSubmit";
+import { STEP_COMMIT_ORDER } from "@/checkout/hooks/useStepCommit";
 import { useUser } from "@/checkout/hooks/useUser";
 import { getById } from "@/checkout/lib/utils/common";
 import {
@@ -47,6 +48,7 @@ export const useUserShippingAddressForm = () => {
 		onSubmit,
 		defaultAddress: user?.defaultShippingAddress,
 		checkoutAddress: shippingAddress,
+		commitOrder: STEP_COMMIT_ORDER.shippingAddress,
 	});
 
 	return { form, userAddressActions };

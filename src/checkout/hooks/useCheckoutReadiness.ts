@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useLocale } from "next-intl";
-import { useClient } from "urql";
+import { CombinedError, useClient } from "urql";
 import {
 	CheckoutDocument,
 	type CheckoutFragment,
@@ -15,8 +15,15 @@ import { areAnyRequestsInProgress, useCheckoutUpdateState } from "@/checkout/sta
 // (debounced, and canceled when a step unmounts), so what the UI shows is not
 // proof of what Saleor has. Before advancing a step — and before any payment
 // gateway mounts — this re-reads the checkout straight from the network and
-// checks the fields checkoutComplete will later require. It does NOT fix the
-// saves themselves (that's Phase 2); it only refuses to move on without them.
+// checks the fields checkoutComplete will later require. Phase 2 (front_store-bwh)
+// makes the saves themselves reliable (commit-on-advance, useStepCommit.ts);
+// this check stays as the backstop.
+//
+// Fail-open contract for callers: only "notReady" and "checkoutGone" are
+// definitive and may block. "error" means the check itself couldn't complete
+// (network, timeout, GraphQL error) and callers must let the customer through,
+// same policy as the phone-status gate — a broken check must never be able to
+// take checkout down.
 
 export type ReadinessStage = "contact" | "payment";
 
@@ -33,8 +40,55 @@ export type ReadinessResult =
 	| { status: "notReady"; checkout: CheckoutFragment; problems: ReadinessProblem[] }
 	// checkout(id:) returned null — already converted into an order (or never existed)
 	| { status: "checkoutGone" }
-	| { status: "error" }
+	| ({ status: "error" } & ReadinessFailure)
 	| { status: "cancelled" };
+
+// Why the check itself couldn't complete (the last failure seen before giving up).
+export type ReadinessFailureReason = "timeout" | "network" | "http" | "graphql" | "unknown";
+
+export interface ReadinessFailure {
+	reason: ReadinessFailureReason;
+	message: string;
+	attempts: number;
+	elapsedMs: number;
+}
+
+// Stable prefix so fail-open events can be found in browser logs / log
+// collectors. One record per actual fail-open, never per retry attempt.
+export const READINESS_FAIL_OPEN_LOG_PREFIX = "[checkout-readiness:fail-open]";
+
+export const reportReadinessFailOpen = (
+	failure: ReadinessFailure & {
+		stage: ReadinessStage;
+		checkoutId: string;
+		source: "step-advance" | "payment-guard";
+	},
+) => {
+	// Synchronous and exception-proof: must never block or delay the customer.
+	try {
+		console.error(READINESS_FAIL_OPEN_LOG_PREFIX, failure);
+	} catch {
+		// ignore
+	}
+};
+
+class ReadinessTimeoutError extends Error {}
+
+const classifyFailure = (error: unknown): Pick<ReadinessFailure, "reason" | "message"> => {
+	const message = error instanceof Error ? error.message : String(error);
+
+	if (error instanceof ReadinessTimeoutError) {
+		return { reason: "timeout", message };
+	}
+	if (error instanceof CombinedError) {
+		if (error.graphQLErrors.length) {
+			return { reason: "graphql", message };
+		}
+		const status = (error.response as { status?: number } | undefined)?.status;
+		return { reason: typeof status === "number" && status >= 400 ? "http" : "network", message };
+	}
+	return { reason: "unknown", message };
+};
 
 interface VerifyOptions {
 	// Keep re-checking at least this long after the first failed check. Clicking
@@ -47,11 +101,29 @@ interface VerifyOptions {
 	// follow-on saves (billing mirrors shipping, cheapest delivery method is
 	// auto-selected once methods exist) can still land on their own.
 	followOnSavesMounted?: boolean;
+	// When the check can't complete, the hook records the fail-open itself
+	// (as "payment-guard", which always fails open). goNext passes false and
+	// records it only if it actually advances — a failed save still blocks there.
+	reportFailOpen?: boolean;
 }
 
 const POLL_INTERVAL_MS = 700;
+const REQUEST_TIMEOUT_MS = 8000;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Rejects if `promise` hasn't settled within `ms`, so no single await in the
+// readiness loop can outlive its own bound.
+const withTimeout = <T>(promise: Promise<T>, ms: number) => {
+	let timer: ReturnType<typeof setTimeout> | undefined;
+	const timeout = new Promise<never>((_, reject) => {
+		timer = setTimeout(
+			() => reject(new ReadinessTimeoutError(`Checkout readiness check timed out after ${ms}ms`)),
+			ms,
+		);
+	});
+	return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+};
 
 export const getReadinessProblems = (
 	checkout: CheckoutFragment,
@@ -112,6 +184,10 @@ export const getReadinessMessage = (
 	result: ReadinessResult,
 	messages: ReturnType<typeof getCheckoutMessages>["readiness"],
 ) => {
+	if (result.status === "checkoutGone") {
+		return messages.checkoutGone;
+	}
+
 	if (result.status === "notReady") {
 		// Without a saved shipping address there are no shipping methods to pick
 		// and nothing for billing to mirror, so those two are only consequences —
@@ -150,13 +226,16 @@ export const useCheckoutReadiness = () => {
 	// is still written back under the same operation key, so every mounted
 	// useCheckout() re-renders with the fresh server state too.
 	const fetchFreshCheckout = useCallback(async () => {
-		const result = await client
-			.query<CheckoutQuery, CheckoutQueryVariables>(
-				CheckoutDocument,
-				{ id: checkoutId, languageCode: getCheckoutLanguageCode(locale) },
-				{ requestPolicy: "network-only" },
-			)
-			.toPromise();
+		const result = await withTimeout(
+			client
+				.query<CheckoutQuery, CheckoutQueryVariables>(
+					CheckoutDocument,
+					{ id: checkoutId, languageCode: getCheckoutLanguageCode(locale) },
+					{ requestPolicy: "network-only" },
+				)
+				.toPromise(),
+			REQUEST_TIMEOUT_MS,
+		);
 
 		if (result.error) {
 			throw result.error;
@@ -168,12 +247,14 @@ export const useCheckoutReadiness = () => {
 	const verify = useCallback(
 		async (
 			stage: ReadinessStage,
-			{ settleMs = 0, maxMs = 7000, followOnSavesMounted = false }: VerifyOptions = {},
+			{ settleMs = 0, maxMs = 7000, followOnSavesMounted = false, reportFailOpen = true }: VerifyOptions = {},
 		): Promise<ReadinessResult> => {
 			const startedAt = Date.now();
+			let attempts = 0;
 
 			for (;;) {
 				let result: ReadinessResult;
+				attempts += 1;
 
 				try {
 					const checkout = await fetchFreshCheckout();
@@ -188,7 +269,12 @@ export const useCheckoutReadiness = () => {
 						: { status: "ready", checkout };
 				} catch (error) {
 					console.error("Checkout readiness check failed:", error);
-					result = { status: "error" };
+					result = {
+						status: "error",
+						...classifyFailure(error),
+						attempts,
+						elapsedMs: Date.now() - startedAt,
+					};
 				}
 
 				if (unmountedRef.current) {
@@ -211,6 +297,18 @@ export const useCheckoutReadiness = () => {
 				const keepWaiting = elapsed < settleMs || ((savesInFlight || settlingOnItsOwn) && elapsed < maxMs);
 
 				if (!keepWaiting) {
+					if (result.status === "error" && reportFailOpen) {
+						const { reason, message } = result;
+						reportReadinessFailOpen({
+							reason,
+							message,
+							attempts,
+							elapsedMs: elapsed,
+							stage,
+							checkoutId,
+							source: "payment-guard",
+						});
+					}
 					return result;
 				}
 
@@ -221,8 +319,8 @@ export const useCheckoutReadiness = () => {
 				}
 			}
 		},
-		[fetchFreshCheckout],
+		[checkoutId, fetchFreshCheckout],
 	);
 
-	return { verify };
+	return { verify, checkoutId };
 };
