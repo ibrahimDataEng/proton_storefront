@@ -5,7 +5,8 @@ import { OrderInfo } from "@/checkout/sections/OrderInfo";
 import { useOrder } from "@/checkout/hooks/useOrder";
 import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 import { getOrderCreatedAt } from "@/checkout/lib/getOrderCreatedAt";
-import { getLastPaymentGatewayId } from "@/checkout/lib/lastPaymentGateway";
+import { getPaymentGatewayForOrder } from "@/checkout/lib/lastPaymentGateway";
+import { getQueryParams } from "@/checkout/lib/utils/url";
 import { codGatewayId } from "@/checkout/sections/PaymentSection/CODComponent/types";
 import { trackPurchase } from "@/lib/analytics/gtag";
 import { type DeliveryLabel, getDeliveryInfo } from "@/lib/delivery";
@@ -24,9 +25,13 @@ export const OrderConfirmation = () => {
 		// Session-local signal set by CODComponent right before completing
 		// checkout — see lastPaymentGateway.ts for why this exists instead of
 		// a GraphQL field (Order.transactions/events both require
-		// MANAGE_ORDERS/HANDLE_PAYMENTS, not available to a guest here).
-		setIsCod(getLastPaymentGatewayId() === codGatewayId);
-	}, []);
+		// MANAGE_ORDERS/HANDLE_PAYMENTS, not available to a guest here). Bound
+		// to this order, so an earlier COD order in the same tab can't make a
+		// card-paid order show the cash reminder.
+		const orderId = order?.id ?? getQueryParams().orderId;
+		if (!orderId) return;
+		setIsCod(getPaymentGatewayForOrder(orderId) === codGatewayId);
+	}, [order?.id]);
 
 	useEffect(() => {
 		if (!order?.id) return;
