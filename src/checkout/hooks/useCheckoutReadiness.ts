@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useLocale } from "next-intl";
-import { CombinedError, useClient } from "urql";
+import { CombinedError, type TypedDocumentNode, useClient } from "urql";
 import {
 	CheckoutDocument,
 	type CheckoutFragment,
@@ -105,24 +105,37 @@ interface VerifyOptions {
 	// (as "payment-guard", which always fails open). goNext passes false and
 	// records it only if it actually advances — a failed save still blocks there.
 	reportFailOpen?: boolean;
+	// Epoch ms after which no request is started or waited on. Defaults to a
+	// fresh READINESS_BUDGET_MS; goNext passes the one started at the Continue
+	// click, and the Payment guard reuses it.
+	deadline?: number;
 }
 
 const POLL_INTERVAL_MS = 700;
-const REQUEST_TIMEOUT_MS = 8000;
+
+// Total time the customer can be kept waiting by one Continue click: the step's
+// commits, the step check and the Payment guard all draw on this one budget.
+export const READINESS_BUDGET_MS = 8000;
+
+export const createReadinessDeadline = () => Date.now() + READINESS_BUDGET_MS;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// Rejects if `promise` hasn't settled within `ms`, so no single await in the
-// readiness loop can outlive its own bound.
-const withTimeout = <T>(promise: Promise<T>, ms: number) => {
-	let timer: ReturnType<typeof setTimeout> | undefined;
-	const timeout = new Promise<never>((_, reject) => {
-		timer = setTimeout(
-			() => reject(new ReadinessTimeoutError(`Checkout readiness check timed out after ${ms}ms`)),
-			ms,
-		);
-	});
-	return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+// The page's useCheckout() and this check must not share an urql operation key:
+// urql keeps one result stream per key, so a failed re-read would replace the
+// page's checkout data with the error and Checkout.tsx would render "not found"
+// (front_store-auc). The key hashes the operation name, so this is
+// CheckoutDocument — same variables, same generated selection — under its own
+// name. A new document object with only `kind` and `definitions`: spreading
+// CheckoutDocument would copy its `loc` (source text naming the old operation)
+// and urql's cached `__key`, and carry the old key over.
+const CheckoutReadinessDocument: TypedDocumentNode<CheckoutQuery, CheckoutQueryVariables> = {
+	kind: CheckoutDocument.kind,
+	definitions: CheckoutDocument.definitions.map((definition) =>
+		"operation" in definition && definition.name
+			? { ...definition, name: { ...definition.name, value: "CheckoutReadiness" } }
+			: definition,
+	),
 };
 
 export const getReadinessProblems = (
@@ -222,59 +235,108 @@ export const useCheckoutReadiness = () => {
 		};
 	}, []);
 
-	// network-only bypasses urql's document cache for this request; the result
-	// is still written back under the same operation key, so every mounted
-	// useCheckout() re-renders with the fresh server state too.
-	const fetchFreshCheckout = useCallback(async () => {
-		const result = await withTimeout(
-			client
-				.query<CheckoutQuery, CheckoutQueryVariables>(
-					CheckoutDocument,
-					{ id: checkoutId, languageCode: getCheckoutLanguageCode(locale) },
-					{ requestPolicy: "network-only" },
-				)
-				.toPromise(),
-			REQUEST_TIMEOUT_MS,
-		);
+	// network-only bypasses urql's document cache, so this always reads what
+	// Saleor has now. It deliberately doesn't refresh the page's checkout data:
+	// the page is kept current by the refetch urql runs after every save.
+	//
+	// Subscribed rather than awaited via toPromise(): on timeout the subscription
+	// is ended, which tears the operation down (and aborts its fetch). A timed-out
+	// toPromise() leaves the operation active, and urql then attaches every later
+	// check with the same key to that dead request instead of sending a new one.
+	const fetchFreshCheckout = useCallback(
+		(timeoutMs: number) =>
+			new Promise<CheckoutFragment | null>((resolve, reject) => {
+				let settled = false;
+				let onTimeout = () => {};
+				const timer = setTimeout(() => onTimeout(), timeoutMs);
 
-		if (result.error) {
-			throw result.error;
-		}
+				const subscription = client
+					.query<CheckoutQuery, CheckoutQueryVariables>(
+						CheckoutReadinessDocument,
+						{ id: checkoutId, languageCode: getCheckoutLanguageCode(locale) },
+						{ requestPolicy: "network-only" },
+					)
+					.subscribe((result) => {
+						// Same filter toPromise() applies.
+						if (settled || result.stale || result.hasNext) {
+							return;
+						}
+						settled = true;
+						clearTimeout(timer);
+						// End the operation once answered, as toPromise() does. Deferred: a
+						// result can arrive before `subscription` is assigned.
+						queueMicrotask(() => subscription.unsubscribe());
 
-		return (result.data?.checkout ?? null) as CheckoutFragment | null;
-	}, [checkoutId, client, locale]);
+						if (result.error) {
+							reject(result.error);
+						} else {
+							resolve((result.data?.checkout ?? null) as CheckoutFragment | null);
+						}
+					});
+
+				onTimeout = () => {
+					if (settled) {
+						return;
+					}
+					settled = true;
+					subscription.unsubscribe();
+					reject(new ReadinessTimeoutError(`Checkout readiness check timed out after ${timeoutMs}ms`));
+				};
+			}),
+		[checkoutId, client, locale],
+	);
 
 	const verify = useCallback(
 		async (
 			stage: ReadinessStage,
-			{ settleMs = 0, maxMs = 7000, followOnSavesMounted = false, reportFailOpen = true }: VerifyOptions = {},
+			{
+				settleMs = 0,
+				maxMs = 7000,
+				followOnSavesMounted = false,
+				reportFailOpen = true,
+				deadline = createReadinessDeadline(),
+			}: VerifyOptions = {},
 		): Promise<ReadinessResult> => {
 			const startedAt = Date.now();
 			let attempts = 0;
 
 			for (;;) {
 				let result: ReadinessResult;
-				attempts += 1;
+				const remainingMs = deadline - Date.now();
 
-				try {
-					const checkout = await fetchFreshCheckout();
-
-					if (!checkout) {
-						return { status: "checkoutGone" };
-					}
-
-					const problems = getReadinessProblems(checkout, stage);
-					result = problems.length
-						? { status: "notReady", checkout, problems }
-						: { status: "ready", checkout };
-				} catch (error) {
-					console.error("Checkout readiness check failed:", error);
+				if (remainingMs <= 0) {
+					// Budget already spent (e.g. by slow commits): don't start a request
+					// that has no time left to answer.
 					result = {
 						status: "error",
-						...classifyFailure(error),
+						reason: "timeout",
+						message: `Checkout readiness budget of ${READINESS_BUDGET_MS}ms was used up before the check could run`,
 						attempts,
 						elapsedMs: Date.now() - startedAt,
 					};
+				} else {
+					attempts += 1;
+
+					try {
+						const checkout = await fetchFreshCheckout(remainingMs);
+
+						if (!checkout) {
+							return { status: "checkoutGone" };
+						}
+
+						const problems = getReadinessProblems(checkout, stage);
+						result = problems.length
+							? { status: "notReady", checkout, problems }
+							: { status: "ready", checkout };
+					} catch (error) {
+						console.error("Checkout readiness check failed:", error);
+						result = {
+							status: "error",
+							...classifyFailure(error),
+							attempts,
+							elapsedMs: Date.now() - startedAt,
+						};
+					}
 				}
 
 				if (unmountedRef.current) {
@@ -293,8 +355,11 @@ export const useCheckoutReadiness = () => {
 					canStillSettleOnItsOwn(result.problems, result.checkout);
 
 				// Bounded either way: never longer than maxMs, so a scope stuck at
-				// "loading" (a save canceled by an earlier unmount) can't hang this.
-				const keepWaiting = elapsed < settleMs || ((savesInFlight || settlingOnItsOwn) && elapsed < maxMs);
+				// "loading" (a save canceled by an earlier unmount) can't hang this,
+				// and never past the shared deadline.
+				const keepWaiting =
+					Date.now() + POLL_INTERVAL_MS < deadline &&
+					(elapsed < settleMs || ((savesInFlight || settlingOnItsOwn) && elapsed < maxMs));
 
 				if (!keepWaiting) {
 					if (result.status === "error" && reportFailOpen) {
