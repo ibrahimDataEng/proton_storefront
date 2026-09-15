@@ -97,6 +97,9 @@ const checkoutMessages = {
 			apply: "Apply",
 			each: "each",
 			quantity: "Quantity",
+			// Shown instead of the quantity/promo-code controls on the Payment step
+			// (front_store-zxf).
+			lockedHint: "To change your order, go back to Shipping.",
 			removePromoCode: "Remove promo code",
 			subtotalPriceAria: "Subtotal price",
 			voucherAria: "Voucher",
@@ -368,6 +371,7 @@ const checkoutMessages = {
 			apply: "تطبيق",
 			each: "للقطعة",
 			quantity: "الكمية",
+			lockedHint: "لتعديل طلبك، يُرجى العودة إلى خطوة الشحن.",
 			removePromoCode: "إزالة رمز الخصم",
 			subtotalPriceAria: "السعر الفرعي",
 			voucherAria: "القسيمة",
