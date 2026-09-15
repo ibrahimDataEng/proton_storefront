@@ -34,7 +34,14 @@ import {
 	type GA4Item,
 } from "@/lib/analytics/gtag";
 
-type Step = "contact" | "shipping" | "payment";
+export type CheckoutStep = "contact" | "shipping" | "payment";
+type Step = CheckoutStep;
+
+interface CheckoutFormProps {
+	// Reports the current wizard step, e.g. so the order summary can lock itself
+	// on the Payment step (front_store-zxf).
+	onStepChange?: (step: CheckoutStep) => void;
+}
 
 // CheckoutLineFragment carries no product id — variant.id is used as the
 // GA4 item_id for checkout-step events (see Session 37 diagnostic).
@@ -55,7 +62,7 @@ const slideVariants = {
 	exit: (dir: "forward" | "back") => ({ opacity: 0, x: dir === "forward" ? -24 : 24 }),
 };
 
-export const CheckoutForm = () => {
+export const CheckoutForm = ({ onStepChange }: CheckoutFormProps = {}) => {
 	const { user } = useUser();
 	const { checkout } = useCheckout();
 	const { passwordResetToken } = getQueryParams();
@@ -110,6 +117,10 @@ export const CheckoutForm = () => {
 	useEffect(() => {
 		setCheckoutError(null);
 	}, [currentStep]);
+
+	useEffect(() => {
+		onStepChange?.(currentStep);
+	}, [currentStep, onStepChange]);
 
 	// Resolves to { verifiedCheckout } when the wizard advanced (undefined when
 	// the check failed open), or null when the step must not advance (the

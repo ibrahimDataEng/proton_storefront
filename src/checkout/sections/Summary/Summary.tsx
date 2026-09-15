@@ -5,6 +5,7 @@ import { PromoCodeAdd } from "./PromoCodeAdd";
 import { SummaryMoneyRow } from "./SummaryMoneyRow";
 import { SummaryPromoCodeRow } from "./SummaryPromoCodeRow";
 import { SummaryItemMoneyEditableSection } from "./SummaryItemMoneyEditableSection";
+import { SummaryItemMoneyLockedSection } from "./SummaryItemMoneyLockedSection";
 import { ChevronDownIcon } from "@/checkout/ui-kit/icons";
 import { Divider, Money, Title } from "@/checkout/components";
 import {
@@ -20,6 +21,9 @@ import { type GrossMoney, type GrossMoneyWithTax } from "@/checkout/lib/globalTy
 
 interface SummaryProps {
 	editable?: boolean;
+	// Checkout on the Payment step: lines, discounts and totals stay visible but
+	// nothing that changes the total is reachable (front_store-zxf).
+	locked?: boolean;
 	lines: SummaryLine[];
 	totalPrice?: GrossMoneyWithTax;
 	subtotalPrice?: GrossMoney;
@@ -31,6 +35,7 @@ interface SummaryProps {
 
 export const Summary: FC<SummaryProps> = ({
 	editable = true,
+	locked = false,
 	lines,
 	totalPrice,
 	subtotalPrice,
@@ -40,6 +45,7 @@ export const Summary: FC<SummaryProps> = ({
 	discount,
 }) => {
 	const { summary, locale } = useCheckoutMessages();
+	const canChangeTotal = editable && !locked;
 
 	return (
 		<div
@@ -56,18 +62,28 @@ export const Summary: FC<SummaryProps> = ({
 				<ul className="py-2" data-testid="SummaryProductList">
 					{lines.map((line) => (
 						<SummaryItem line={line} key={line?.id}>
-							{editable ? (
-								<SummaryItemMoneyEditableSection line={line as CheckoutLineFragment} />
-							) : (
+							{!editable ? (
 								<SummaryItemMoneySection line={line as OrderLineFragment} />
+							) : locked ? (
+								<SummaryItemMoneyLockedSection line={line as CheckoutLineFragment} />
+							) : (
+								<SummaryItemMoneyEditableSection line={line as CheckoutLineFragment} />
 							)}
 						</SummaryItem>
 					))}
 				</ul>
 			</details>
-			{editable && (
+			{canChangeTotal && (
 				<>
 					<PromoCodeAdd />
+					<Divider />
+				</>
+			)}
+			{editable && locked && (
+				<>
+					<p className="my-4 text-sm text-neutral-500" data-testid="summaryLockedHint">
+						{summary.lockedHint}
+					</p>
 					<Divider />
 				</>
 			)}
@@ -79,7 +95,7 @@ export const Summary: FC<SummaryProps> = ({
 				/>
 				{voucherCode && (
 					<SummaryPromoCodeRow
-						editable={editable}
+						editable={canChangeTotal}
 						promoCode={voucherCode}
 						ariaLabel={summary.voucherAria}
 						label={summary.voucherCode.replace("{code}", voucherCode)}
@@ -90,7 +106,7 @@ export const Summary: FC<SummaryProps> = ({
 				{giftCards.map(({ currentBalance, displayCode, id }) => (
 					<SummaryPromoCodeRow
 						key={id}
-						editable={editable}
+						editable={canChangeTotal}
 						promoCodeId={id}
 						ariaLabel={summary.giftCardAria}
 						label={summary.giftCard.replace("{code}", displayCode)}
