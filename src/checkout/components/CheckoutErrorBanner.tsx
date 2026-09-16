@@ -21,15 +21,15 @@ export const CheckoutErrorBanner = ({ message, onDismiss }: CheckoutErrorBannerP
 
 	return (
 		<div
-			className={`mb-4 rounded-md border border-red-200 bg-red-50 p-3 transition-opacity duration-300 ${
+			className={`mb-4 rounded-xl border border-s-4 border-status-danger/30 border-s-status-danger bg-status-danger/5 p-4 shadow-sm transition-opacity duration-300 ${
 				visible ? "opacity-100" : "opacity-0"
 			}`}
 			role="alert"
 		>
 			<div className="flex items-start justify-between gap-2">
-				<div className="flex items-start gap-2">
+				<div className="flex items-start gap-2.5">
 					<svg
-						className="mt-0.5 h-4 w-4 flex-shrink-0 text-red-500"
+						className="mt-0.5 h-5 w-5 flex-shrink-0 text-status-danger"
 						fill="none"
 						viewBox="0 0 24 24"
 						stroke="currentColor"
@@ -42,12 +42,12 @@ export const CheckoutErrorBanner = ({ message, onDismiss }: CheckoutErrorBannerP
 						/>
 					</svg>
 					<div>
-						<p className="text-sm font-medium text-red-700">{message}</p>
+						<p className="text-sm font-semibold text-status-danger">{message}</p>
 						<a
 							href="https://wa.me/971558711442"
 							target="_blank"
 							rel="noopener noreferrer"
-							className="mt-0.5 block text-xs text-red-500 underline hover:text-red-700"
+							className="mt-1 inline-block text-xs font-medium text-status-danger/80 underline hover:text-status-danger"
 						>
 							Need help? Contact us on WhatsApp
 						</a>
@@ -55,7 +55,7 @@ export const CheckoutErrorBanner = ({ message, onDismiss }: CheckoutErrorBannerP
 				</div>
 				<button
 					onClick={onDismiss}
-					className="flex-shrink-0 text-red-400 hover:text-red-600"
+					className="flex-shrink-0 text-status-danger/60 hover:text-status-danger"
 					aria-label="Dismiss error"
 				>
 					<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
