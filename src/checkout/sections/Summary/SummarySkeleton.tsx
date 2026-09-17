@@ -1,7 +1,7 @@
 import { Divider, Skeleton } from "@/checkout/components";
 
 export const SummarySkeleton = () => (
-	<div className="summary px-6 pt-6">
+	<div className="summary rounded-2xl border border-line-subtle bg-surface-raised px-6 pt-6 shadow-raised sm:p-6">
 		<div className="flex flex-col lg:hidden">
 			<div className="mb-6 flex flex-row items-center justify-between">
 				<Skeleton className="w-1/3" />

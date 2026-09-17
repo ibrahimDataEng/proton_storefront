@@ -12,7 +12,7 @@ export const Skeleton: React.FC<PropsWithChildren<SkeletonProps>> = ({
 	variant = "paragraph",
 }) => {
 	const classes = clsx(
-		"bg-neutral-200/50 mb-2 h-3 min-w-[250px] rounded",
+		"mb-2 h-3 min-w-[250px] animate-pulse rounded bg-line-subtle",
 		{ "mb-6 w-1/3": variant === "title", "h-3": variant === "paragraph" },
 		className,
 	);

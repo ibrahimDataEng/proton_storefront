@@ -105,10 +105,10 @@ export const PaymentSection = ({ onNavigateBack, readinessDeadline }: PaymentSec
 					<div
 						role="alert"
 						data-testid="paymentNotReady"
-						className="mt-4 rounded-md border border-amber-200 bg-amber-50 p-4"
+						className="mt-4 rounded-xl border border-s-4 border-status-warning/30 border-s-status-warning bg-status-warning/5 p-4 shadow-sm"
 					>
-						<p className="font-semibold text-neutral-900">{readiness.paymentNotReadyTitle}</p>
-						<p className="mt-1 text-sm text-neutral-700">{gate.message}</p>
+						<p className="font-semibold text-content-primary">{readiness.paymentNotReadyTitle}</p>
+						<p className="mt-1 text-sm text-content-secondary">{gate.message}</p>
 						<div className="mt-3 flex flex-wrap gap-3">
 							{onNavigateBack && (
 								<Button

@@ -1,4 +1,5 @@
 import { type SelectHTMLAttributes, type ChangeEvent, type FocusEvent, type ReactNode } from "react";
+import clsx from "clsx";
 import { useField } from "@/checkout/hooks/useForm/useField";
 
 export interface Option<TData extends string = string> {
@@ -52,16 +53,19 @@ export const Select = <TName extends string, TData extends string>({
 	};
 
 	return (
-		<div className="space-y-0.5">
+		<div className="space-y-1">
 			<label className="flex flex-col">
-				<span className="text-xs text-neutral-600">{label}</span>
+				<span className="text-xs font-medium text-content-secondary">{label}</span>
 				<select
 					{...fieldProps}
 					{...rest}
 					value={hasValue ? (fieldProps.value as string) : ""}
 					onBlur={handleSelectBlur}
 					onChange={handleChange}
-					className="mt-1 block w-full rounded-md border-neutral-200 shadow-sm focus:border-[#2d6a4f] focus:ring focus:ring-[#2d6a4f] focus:ring-opacity-30"
+					className={clsx(
+						"mt-1 block w-full rounded-lg border-line-default bg-surface-raised bg-[right_0.5rem_center] shadow-sm focus:border-brand-primary focus:ring focus:ring-brand-primary focus:ring-opacity-30 rtl:bg-[left_0.5rem_center]",
+						{ "border-status-danger focus:border-status-danger focus:ring-status-danger/30": error },
+					)}
 				>
 					{!hasValue && (
 						<option disabled value="">
@@ -75,7 +79,24 @@ export const Select = <TName extends string, TData extends string>({
 					))}
 				</select>
 			</label>
-			{error && <p className="text-sm text-red-600">{error}</p>}
+			{error && (
+				<p className="flex items-center gap-1 text-sm font-medium text-status-danger">
+					<svg
+						className="h-3.5 w-3.5 flex-shrink-0"
+						fill="none"
+						viewBox="0 0 24 24"
+						stroke="currentColor"
+						strokeWidth={2}
+					>
+						<path
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+						/>
+					</svg>
+					{error}
+				</p>
+			)}
 		</div>
 	);
 };
