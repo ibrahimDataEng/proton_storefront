@@ -128,6 +128,17 @@ const checkoutMessages = {
 			description: "We couldn't fetch information about your checkout. Go back to the store and try again.",
 			backToStore: "Go back to store",
 		},
+		// A transient error on a background refetch (e.g. the automatic re-read
+		// after an autosave/commit) — distinct from notFound, which is only shown
+		// when the server authoritatively confirms the checkout is gone
+		// (front_store-12e).
+		checkoutError: {
+			bannerTitle: "We couldn't refresh your checkout",
+			bannerMessage:
+				"Your details are safe, but we couldn't confirm your latest changes with the server. Try again to make sure everything is up to date.",
+			loadFailedTitle: "We couldn't load your checkout",
+			loadFailedDescription: "Please check your connection and try again.",
+		},
 		orderConfirmation: {
 			title: "Order #{number} confirmed",
 			description:
@@ -399,6 +410,13 @@ const checkoutMessages = {
 		notFound: {
 			description: "تعذر تحميل معلومات صفحة الدفع. ارجع إلى المتجر وحاول مرة أخرى.",
 			backToStore: "العودة إلى المتجر",
+		},
+		checkoutError: {
+			bannerTitle: "تعذّر تحديث بيانات الدفع",
+			bannerMessage:
+				"بياناتك محفوظة بأمان، لكن تعذّر تأكيد آخر التغييرات مع الخادم. حاول مرة أخرى للتأكد من أن كل شيء محدث.",
+			loadFailedTitle: "تعذّر تحميل بيانات الدفع",
+			loadFailedDescription: "يرجى التحقق من اتصالك بالإنترنت والمحاولة مرة أخرى.",
 		},
 		orderConfirmation: {
 			title: "تم تأكيد الطلب رقم {number}",
