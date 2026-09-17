@@ -58,10 +58,10 @@ export const Checkout = () => {
 				{isRefetchError && (
 					<div
 						role="alert"
-						className="mx-auto mt-4 max-w-screen-sm rounded-md border border-amber-200 bg-amber-50 p-4"
+						className="mx-auto mb-6 max-w-screen-sm rounded-xl border border-s-4 border-status-warning/30 border-s-status-warning bg-status-warning/5 p-4 shadow-sm"
 					>
-						<p className="font-semibold text-neutral-900">{checkoutError.bannerTitle}</p>
-						<p className="mt-1 text-sm text-neutral-700">{checkoutError.bannerMessage}</p>
+						<p className="font-semibold text-content-primary">{checkoutError.bannerTitle}</p>
+						<p className="mt-1 text-sm text-content-secondary">{checkoutError.bannerMessage}</p>
 						<div className="mt-3">
 							<Button variant="secondary" label={readiness.tryAgain} onClick={retry} />
 						</div>
@@ -70,7 +70,7 @@ export const Checkout = () => {
 				{isEmptyCart ? (
 					<EmptyCartPage />
 				) : (
-					<div className="grid min-h-screen grid-cols-1 gap-8 gap-x-16 lg:grid-cols-2">
+					<div className="grid grid-cols-1 gap-8 gap-x-12 lg:grid-cols-[1fr_380px] lg:items-start lg:gap-x-16">
 						<div className={locale === "ar" ? "lg:order-2" : "lg:order-1"}>
 							<div className="hidden">
 								<CheckoutDiscovery checkout={checkout} />

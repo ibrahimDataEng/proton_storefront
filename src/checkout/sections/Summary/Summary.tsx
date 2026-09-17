@@ -50,8 +50,8 @@ export const Summary: FC<SummaryProps> = ({
 	return (
 		<div
 			className={clsx(
-				"z-0 flex h-fit w-full flex-col",
-				"before:fixed before:bottom-0 before:left-1/2 before:top-0 before:-z-10 before:w-1/2 before:border-l before:border-neutral-100 before:bg-[#FAF7F2] before:content-none before:lg:content-['']",
+				"flex h-fit w-full flex-col rounded-2xl border border-line-subtle bg-surface-raised p-5 shadow-raised sm:p-6",
+				"lg:sticky lg:top-24",
 			)}
 		>
 			<details open className="group">

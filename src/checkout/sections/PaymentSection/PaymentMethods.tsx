@@ -116,9 +116,9 @@ export const PaymentMethods = () => {
 							<label
 								key={gateway.id}
 								className={clsx(
-									"relative flex cursor-pointer flex-row items-center gap-3 rounded border px-4 py-3 transition-colors duration-150",
-									"border-neutral-300 hover:border-[#2d6a4f]",
-									{ "border-2 border-[#2d6a4f] bg-[#e8f5ee]": isSelected },
+									"relative flex cursor-pointer flex-row items-center gap-3 rounded-xl border px-4 py-3.5 transition-all duration-150",
+									"border-line-default hover:border-brand-primary/60",
+									{ "border-2 border-brand-primary bg-brand-primary/5 shadow-sm": isSelected },
 								)}
 							>
 								<input
@@ -127,14 +127,14 @@ export const PaymentMethods = () => {
 									value={gateway.id}
 									checked={isSelected}
 									onChange={() => setSelectedGatewayId(gateway.id)}
-									className="h-4 w-4 shrink-0 border-neutral-300 text-[#2d6a4f] focus:ring focus:ring-[#2d6a4f] focus:ring-opacity-30 focus:ring-offset-0"
+									className="h-4 w-4 shrink-0 border-line-default text-brand-primary focus:ring focus:ring-brand-primary focus:ring-opacity-30 focus:ring-offset-0"
 								/>
 								<span aria-hidden="true" className="text-xl leading-none">
 									{icon}
 								</span>
 								<span className="flex flex-col">
-									<span className="font-medium">{label}</span>
-									{description && <span className="text-sm text-neutral-500">{description}</span>}
+									<span className="font-medium text-content-primary">{label}</span>
+									{description && <span className="text-sm text-content-secondary">{description}</span>}
 								</span>
 							</label>
 						);
