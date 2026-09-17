@@ -6,6 +6,16 @@ import { isTokenExpiringSoon } from "@/lib/auth/jwt";
 
 const intlMiddleware = createMiddleware(routing);
 
+// The refresh self-fetch below must never go out through the public domain
+// (Cloudflare/Nginx) and back — request.url's protocol can't be trusted to
+// be https behind the reverse proxy, and a plain-HTTP self-fetch gets a 301
+// to https that fetch() follows by retrying as GET (spec behavior for a 301
+// on a POST), silently hitting this POST-only route as a 405. Hitting the
+// container's own loopback listener directly sidesteps the whole class of
+// problem — port 3000 is what docker-compose.server.yml publishes
+// (`127.0.0.1:3000:3000`) and what Next's standalone server.js listens on.
+const INTERNAL_ORIGIN = "http://127.0.0.1:3000";
+
 // @saleor/auth-sdk's SaleorAuthClient.fetchWithAuth reads a plain
 // (non-httpOnly) cookie literally named "token" via document.cookie on its
 // first call, adopts it as the checkout sub-app's access token, then
@@ -41,7 +51,7 @@ export default async function middleware(request: NextRequest): Promise<NextResp
 
 		if (refreshToken && (!accessToken || isTokenExpiringSoon(accessToken))) {
 			try {
-				const refreshUrl = new URL("/api/auth/refresh", request.url);
+				const refreshUrl = new URL("/api/auth/refresh", INTERNAL_ORIGIN);
 				const refreshRes = await fetch(refreshUrl, {
 					method: "POST",
 					headers: {
