@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { AuthFormField } from "./AuthFormField";
 import { Button } from "@/ui/components/Button";
@@ -13,6 +13,9 @@ export function SetPasswordForm() {
 	const t = useTranslations("auth");
 	const router = useRouter();
 	const searchParams = useSearchParams();
+	const params = useParams();
+	const channel = (params.channel as string) ?? "";
+	const locale = (params.locale as string) ?? "en";
 	const { setUser } = useAuth();
 
 	const token = searchParams.get("token") ?? "";
@@ -85,14 +88,14 @@ export function SetPasswordForm() {
 					setTokenInvalid(true);
 					return;
 				}
-				setFormError(t(`errors.${code}` , { defaultValue: t("errors.unknown") }));
+				setFormError(t(`errors.${code}`, { defaultValue: t("errors.unknown") }));
 				return;
 			}
 
 			if (data.user) setUser(data.user);
 			setSuccess(true);
 			setTimeout(() => {
-				router.push("/");
+				router.push(`/${locale}/${channel}`);
 				router.refresh();
 			}, 1500);
 		} catch {

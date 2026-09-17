@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { AnimatePresence, motion } from "framer-motion";
 import { AuthFormField } from "./AuthFormField";
@@ -49,6 +49,9 @@ export function LoginForm({ onForgotPassword }: Props) {
 	const t = useTranslations("auth");
 	const tPhoneLogin = useTranslations("phoneLogin");
 	const router = useRouter();
+	const params = useParams();
+	const channel = (params.channel as string) ?? "";
+	const locale = (params.locale as string) ?? "en";
 	const { closeAuthModal, setUser } = useAuth();
 
 	// The single "Email or Phone Number" field when the flag is on; a plain email
@@ -106,10 +109,10 @@ export function LoginForm({ onForgotPassword }: Props) {
 			}
 
 			closeAuthModal();
-			router.push("/");
+			router.push(`/${locale}/${channel}`);
 			router.refresh();
 		},
-		[setUser, closeAuthModal, router],
+		[setUser, closeAuthModal, router, locale, channel],
 	);
 
 	async function handleEmailSubmit(e: React.FormEvent) {

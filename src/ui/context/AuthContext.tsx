@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { type AuthUser } from "@/lib/auth/types";
 
 type AuthModalMode = "login" | "register";
@@ -27,6 +27,9 @@ type AuthProviderProps = {
 
 export function AuthProvider({ children, initialUser = null }: AuthProviderProps) {
 	const router = useRouter();
+	const params = useParams();
+	const channel = (params.channel as string) ?? "";
+	const locale = (params.locale as string) ?? "en";
 	const [user, setUser] = useState<AuthUser | null>(initialUser);
 	const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 	const [authModalMode, setAuthModalMode] = useState<AuthModalMode>("login");
@@ -43,9 +46,9 @@ export function AuthProvider({ children, initialUser = null }: AuthProviderProps
 	const logout = useCallback(async () => {
 		await fetch("/api/auth/logout", { method: "POST" });
 		setUser(null);
-		router.push("/");
+		router.push(`/${locale}/${channel}`);
 		router.refresh();
-	}, [router]);
+	}, [router, locale, channel]);
 
 	return (
 		<AuthContext.Provider

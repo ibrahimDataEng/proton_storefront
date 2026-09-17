@@ -1,15 +1,17 @@
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
 import { Container } from "@/ui/components/Container";
 import { SetPasswordForm } from "@/ui/components/auth/SetPasswordForm";
-import { COOKIE_ACCESS_TOKEN } from "@/lib/auth/cookies";
+import { resolveAuthenticatedUser } from "@/lib/identity";
 
-export default async function ResetPasswordPage() {
-	const cookieStore = await cookies();
-	if (cookieStore.get(COOKIE_ACCESS_TOKEN)?.value) {
-		redirect("/");
+export default async function ResetPasswordPage(props: {
+	params: Promise<{ locale: string; channel: string }>;
+}) {
+	const { locale, channel } = await props.params;
+	const authenticatedUser = await resolveAuthenticatedUser();
+	if (authenticatedUser) {
+		redirect(`/${locale}/${channel}`);
 	}
 
 	const t = await getTranslations("auth");

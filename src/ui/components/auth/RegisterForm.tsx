@@ -160,7 +160,7 @@ export function RegisterForm({ onConfirmationRequired }: Props) {
 				if (combinedPhone) void submitPhoneAfterAuth(email, combinedPhone);
 			}
 			closeAuthModal();
-			router.push("/");
+			router.push(`/${locale}/${channel}`);
 			router.refresh();
 		} catch {
 			setErrors({ form: t("errors.unknown") });
