@@ -19,3 +19,7 @@ export function isTokenExpiringSoon(token: string, thresholdSeconds = 300): bool
 		return true;
 	}
 }
+
+export function isExpired(token: string): boolean {
+	return isTokenExpiringSoon(token, 0);
+}
