@@ -8,7 +8,7 @@ import { AuthModal } from "@/ui/components/auth/AuthModal";
 import { PhoneGate } from "@/ui/components/auth/PhoneGate";
 import { PhoneSaveNoticeBanner } from "@/ui/components/auth/PhoneSaveNoticeBanner";
 import { COOKIE_ACCESS_TOKEN } from "@/lib/auth/cookies";
-import { decodeJwtPayload } from "@/lib/auth/jwt";
+import { decodeJwtPayload, isExpired } from "@/lib/auth/jwt";
 import { type AuthUser } from "@/lib/auth/types";
 
 const SALEOR_API_URL = process.env.NEXT_PUBLIC_SALEOR_API_URL!;
@@ -63,6 +63,7 @@ export const generateStaticParams = async () => {
 
 function getInitialUser(token: string | undefined): AuthUser | null {
 	if (!token) return null;
+	if (isExpired(token)) return null;
 	try {
 		const payload = decodeJwtPayload(token);
 		// Saleor JWT payload carries email; id and name need a separate fetch for full data.
