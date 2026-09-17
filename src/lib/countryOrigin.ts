@@ -19,7 +19,6 @@ export const COUNTRY_ORIGINS: readonly CountryOrigin[] = [
 	{ slug: "pakistan", nameEn: "Pakistan", nameAr: "باكستان", flagCode: "pk" },
 	{ slug: "chile", nameEn: "Chile", nameAr: "تشيلي", flagCode: "cl" },
 	{ slug: "nicaragua", nameEn: "Nicaragua", nameAr: "نيكاراغوا", flagCode: "ni" },
-	{ slug: "iran", nameEn: "Iran", nameAr: "إيران", flagCode: "ir" },
 	{ slug: "afghanistan", nameEn: "Afghanistan", nameAr: "أفغانستان", flagCode: "af" },
 	{ slug: "vietnam", nameEn: "Vietnam", nameAr: "فيتنام", flagCode: "vn" },
 	{ slug: "indonesia", nameEn: "Indonesia", nameAr: "إندونيسيا", flagCode: "id" },
