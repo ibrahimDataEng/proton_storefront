@@ -24,7 +24,7 @@ const SuccessMessage = ({ message }: { message: string }) => {
 	);
 };
 
-export const PaymentSection = () => {
+export const PaymentSection = ({ isCod }: { isCod: boolean }) => {
 	const { payment } = useCheckoutMessages();
 	const { order } = useOrder();
 	const paymentStatus = usePaymentStatus(order);
@@ -33,8 +33,13 @@ export const PaymentSection = () => {
 		<Section title={payment.payment}>
 			<div data-testid="paymentStatus">
 				<div className="flex flex-row items-center">
-					{paymentStatus === "authorized" && <SuccessMessage message={payment.receivedAuthorization} />}
-					{paymentStatus === "paidInFull" && <SuccessMessage message={payment.receivedPayment} />}
+					{/* COD's transactionInitialize always reports CHARGE_SUCCESS even
+					though no money has actually changed hands — never show a
+					payment-received message for it, regardless of chargeStatus. */}
+					{!isCod && paymentStatus === "authorized" && (
+						<SuccessMessage message={payment.receivedAuthorization} />
+					)}
+					{!isCod && paymentStatus === "paidInFull" && <SuccessMessage message={payment.receivedPayment} />}
 					{paymentStatus === "overpaid" && <ErrorMessage message={payment.overpaid} />}
 				</div>
 			</div>

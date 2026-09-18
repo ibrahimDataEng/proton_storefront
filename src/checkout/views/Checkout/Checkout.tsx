@@ -71,7 +71,12 @@ export const Checkout = () => {
 					<EmptyCartPage />
 				) : (
 					<div className="grid grid-cols-1 gap-8 gap-x-12 lg:grid-cols-[1fr_380px] lg:items-start lg:gap-x-16">
-						<div className={locale === "ar" ? "lg:order-2" : "lg:order-1"}>
+						{/* No order-* override — the grid's two differently-sized tracks
+						(1fr / 380px) auto-mirror correctly under dir="rtl" on their own;
+						an explicit order swap here would reassign which child inherits
+						which track's width instead of just its visual position, same as
+						CheckoutSkeleton (unchanged) and AuthPageShell/OrderConfirmation. */}
+						<div>
 							<div className="hidden">
 								<CheckoutDiscovery checkout={checkout} />
 							</div>
@@ -79,7 +84,7 @@ export const Checkout = () => {
 								<CheckoutForm onStepChange={handleStepChange} />
 							</Suspense>
 						</div>
-						<div className={locale === "ar" ? "lg:order-1" : "lg:order-2"}>
+						<div>
 							<Suspense fallback={<SummarySkeleton />}>
 								<Summary {...checkout} locked={isPaymentStep} />
 							</Suspense>
