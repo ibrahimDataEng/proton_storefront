@@ -157,7 +157,7 @@ export const OrderConfirmation = () => {
 					</div>
 				)}
 
-				<OrderInfo />
+				<OrderInfo isCod={isCod} />
 
 				<div className="mt-8 flex flex-col gap-3 sm:flex-row">
 					<a
