@@ -63,8 +63,8 @@ export const SummaryItemMoneyEditableSection: React.FC<SummaryItemMoneyEditableS
 			</FormProvider>
 			{isSubmitting ? (
 				<div className="flex max-w-[6ch] flex-col">
-					<Skeleton />
-					<Skeleton />
+					<Skeleton className="w-full" />
+					<Skeleton className="w-full" />
 				</div>
 			) : (
 				<SummaryItemMoneyInfo {...line} />

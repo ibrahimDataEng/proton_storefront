@@ -6,14 +6,14 @@ export const OrderConfirmationSkeleton = () => {
 		<div className="page">
 			<header>
 				<Skeleton className="title mb-6 h-4 w-72" />
-				<Skeleton />
+				<Skeleton className="w-full" />
 				<Skeleton className="w-2/3" />
 			</header>
 			<main className="mt-8 grid grid-cols-1 gap-8 gap-x-12 lg:grid-cols-[1fr_380px] lg:items-start lg:gap-x-16">
 				<div className="rounded-xl border border-line-subtle px-6 pb-4 pt-6">
 					<div className="mb-10">
 						<Skeleton variant="title" />
-						<Skeleton />
+						<Skeleton className="w-2/3" />
 					</div>
 					<div className="mb-10">
 						<Skeleton variant="title" />
