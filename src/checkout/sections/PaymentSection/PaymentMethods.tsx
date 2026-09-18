@@ -46,11 +46,12 @@ export const PaymentMethods = () => {
 		[availablePaymentGateways],
 	);
 
-	// Amazon-style default: the first available method is pre-selected
-	// rather than requiring an explicit click before anything can proceed —
-	// same "auto-pick a sensible default, let the user override" precedent
-	// DeliveryMethods' own useDeliveryMethodsForm already uses for shipping
-	// method selection (getAutoSetMethod). Re-validated whenever the
+	// No default pre-selection: the customer must actively pick a gateway
+	// before its component mounts (and, in turn, before any gateway's own
+	// Pay/Confirm button can even appear) — an earlier "Amazon-style" default
+	// silently auto-picked the first available method (in practice, always
+	// COD), which meant a customer could complete checkout without ever
+	// choosing cash-on-delivery on purpose. Re-validated whenever the
 	// available gateway list changes, so a stale selection id (e.g. a
 	// gateway that stopped being available) never points at nothing.
 	const [selectedGatewayId, setSelectedGatewayId] = useState<string | undefined>(undefined);
@@ -60,25 +61,30 @@ export const PaymentMethods = () => {
 			return;
 		}
 
-		// Returning from a payment redirect overrides the "first available"
-		// default — Stripe's own return_url carries payment_intent/
-		// payment_intent_client_secret (Adyen's equivalent uses
-		// redirectResult/resultCode instead, and COD never redirects at all —
-		// see src/checkout/lib/utils/url.ts's queryParamsMap), so this pair's
-		// mere presence unambiguously means Stripe's reconciliation needs to
-		// run, regardless of which gateway would otherwise sort first. Without
-		// this, a fresh page load after Stripe's redirect silently re-defaults
-		// to COD (or whatever sorts first) and StripeComponent — the only code
-		// that reads these params and calls transactionProcess — never mounts,
-		// leaving the "Almost done..." overlay stuck forever even though
-		// Stripe already confirmed the payment.
+		// Returning from a payment redirect is not a "default" — it's Stripe's
+		// own return_url carrying payment_intent/payment_intent_client_secret
+		// (Adyen's equivalent uses redirectResult/resultCode instead, and COD
+		// never redirects at all — see src/checkout/lib/utils/url.ts's
+		// queryParamsMap), so this pair's mere presence unambiguously means
+		// Stripe's reconciliation needs to run regardless of any other
+		// gateway's position in the list. Without this, a fresh page load
+		// after Stripe's redirect would sit unselected and StripeComponent —
+		// the only code that reads these params and calls transactionProcess —
+		// would never mount, leaving the "Almost done..." overlay stuck
+		// forever even though Stripe already confirmed the payment.
 		const { paymentIntent } = getQueryParams();
 		if (paymentIntent && gatewaysWithDefinedComponent.some(({ id }) => id === stripeGatewayId)) {
 			setSelectedGatewayId(stripeGatewayId);
 			return;
 		}
 
-		setSelectedGatewayId(gatewaysWithDefinedComponent[0]?.id);
+		// A single available gateway isn't a "choice" — the radio list below
+		// is hidden in that case (length > 1 gate), so there's nothing for the
+		// customer to click; auto-select it or checkout would be stuck with
+		// no way to proceed.
+		if (gatewaysWithDefinedComponent.length === 1) {
+			setSelectedGatewayId(gatewaysWithDefinedComponent[0]?.id);
+		}
 	}, [gatewaysWithDefinedComponent, selectedGatewayId]);
 
 	// A COD marker nobody has claimed yet (e.g. a COD attempt that failed) must
