@@ -8,7 +8,7 @@ export interface CountryOrigin {
 }
 
 export const COUNTRY_ORIGINS: readonly CountryOrigin[] = [
-	{ slug: "syria", nameEn: "Syria", nameAr: "سوريا", flagCode: "sy" },
+	// Syria temporarily removed pending the Stripe account restriction review — do not restore without checking that review's status first.
 	{ slug: "egypt", nameEn: "Egypt", nameAr: "مصر", flagCode: "eg" },
 	{ slug: "india", nameEn: "India", nameAr: "الهند", flagCode: "in" },
 	{ slug: "united-states", nameEn: "United States", nameAr: "الولايات المتحدة", flagCode: "us" },

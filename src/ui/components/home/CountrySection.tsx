@@ -14,7 +14,7 @@ import { getCountryBySlug } from "@/lib/countryOrigin";
  * showcase, not the PLP filter.
  */
 const HOMEPAGE_COUNTRY_SLUGS = [
-	"syria",
+	// Syria temporarily removed pending the Stripe account restriction review — see countryOrigin.ts.
 	"egypt",
 	"india",
 	"united-states",
@@ -28,7 +28,6 @@ const HOMEPAGE_COUNTRY_SLUGS = [
 ] as const;
 
 const HOMEPAGE_COUNTRY_EMOJI: Record<(typeof HOMEPAGE_COUNTRY_SLUGS)[number], string> = {
-	syria: "🇸🇾",
 	egypt: "🇪🇬",
 	india: "🇮🇳",
 	"united-states": "🇺🇸",
