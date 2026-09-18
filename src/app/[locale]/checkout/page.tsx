@@ -44,15 +44,15 @@ export default async function CheckoutPage(props: {
 	const cartHref = checkoutChannel ? `/${locale}/${checkoutChannel}/cart` : `/${locale}`;
 
 	return (
-		<div className="min-h-dvh bg-[#FAF7F2]" dir={locale === "ar" ? "rtl" : "ltr"}>
-			<header className="border-b border-neutral-100 bg-white">
+		<div className="min-h-dvh bg-surface-base" dir={locale === "ar" ? "rtl" : "ltr"}>
+			<header className="border-b border-line-subtle bg-surface-raised">
 				<div className="mx-auto flex min-h-[64px] max-w-7xl items-center px-6 md:px-8">
 					{/* Left: Back to cart */}
 					<div className="flex flex-1 items-center">
 						<Link
 							href={cartHref}
 							aria-label={locale === "ar" ? "العودة للسلة" : "Back to cart"}
-							className="group flex items-center gap-2 text-sm text-neutral-500 transition-colors hover:text-neutral-800"
+							className="group flex items-center gap-2 text-sm text-content-secondary transition-colors hover:text-content-primary"
 						>
 							<svg
 								width="20"
@@ -92,7 +92,7 @@ export default async function CheckoutPage(props: {
 							href="https://wa.me/971558711442"
 							target="_blank"
 							rel="noopener noreferrer"
-							className="flex items-center gap-2 text-sm text-[#2d6a4f] transition-colors hover:text-[#235c43]"
+							className="flex items-center gap-2 text-sm text-brand-primary transition-colors hover:text-brand-primary/80"
 						>
 							<svg
 								width="18"
@@ -119,8 +119,10 @@ export default async function CheckoutPage(props: {
 
 			{/* Main checkout section */}
 			<section className="mx-auto flex min-h-dvh max-w-7xl flex-col px-4 pb-8 pt-6 md:px-8">
-				<h1 className="mb-6 text-2xl font-bold text-neutral-800">{locale === "ar" ? "الدفع" : "Checkout"}</h1>
-				<section className="mb-6 flex-1 rounded-xl border border-neutral-100/80 bg-white p-4 shadow-sm md:p-8">
+				<h1 className="mb-6 text-2xl font-bold text-content-primary">
+					{locale === "ar" ? "الدفع" : "Checkout"}
+				</h1>
+				<section className="mb-6 flex-1 rounded-xl border border-line-subtle/80 bg-surface-raised p-4 shadow-sm md:p-8">
 					<RootWrapper saleorApiUrl={process.env.NEXT_PUBLIC_SALEOR_API_URL} />
 				</section>
 			</section>
