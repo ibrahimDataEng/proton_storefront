@@ -1,5 +1,5 @@
-mutation AccountConfirm($email: String!, $token: String!) {
-	confirmAccount(email: $email, token: $token) {
+mutation AccountConfirm($email: String!, $token: String!, $password: String!) {
+	confirmAccount(email: $email, token: $token, password: $password) {
 		user {
 			id
 			email

@@ -1,41 +1,88 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { m } from "framer-motion";
 import { CheckCircle2, Loader2, XCircle } from "lucide-react";
+import { AuthFormField } from "./AuthFormField";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
+import { Button } from "@/ui/components/Button";
 
-type State = "pending" | "success" | "error";
+type State = "form" | "pending" | "success" | "error";
 
 export function ConfirmAccountClient() {
 	const t = useTranslations("confirmAccount");
+	const tAuth = useTranslations("auth");
 	const searchParams = useSearchParams();
 	const email = searchParams.get("email") ?? "";
 	const token = searchParams.get("token") ?? "";
 
-	const [state, setState] = useState<State>(email && token ? "pending" : "error");
-	const ranRef = useRef(false);
+	const [state, setState] = useState<State>(email && token ? "form" : "error");
+	const [password, setPassword] = useState("");
+	const [confirmPassword, setConfirmPassword] = useState("");
+	const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-	useEffect(() => {
-		if (!email || !token || ranRef.current) return;
-		ranRef.current = true;
+	function validate(): boolean {
+		const next: Record<string, string> = {};
+		if (password.length < 8) next.password = tAuth("errors.PASSWORD_TOO_SHORT");
+		if (password !== confirmPassword) next.confirmPassword = tAuth("errors.PASSWORD_MISMATCH");
+		setFieldErrors(next);
+		return Object.keys(next).length === 0;
+	}
 
-		void (async () => {
-			try {
-				const res = await fetch("/api/auth/confirm-account", {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({ email, token }),
-				});
-				const data = (await res.json()) as { success?: boolean; error?: string };
-				setState(res.ok && data.success ? "success" : "error");
-			} catch {
-				setState("error");
-			}
-		})();
-	}, [email, token]);
+	async function handleSubmit(e: React.FormEvent) {
+		e.preventDefault();
+		if (!validate()) return;
+
+		setFieldErrors({});
+		setState("pending");
+
+		try {
+			const res = await fetch("/api/auth/confirm-account", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ email, token, password }),
+			});
+			const data = (await res.json()) as { success?: boolean; error?: string };
+			setState(res.ok && data.success ? "success" : "error");
+		} catch {
+			setState("error");
+		}
+	}
+
+	if (state === "form") {
+		return (
+			<m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
+				<p className="mb-6 text-center text-sm text-content-secondary">{t("passwordPrompt")}</p>
+				<form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+					<AuthFormField
+						id="confirm-account-password"
+						label={tAuth("password")}
+						type="password"
+						autoComplete="new-password"
+						required
+						value={password}
+						onChange={(e) => setPassword(e.target.value)}
+						error={fieldErrors.password}
+					/>
+					<AuthFormField
+						id="confirm-account-confirm-password"
+						label={tAuth("confirmPassword")}
+						type="password"
+						autoComplete="new-password"
+						required
+						value={confirmPassword}
+						onChange={(e) => setConfirmPassword(e.target.value)}
+						error={fieldErrors.confirmPassword}
+					/>
+					<Button type="submit" variant="primary" size="md" className="w-full">
+						{t("confirmButton")}
+					</Button>
+				</form>
+			</m.div>
+		);
+	}
 
 	if (state === "pending") {
 		return (
