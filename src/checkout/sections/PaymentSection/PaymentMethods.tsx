@@ -1,6 +1,7 @@
 import clsx from "clsx";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { paymentMethodToComponent } from "./supportedPaymentApps";
+import { Button } from "@/checkout/components/Button";
 import { codGatewayId } from "@/checkout/sections/PaymentSection/CODComponent/types";
 import { stripeGatewayId } from "@/checkout/sections/PaymentSection/StripeElements/types";
 import { PaymentSectionSkeleton } from "@/checkout/sections/PaymentSection/PaymentSectionSkeleton";
@@ -9,6 +10,8 @@ import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 import { getQueryParams } from "@/checkout/lib/utils/url";
 import { clearUnclaimedPaymentGateway } from "@/checkout/lib/lastPaymentGateway";
 import { useCheckoutUpdateState } from "@/checkout/state/updateStateStore";
+
+const WHATSAPP_URL = "https://wa.me/971558711442";
 
 /**
  * Presentation-only lookup — payment.title/cashOnDelivery/creditCard etc.
@@ -32,9 +35,19 @@ const useGatewayDisplayInfo = () => {
 	};
 };
 
+// Retrying re-mounts PaymentMethodsInner via a key bump rather than calling
+// into usePayments/usePaymentGatewaysInitialize directly (both live under
+// hooks/ conventions this session isn't approved to touch) — a fresh mount
+// re-runs that hook's own on-mount initialize effect exactly as a real page
+// load would, with no change to its internals.
 export const PaymentMethods = () => {
+	const [retryKey, setRetryKey] = useState(0);
+	return <PaymentMethodsInner key={retryKey} onRetry={() => setRetryKey((key) => key + 1)} />;
+};
+
+const PaymentMethodsInner = ({ onRetry }: { onRetry: () => void }) => {
 	const { availablePaymentGateways, fetching } = usePayments();
-	const { payment } = useCheckoutMessages();
+	const { payment, readiness } = useCheckoutMessages();
 	const getGatewayDisplayInfo = useGatewayDisplayInfo();
 	const {
 		changingBillingCountry,
@@ -96,9 +109,81 @@ export const PaymentMethods = () => {
 		}
 	}, [selectedGatewayId]);
 
+	// Stripe's return_url lands here with the payment already taken — the
+	// reconciliation that follows (StripeComponent reading payment_intent from
+	// the URL) must never be replaced by this panel, even if gateway init
+	// itself comes back empty on this particular mount.
+	const isRedirectReturn = !!getQueryParams().processingPayment;
+
+	// usePaymentGatewaysInitialize's own mutation-in-flight `fetching` starts
+	// false and only flips true once its mount effect actually calls the
+	// mutation — so on the very first render, before that effect has run,
+	// `fetching` is false AND its gatewayConfigs state is still its initial
+	// empty array. Without this ref, that single tick looks identical to
+	// "initialization finished with nothing usable" and both the panel and
+	// its log would fire immediately on every mount, real failure or not
+	// (caught live: the log fired even on a normal COD-only mount that
+	// rendered correctly moments later). Once a real fetch cycle is observed,
+	// "no gateway" can only mean it has actually settled empty.
+	const hasStartedInitializing = useRef(false);
+	useEffect(() => {
+		if (fetching) {
+			hasStartedInitializing.current = true;
+		}
+	}, [fetching]);
+
 	// delivery methods change total price so we want to wait until the change is done
-	if (changingBillingCountry || fetching || checkoutDeliveryMethodUpdate === "loading") {
+	const isLoading = changingBillingCountry || fetching || checkoutDeliveryMethodUpdate === "loading";
+
+	// True once initialization has settled with nothing usable to show: either
+	// paymentGatewaysInitialize returned no gateway at all (the 2026-09-16
+	// incident — every app failed init), or it returned gateways this
+	// checkout has no component wired for (paymentMethodToComponent gap).
+	// Logged once per mount so a retry (a fresh mount, see PaymentMethods
+	// above) can log again if it still fails.
+	const hasNoUsableGateway =
+		hasStartedInitializing.current &&
+		!isLoading &&
+		!isRedirectReturn &&
+		gatewaysWithDefinedComponent.length === 0;
+	const loggedRef = useRef(false);
+
+	useEffect(() => {
+		if (!hasNoUsableGateway || loggedRef.current) {
+			return;
+		}
+		loggedRef.current = true;
+		console.error("[checkout-payment] no usable payment gateway after initialization", {
+			reason: availablePaymentGateways.length === 0 ? "gatewayInitializeFailed" : "noSupportedComponent",
+		});
+	}, [hasNoUsableGateway, availablePaymentGateways.length]);
+
+	if (isLoading) {
 		return <PaymentSectionSkeleton />;
+	}
+
+	if (hasNoUsableGateway) {
+		return (
+			<div
+				role="alert"
+				data-testid="paymentGatewaysUnavailable"
+				className="mt-4 rounded-xl border border-s-4 border-status-warning/30 border-s-status-warning bg-status-warning/5 p-4 shadow-sm"
+			>
+				<p className="font-semibold text-content-primary">{payment.gatewaysUnavailableTitle}</p>
+				<p className="mt-1 text-sm text-content-secondary">{payment.gatewaysUnavailableMessage}</p>
+				<div className="mt-3 flex flex-wrap gap-3">
+					<Button variant="primary" label={readiness.tryAgain} onClick={onRetry} />
+					<a
+						href={WHATSAPP_URL}
+						target="_blank"
+						rel="noopener noreferrer"
+						className="inline-flex h-10 items-center justify-center whitespace-nowrap rounded border border-line-default px-4 font-semibold text-content-primary transition-colors duration-200 hover:bg-surface-sunken"
+					>
+						{payment.contactWhatsApp}
+					</a>
+				</div>
+			</div>
+		);
 	}
 
 	const selectedGateway = gatewaysWithDefinedComponent.find(({ id }) => id === selectedGatewayId);
