@@ -59,6 +59,26 @@ const PaymentMethodsInner = ({ onRetry }: { onRetry: () => void }) => {
 		[availablePaymentGateways],
 	);
 
+	// A gateway that failed its own init webhook (401 / timeout / connection
+	// refused — indistinguishable at this layer, confirmed against Saleor's
+	// PaymentGatewayInitialize.prepare_response()) is still present in
+	// gatewaysWithDefinedComponent: Saleor always returns one entry per
+	// requested app, never omits a failed one, so `gateway.id in
+	// paymentMethodToComponent` alone can't tell a broken entry from a
+	// working one. A failed entry carries a non-empty `errors` array; a
+	// healthy one's is always `[]` (confirmed for COD specifically — a
+	// successful init has `data: {}`, not `null`, which is why `data` is not
+	// used as the discriminator here: an empty-but-valid `data` would be
+	// wrongly excluded by a `data == null` check).
+	const usableGateways = useMemo(
+		() => gatewaysWithDefinedComponent.filter((gateway) => !gateway.errors?.length),
+		[gatewaysWithDefinedComponent],
+	);
+	const excludedGateways = useMemo(
+		() => gatewaysWithDefinedComponent.filter((gateway) => gateway.errors?.length),
+		[gatewaysWithDefinedComponent],
+	);
+
 	// No default pre-selection: the customer must actively pick a gateway
 	// before its component mounts (and, in turn, before any gateway's own
 	// Pay/Confirm button can even appear) — an earlier "Amazon-style" default
@@ -70,7 +90,7 @@ const PaymentMethodsInner = ({ onRetry }: { onRetry: () => void }) => {
 	const [selectedGatewayId, setSelectedGatewayId] = useState<string | undefined>(undefined);
 
 	useEffect(() => {
-		if (selectedGatewayId && gatewaysWithDefinedComponent.some(({ id }) => id === selectedGatewayId)) {
+		if (selectedGatewayId && usableGateways.some(({ id }) => id === selectedGatewayId)) {
 			return;
 		}
 
@@ -84,21 +104,24 @@ const PaymentMethodsInner = ({ onRetry }: { onRetry: () => void }) => {
 		// after Stripe's redirect would sit unselected and StripeComponent —
 		// the only code that reads these params and calls transactionProcess —
 		// would never mount, leaving the "Almost done..." overlay stuck
-		// forever even though Stripe already confirmed the payment.
+		// forever even though Stripe already confirmed the payment. Gated on
+		// usableGateways, not gatewaysWithDefinedComponent — selecting a
+		// Stripe entry that itself failed init would mount StripeComponent
+		// with no publishable key instead of reconciling anything.
 		const { paymentIntent } = getQueryParams();
-		if (paymentIntent && gatewaysWithDefinedComponent.some(({ id }) => id === stripeGatewayId)) {
+		if (paymentIntent && usableGateways.some(({ id }) => id === stripeGatewayId)) {
 			setSelectedGatewayId(stripeGatewayId);
 			return;
 		}
 
-		// A single available gateway isn't a "choice" — the radio list below
-		// is hidden in that case (length > 1 gate), so there's nothing for the
+		// A single usable gateway isn't a "choice" — the radio list below is
+		// hidden in that case (length > 1 gate), so there's nothing for the
 		// customer to click; auto-select it or checkout would be stuck with
 		// no way to proceed.
-		if (gatewaysWithDefinedComponent.length === 1) {
-			setSelectedGatewayId(gatewaysWithDefinedComponent[0]?.id);
+		if (usableGateways.length === 1) {
+			setSelectedGatewayId(usableGateways[0]?.id);
 		}
-	}, [gatewaysWithDefinedComponent, selectedGatewayId]);
+	}, [usableGateways, selectedGatewayId]);
 
 	// A COD marker nobody has claimed yet (e.g. a COD attempt that failed) must
 	// not follow the customer into a card payment — otherwise that order's
@@ -136,27 +159,54 @@ const PaymentMethodsInner = ({ onRetry }: { onRetry: () => void }) => {
 	const isLoading = changingBillingCountry || fetching || checkoutDeliveryMethodUpdate === "loading";
 
 	// True once initialization has settled with nothing usable to show: either
-	// paymentGatewaysInitialize returned no gateway at all (the 2026-09-16
-	// incident — every app failed init), or it returned gateways this
-	// checkout has no component wired for (paymentMethodToComponent gap).
-	// Logged once per mount so a retry (a fresh mount, see PaymentMethods
-	// above) can log again if it still fails.
+	// paymentGatewaysInitialize returned no gateway with a component wired for
+	// it at all, or every gateway it did return failed its own init webhook
+	// (the 2026-09-16 incident's actual shape — confirmed against Saleor's
+	// PaymentGatewayInitialize.prepare_response(): a failed init is never
+	// omitted, it comes back as an entry with a populated `errors` array, so
+	// checking gatewaysWithDefinedComponent alone would miss this — see
+	// usableGateways above). Logged once per mount so a retry (a fresh mount,
+	// see PaymentMethods above) can log again if it still fails.
 	const hasNoUsableGateway =
-		hasStartedInitializing.current &&
-		!isLoading &&
-		!isRedirectReturn &&
-		gatewaysWithDefinedComponent.length === 0;
-	const loggedRef = useRef(false);
+		hasStartedInitializing.current && !isLoading && !isRedirectReturn && usableGateways.length === 0;
+	const loggedErrorRef = useRef(false);
 
 	useEffect(() => {
-		if (!hasNoUsableGateway || loggedRef.current) {
+		if (!hasNoUsableGateway || loggedErrorRef.current) {
 			return;
 		}
-		loggedRef.current = true;
+		loggedErrorRef.current = true;
 		console.error("[checkout-payment] no usable payment gateway after initialization", {
-			reason: availablePaymentGateways.length === 0 ? "gatewayInitializeFailed" : "noSupportedComponent",
+			reason: gatewaysWithDefinedComponent.length === 0 ? "noGatewaysReturned" : "allGatewaysErrored",
+			// Ids and error codes only — never the free-form `message` field,
+			// which is app-authored text, not something this client should log.
+			gateways: gatewaysWithDefinedComponent.map((gateway) => ({
+				id: gateway.id,
+				codes: (gateway.errors ?? []).map((error) => error.code),
+			})),
 		});
-	}, [hasNoUsableGateway, availablePaymentGateways.length]);
+	}, [hasNoUsableGateway, gatewaysWithDefinedComponent]);
+
+	// Mixed case: at least one gateway is usable, but not all of them are —
+	// the customer still gets a working Payment step, but this is worth
+	// surfacing (once) since it means one gateway is silently unavailable
+	// rather than genuinely absent.
+	const hasPartialFailure =
+		!isLoading && !isRedirectReturn && usableGateways.length > 0 && excludedGateways.length > 0;
+	const loggedWarnRef = useRef(false);
+
+	useEffect(() => {
+		if (!hasPartialFailure || loggedWarnRef.current) {
+			return;
+		}
+		loggedWarnRef.current = true;
+		console.warn("[checkout-payment] some payment gateways failed initialization", {
+			excluded: excludedGateways.map((gateway) => ({
+				id: gateway.id,
+				codes: (gateway.errors ?? []).map((error) => error.code),
+			})),
+		});
+	}, [hasPartialFailure, excludedGateways]);
 
 	if (isLoading) {
 		return <PaymentSectionSkeleton />;
@@ -186,10 +236,11 @@ const PaymentMethodsInner = ({ onRetry }: { onRetry: () => void }) => {
 		);
 	}
 
-	const selectedGateway = gatewaysWithDefinedComponent.find(({ id }) => id === selectedGatewayId);
+	const selectedGateway = usableGateways.find(({ id }) => id === selectedGatewayId);
 	// gateway.id matches one of paymentMethodToComponent's keys by construction
-	// (gatewaysWithDefinedComponent is filtered against that same object) —
-	// TypeScript can't see that relationship through the .find() lookup.
+	// (usableGateways is a subset of gatewaysWithDefinedComponent, itself
+	// filtered against that same object) — TypeScript can't see that
+	// relationship through the .find() lookup.
 	const SelectedComponent = selectedGateway
 		? // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
 			paymentMethodToComponent[selectedGateway.id as keyof typeof paymentMethodToComponent]
@@ -197,9 +248,9 @@ const PaymentMethodsInner = ({ onRetry }: { onRetry: () => void }) => {
 
 	return (
 		<div className="flex flex-col gap-y-4">
-			{gatewaysWithDefinedComponent.length > 1 && (
+			{usableGateways.length > 1 && (
 				<div role="radiogroup" aria-label={payment.title} className="flex flex-col gap-y-2">
-					{gatewaysWithDefinedComponent.map((gateway) => {
+					{usableGateways.map((gateway) => {
 						const isSelected = gateway.id === selectedGatewayId;
 						const { icon, label, description } = getGatewayDisplayInfo(gateway.id);
 
