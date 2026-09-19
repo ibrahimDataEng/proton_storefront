@@ -84,6 +84,9 @@ const checkoutMessages = {
 				"Your order has been paid more than owed. This may be an error during payment. Contact your shop staff for help.",
 			paymentProcessingError: "There was an error processing your payment.",
 			unexpectedError: "An unexpected error occurred.",
+			gatewaysUnavailableTitle: "Payment is temporarily unavailable",
+			gatewaysUnavailableMessage: "Your cart is saved — please try again in a moment.",
+			contactWhatsApp: "Contact us on WhatsApp",
 		},
 		summary: {
 			title: "Summary",
@@ -369,6 +372,9 @@ const checkoutMessages = {
 				"تم دفع مبلغ أكبر من المستحق لهذا الطلب. قد يكون هناك خطأ أثناء عملية الدفع. يرجى التواصل مع المتجر للمساعدة.",
 			paymentProcessingError: "حدث خطأ أثناء معالجة الدفع.",
 			unexpectedError: "حدث خطأ غير متوقع.",
+			gatewaysUnavailableTitle: "الدفع غير متاح مؤقتًا",
+			gatewaysUnavailableMessage: "سلتك محفوظة — يرجى المحاولة مرة أخرى بعد قليل.",
+			contactWhatsApp: "تواصل معنا عبر واتساب",
 		},
 		summary: {
 			title: "الملخص",
