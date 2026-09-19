@@ -102,19 +102,19 @@ export const OrderConfirmation = () => {
 		<main className="grid grid-cols-1 gap-x-16 lg:grid-cols-2" dir={locale === "ar" ? "rtl" : "ltr"}>
 			<div>
 				<div className="mb-6 flex items-center gap-3">
-					<div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#e8f5ee]">
-						<svg className="h-6 w-6 text-[#2d6a4f]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+					<div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-primary/10">
+						<svg className="h-6 w-6 text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
 						</svg>
 					</div>
 					<div>
-						<p className="text-lg font-bold text-[#1a4a32]" data-testid="orderConfrmationTitle">
+						<p className="text-lg font-bold text-brand-primary" data-testid="orderConfrmationTitle">
 							{orderConfirmation.title.replace("{number}", order.number ?? "")}
 						</p>
-						<p className="text-sm text-neutral-500">
+						<p className="text-sm text-content-secondary">
 							{orderConfirmation.description.replace("{email}", order.userEmail ?? "")}
 						</p>
-						<p className="mt-1 text-xs text-neutral-400">{orderConfirmation.checkSpamFolder}</p>
+						<p className="mt-1 text-xs text-content-secondary">{orderConfirmation.checkSpamFolder}</p>
 					</div>
 				</div>
 
@@ -124,31 +124,35 @@ export const OrderConfirmation = () => {
 							<div className="flex flex-col items-center gap-1">
 								<div
 									className={`flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold ${
-										index === 0 ? "bg-[#2d6a4f] text-white" : "bg-neutral-200 text-neutral-400"
+										index === 0
+											? "bg-brand-primary text-content-inverse"
+											: "bg-line-subtle text-content-secondary"
 									}`}
 								>
 									{index + 1}
 								</div>
 								<span
 									className={`whitespace-nowrap text-[11px] ${
-										index === 0 ? "font-semibold text-[#2d6a4f]" : "text-neutral-400"
+										index === 0 ? "font-semibold text-brand-primary" : "text-content-secondary"
 									}`}
 								>
 									{step.label}
 								</span>
 							</div>
-							{index < statusSteps.length - 1 && <div className="mx-2 h-px flex-1 bg-neutral-200" />}
+							{index < statusSteps.length - 1 && <div className="mx-2 h-px flex-1 bg-line-subtle" />}
 						</li>
 					))}
 				</ol>
 
-				<div className="mb-6 rounded-lg border border-neutral-200 bg-neutral-50 p-4">
-					<p className="text-sm font-semibold text-neutral-700">{orderConfirmation.estimatedDeliveryTitle}</p>
-					<p className="mt-1 text-sm text-neutral-500">{estimatedDeliveryValue}</p>
+				<div className="mb-6 rounded-lg border border-line-subtle bg-surface-sunken p-4">
+					<p className="text-sm font-semibold text-content-primary">
+						{orderConfirmation.estimatedDeliveryTitle}
+					</p>
+					<p className="mt-1 text-sm text-content-secondary">{estimatedDeliveryValue}</p>
 				</div>
 
 				{isCod && (
-					<div className="mb-6 rounded-lg bg-[#fff8e6] p-4 text-sm text-[#8a6d1a]">
+					<div className="mb-6 rounded-lg bg-status-warning/10 p-4 text-sm text-status-warning">
 						💵{" "}
 						{orderConfirmation.codReminder.replace(
 							"{amount}",
@@ -162,24 +166,24 @@ export const OrderConfirmation = () => {
 				<div className="mt-8 flex flex-col gap-3 sm:flex-row">
 					<a
 						href={`/${locale}`}
-						className="flex-1 rounded-md bg-[#2d6a4f] px-6 py-3 text-center text-sm font-medium text-white hover:bg-[#235c43]"
+						className="flex-1 rounded-md bg-brand-primary px-6 py-3 text-center text-sm font-medium text-content-inverse hover:bg-brand-primary/90"
 					>
 						{orderConfirmation.continueShopping}
 					</a>
 					<button
 						onClick={() => window.print()}
-						className="flex-1 rounded-md border border-neutral-300 px-6 py-3 text-center text-sm font-medium text-neutral-700 hover:bg-neutral-50"
+						className="flex-1 rounded-md border border-line-default px-6 py-3 text-center text-sm font-medium text-content-primary hover:bg-surface-sunken"
 					>
 						{orderConfirmation.printOrder}
 					</button>
 				</div>
 
-				<div className="mt-6 rounded-lg bg-[#e8f5ee] p-4 text-sm text-[#2d6a4f]">
+				<div className="mt-6 rounded-lg bg-brand-primary/10 p-4 text-sm text-brand-primary">
 					<a
 						href="https://wa.me/971558711442"
 						target="_blank"
 						rel="noopener noreferrer"
-						className="font-medium underline hover:text-[#1a4a32]"
+						className="font-medium underline hover:text-brand-primary/80"
 					>
 						{orderConfirmation.needHelp}
 					</a>
