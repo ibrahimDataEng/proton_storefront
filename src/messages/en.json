@@ -228,6 +228,27 @@
 		"emptyTitle": "No recently viewed products",
 		"emptySubtitle": "Products you view will appear here so you can find them again easily."
 	},
+	"orderTracking": {
+		"pageTitle": "Track Your Order",
+		"orderNumber": "Order #{number}",
+		"orderDate": "Placed on {date}",
+		"stage1Placed": "Order placed",
+		"stage2Preparing": "Preparing",
+		"stage3OutForDelivery": "Out for delivery",
+		"stage4Delivered": "Delivered",
+		"cancelledTitle": "This order was cancelled",
+		"cancelledBody": "If you believe this is a mistake, please contact us and we'll be happy to help.",
+		"returnedTitle": "This order was returned",
+		"returnedBody": "Please contact us if you have any questions about this return.",
+		"notFoundTitle": "Order not found",
+		"notFoundBody": "We couldn't find an order matching this link. Please check the link from your confirmation email, or contact us for help.",
+		"itemsTitle": "Items",
+		"shippingAddress": "Shipping Address",
+		"total": "Total",
+		"codDueOnDelivery": "Amount due on delivery: {amount}",
+		"contactUs": "Contact Us",
+		"backHome": "Go Home"
+	},
 	"contact": {
 		"title": "Contact Us",
 		"subtitle": "We'd love to hear from you. Send us a message and we'll get back to you as soon as possible.",
