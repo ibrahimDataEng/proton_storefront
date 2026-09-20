@@ -22,6 +22,7 @@ export function ConfirmAccountClient() {
 	const [password, setPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
 	const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+	const [formError, setFormError] = useState<string | null>(null);
 
 	function validate(): boolean {
 		const next: Record<string, string> = {};
@@ -36,6 +37,7 @@ export function ConfirmAccountClient() {
 		if (!validate()) return;
 
 		setFieldErrors({});
+		setFormError(null);
 		setState("pending");
 
 		try {
@@ -45,7 +47,22 @@ export function ConfirmAccountClient() {
 				body: JSON.stringify({ email, token, password }),
 			});
 			const data = (await res.json()) as { success?: boolean; error?: string };
-			setState(res.ok && data.success ? "success" : "error");
+
+			if (res.ok && data.success) {
+				setState("success");
+				return;
+			}
+
+			// A wrong password (as opposed to an invalid/expired token) still has a
+			// valid, reusable token — let the user retry instead of stranding them on
+			// the generic terminal error screen.
+			if (data.error === "INVALID_PASSWORD") {
+				setFormError(tAuth("errors.INVALID_PASSWORD"));
+				setState("form");
+				return;
+			}
+
+			setState("error");
 		} catch {
 			setState("error");
 		}
@@ -56,6 +73,11 @@ export function ConfirmAccountClient() {
 			<m.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.3 }}>
 				<p className="mb-6 text-center text-sm text-content-secondary">{t("passwordPrompt")}</p>
 				<form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+					{formError && (
+						<p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+							{formError}
+						</p>
+					)}
 					<AuthFormField
 						id="confirm-account-password"
 						label={tAuth("password")}

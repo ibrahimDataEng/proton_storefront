@@ -12,12 +12,21 @@ const CONFIRM_ACCOUNT = `
 `;
 
 const ERROR_MAP: Record<string, string> = {
-	INVALID: "TOKEN_INVALID",
 	NOT_FOUND: "TOKEN_INVALID",
 	INVALID_PASSWORD: "INVALID_PASSWORD",
 	PASSWORD_TOO_SHORT: "PASSWORD_TOO_SHORT",
 	PASSWORD_TOO_SIMILAR: "PASSWORD_TOO_SIMILAR",
 };
+
+// Saleor's confirmAccount resolver returns the identical code: "INVALID" for both
+// an invalid/expired token and (under accountConfirmMergeMode: REQUIRE_PASSWORD) a
+// wrong password — the only way to tell them apart is which field the error is on.
+function mapConfirmAccountError(code: string, field: string | null): string {
+	if (code === "INVALID") {
+		return field === "password" ? "INVALID_PASSWORD" : "TOKEN_INVALID";
+	}
+	return ERROR_MAP[code] ?? "unknown";
+}
 
 export async function POST(request: NextRequest) {
 	const { email, token, password } = (await request.json()) as {
@@ -52,8 +61,8 @@ export async function POST(request: NextRequest) {
 	}
 
 	if (result.errors.length > 0) {
-		const code = result.errors[0].code;
-		return NextResponse.json({ error: ERROR_MAP[code] ?? "unknown" }, { status: 400 });
+		const { code, field } = result.errors[0];
+		return NextResponse.json({ error: mapConfirmAccountError(code, field) }, { status: 400 });
 	}
 
 	if (!result.user) {
