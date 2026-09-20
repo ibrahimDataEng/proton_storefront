@@ -1,3 +1,4 @@
+import { type ReactNode } from "react";
 import { PackageX, RotateCcw, SearchX } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { executeGraphQL } from "@/lib/graphql";
@@ -11,6 +12,17 @@ import { OrderTrackingSummary } from "@/ui/components/orderTracking/OrderTrackin
 import { resolveStage } from "@/lib/orderTracking/resolveStage";
 
 export const dynamic = "force-dynamic";
+
+// order(id:) rejects a malformed global id as a GraphQL error (not a clean
+// `null`) — e.g. base64-encoding "Order:not-a-uuid" still decodes to a
+// well-formed "Order:<garbage>" global id, which Saleor then refuses with
+// "Invalid ID: ... Expected: Order." (confirmed live: this surfaced as an
+// uncaught GraphQLError from executeGraphQL, crashing the page with a 500,
+// where orderByToken's UUID!-typed argument would have failed differently).
+// Validating the token's shape before ever building the global id or calling
+// GraphQL keeps a malformed/mistyped URL on the graceful not-found path,
+// matching this page's "never an error, never a broken render" requirement.
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function formatDate(dateStr: string, locale: string) {
 	return new Intl.DateTimeFormat(locale === "ar" ? "ar-AE" : "en-US", {
@@ -42,34 +54,63 @@ function ContactLink({ label }: { label: string }) {
 	);
 }
 
+function NotFoundView({ title, subtitle, action }: { title: string; subtitle: string; action: ReactNode }) {
+	return (
+		<Container size="sm" className="py-16">
+			<EmptyState
+				icon={<SearchX className="h-16 w-16" aria-hidden="true" />}
+				title={title}
+				subtitle={subtitle}
+				action={action}
+			/>
+		</Container>
+	);
+}
+
 export default async function TrackOrderPage(props: {
 	params: Promise<{ locale: string; channel: string; token: string }>;
 }) {
 	const { locale, token } = await props.params;
 	const t = await getTranslations("orderTracking");
 
-	// Public field only, no auth needed — order(id:)/orderByToken has no
-	// permission requirement in Saleor 3.23.1, and every field this query
-	// selects (status, chargeStatus, addresses, lines, metadata) is likewise
-	// ungated for a normal order (see saleor/graphql/order/types.py). This
-	// mirrors src/checkout/lib/getOrderCreatedAt.ts's own reasoning for the
-	// same class of anonymous order read.
-	const { orderByToken: order } = await executeGraphQL(OrderTrackingDocument, {
-		variables: { token },
+	if (!UUID_PATTERN.test(token)) {
+		return (
+			<NotFoundView
+				title={t("notFoundTitle")}
+				subtitle={t("notFoundBody")}
+				action={<HomeLink label={t("backHome")} />}
+			/>
+		);
+	}
+
+	// The URL carries the order's raw UUID (Order.id). order(id:) expects the
+	// relay global id, not the raw UUID, so it's converted here rather than in
+	// the URL itself — a base64 global id can contain "/" or "+", a real
+	// path-segment escaping hazard for a literal link pasted into an email
+	// client. orderByToken(token: UUID!) would take the raw UUID directly but
+	// is deprecated (removal targeted for Saleor 4.0); order(id:) is not.
+	const globalId = Buffer.from(`Order:${token}`).toString("base64");
+
+	// Public field only, no auth needed — order(id:) has no permission
+	// requirement in Saleor 3.23.1 (only the separate externalReference lookup
+	// arm requires MANAGE_ORDERS), and every field this query selects (status,
+	// chargeStatus, addresses, lines, metadata) is likewise ungated for a
+	// normal order (see saleor/graphql/order/types.py). This mirrors
+	// src/checkout/lib/getOrderCreatedAt.ts's own reasoning for the same class
+	// of anonymous order read.
+	const { order } = await executeGraphQL(OrderTrackingDocument, {
+		variables: { id: globalId },
 		withAuth: false,
 		cache: "no-cache",
 	});
 
 	if (!order) {
 		return (
-			<Container size="sm" className="py-16">
-				<EmptyState
-					icon={<SearchX className="h-16 w-16" aria-hidden="true" />}
-					title={t("notFoundTitle")}
-					subtitle={t("notFoundBody")}
-					action={<HomeLink label={t("backHome")} />}
-				/>
-			</Container>
+			<NotFoundView
+				title={t("notFoundTitle")}
+				subtitle={t("notFoundBody")}
+				action={<HomeLink label={t("backHome")} />}
+			/>
 		);
 	}
 

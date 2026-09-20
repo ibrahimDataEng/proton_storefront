@@ -1,5 +1,5 @@
-query OrderTracking($token: UUID!) {
-	orderByToken(token: $token) {
+query OrderTracking($id: ID!) {
+	order(id: $id) {
 		id
 		number
 		created

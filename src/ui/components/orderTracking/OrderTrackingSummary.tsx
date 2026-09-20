@@ -3,7 +3,7 @@ import { useTranslations } from "next-intl";
 import { formatMoney } from "@/lib/utils";
 import type { OrderTrackingQuery } from "@/gql/graphql";
 
-type Order = NonNullable<OrderTrackingQuery["orderByToken"]>;
+type Order = NonNullable<OrderTrackingQuery["order"]>;
 
 export function OrderTrackingSummary({ order }: { order: Order }) {
 	const t = useTranslations("orderTracking");
