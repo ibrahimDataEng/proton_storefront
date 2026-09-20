@@ -20,23 +20,11 @@ export function ConfirmAccountClient() {
 
 	const [state, setState] = useState<State>(email && token ? "form" : "error");
 	const [password, setPassword] = useState("");
-	const [confirmPassword, setConfirmPassword] = useState("");
-	const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 	const [formError, setFormError] = useState<string | null>(null);
-
-	function validate(): boolean {
-		const next: Record<string, string> = {};
-		if (password.length < 8) next.password = tAuth("errors.PASSWORD_TOO_SHORT");
-		if (password !== confirmPassword) next.confirmPassword = tAuth("errors.PASSWORD_MISMATCH");
-		setFieldErrors(next);
-		return Object.keys(next).length === 0;
-	}
 
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
-		if (!validate()) return;
 
-		setFieldErrors({});
 		setFormError(null);
 		setState("pending");
 
@@ -82,21 +70,10 @@ export function ConfirmAccountClient() {
 						id="confirm-account-password"
 						label={tAuth("password")}
 						type="password"
-						autoComplete="new-password"
+						autoComplete="current-password"
 						required
 						value={password}
 						onChange={(e) => setPassword(e.target.value)}
-						error={fieldErrors.password}
-					/>
-					<AuthFormField
-						id="confirm-account-confirm-password"
-						label={tAuth("confirmPassword")}
-						type="password"
-						autoComplete="new-password"
-						required
-						value={confirmPassword}
-						onChange={(e) => setConfirmPassword(e.target.value)}
-						error={fieldErrors.confirmPassword}
 					/>
 					<Button type="submit" variant="primary" size="md" className="w-full">
 						{t("confirmButton")}

@@ -596,7 +596,7 @@
 	},
 	"confirmAccount": {
 		"pageTitle": "Confirm Your Account",
-		"passwordPrompt": "Create a password to secure your account.",
+		"passwordPrompt": "Enter your account password to confirm your account.",
 		"confirmButton": "Confirm Account",
 		"pending": "Confirming your account...",
 		"successTitle": "Account confirmed",
