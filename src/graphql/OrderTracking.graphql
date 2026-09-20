@@ -1,0 +1,54 @@
+query OrderTracking($token: UUID!) {
+	orderByToken(token: $token) {
+		id
+		number
+		created
+		status
+		chargeStatus
+		authorizeStatus
+		channel {
+			slug
+		}
+		metadata {
+			key
+			value
+		}
+		lines {
+			id
+			productName
+			variantName
+			quantity
+			thumbnail {
+				url
+				alt
+			}
+			totalPrice {
+				gross {
+					amount
+					currency
+				}
+			}
+		}
+		shippingAddress {
+			firstName
+			lastName
+			streetAddress1
+			streetAddress2
+			city
+			countryArea
+			country {
+				country
+			}
+			phone
+		}
+		total {
+			gross {
+				amount
+				currency
+			}
+		}
+		fulfillments {
+			status
+		}
+	}
+}
