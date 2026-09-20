@@ -596,7 +596,7 @@
 	},
 	"confirmAccount": {
 		"pageTitle": "تأكيد حسابك",
-		"passwordPrompt": "أنشئ كلمة مرور لتأمين حسابك.",
+		"passwordPrompt": "أدخل كلمة مرور حسابك لتأكيد الحساب.",
 		"confirmButton": "تأكيد الحساب",
 		"pending": "جارٍ تأكيد حسابك...",
 		"successTitle": "تم تأكيد الحساب",
