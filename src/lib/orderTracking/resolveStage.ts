@@ -8,10 +8,27 @@ import { FulfillmentStatus, OrderChargeStatusEnum, OrderStatus } from "@/gql/gra
  * Four customer-visible stages:
  *   1. Order placed     — automatic, floor for any live order
  *   2. Preparing         — automatic, Order.status past DRAFT/UNCONFIRMED
- *   3. Out for delivery  — manual, order public metadata `deliveryStage`
+ *   3. Out for delivery  — automatic once Order.status is FULFILLED or
+ *                          PARTIALLY_FULFILLED, OR manually via order public
+ *                          metadata `deliveryStage: "out_for_delivery"`
  *   4. Delivered         — COD: automatic once chargeStatus is FULL (the
  *                          Capture button, live in production); Stripe: manual,
  *                          via the same `deliveryStage` metadata value
+ *
+ * DELIBERATE CHOICE, DO NOT "CORRECT" THIS: FULFILLED is treated as "out for
+ * delivery," not "delivered." Saleor's own Fulfillment model has no delivered
+ * status — FULFILLED just means "handed off," which for a typical third-party
+ * courier (Aramex/DHL) is a meaningfully earlier event than the customer
+ * actually receiving the package. This store delivers in-house, though: found
+ * live on production that clicking "Fulfill" in the Dashboard is precisely the
+ * moment staff hand the order to their own courier, i.e. exactly what stage 3
+ * means here. Do not map FULFILLED to stage 4 — that would require Saleor
+ * fulfillment data to mean something it structurally doesn't, and would wrongly
+ * short-circuit past the COD capture-at-delivery signal below. The
+ * `deliveryStage` metadata key is kept as a manual override/supplement on top
+ * of this, not replaced by it — some orders may still need a hand-set stage 3
+ * (e.g. before a fulfillment is ever recorded), and it's also the only way a
+ * Stripe order ever reaches stage 4.
  *
  * Gateway detection (needed because chargeStatus FULL means "cash collected
  * at delivery" for COD but just "charged at checkout" for Stripe — the two
@@ -23,6 +40,8 @@ import { FulfillmentStatus, OrderChargeStatusEnum, OrderStatus } from "@/gql/gra
  * checkoutComplete. An absent/unrecognized value degrades to "unknown" —
  * the automatic COD rule simply doesn't fire; the order still reaches stage 4
  * via the manual metadata value, same as Stripe.
+ *
+ * All signals combine via max() — stages are monotonic, never regress.
  */
 
 export type OrderTrackingStage = 1 | 2 | 3 | 4;
@@ -47,6 +66,7 @@ const RETURNED_FULFILLMENT_STATUSES: readonly FulfillmentStatus[] = [
 	FulfillmentStatus.RefundedAndReturned,
 ];
 const NOT_YET_PLACED_STATUSES: readonly OrderStatus[] = [OrderStatus.Draft, OrderStatus.Unconfirmed];
+const FULFILLED_STATUSES: readonly OrderStatus[] = [OrderStatus.Fulfilled, OrderStatus.PartiallyFulfilled];
 
 function readMetadataValue(metadata: readonly { key: string; value: string }[], key: string): string {
 	const entry = metadata.find((item) => item.key === key);
@@ -77,6 +97,10 @@ export function resolveStage(order: StageResolutionInput): ResolvedStage {
 
 	if (!NOT_YET_PLACED_STATUSES.includes(order.status)) {
 		stage = Math.max(stage, 2) as OrderTrackingStage;
+	}
+
+	if (FULFILLED_STATUSES.includes(order.status)) {
+		stage = Math.max(stage, 3) as OrderTrackingStage;
 	}
 
 	const deliveryStage = readMetadataValue(order.metadata, "deliveryStage");
