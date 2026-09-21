@@ -59,14 +59,16 @@ export function ProductInfo({ product, locale, channel }: Props) {
 	const [selectedVariantId, setSelectedVariantId] = useState<string | undefined>(firstAvailable?.id);
 	const [quantity, setQuantity] = useState(1);
 	const [addStatus, setAddStatus] = useState<"idle" | "pending" | "success" | "error">("idle");
+	const [addErrorIsStock, setAddErrorIsStock] = useState(false);
 	const [descExpanded, setDescExpanded] = useState(false);
 
 	const selectedVariant = variants.find((v) => v.id === selectedVariantId);
 	const maxQty = Math.min(99, selectedVariant?.quantityAvailable ?? 99);
 	const isAvailable =
-		selectedVariant != null
+		product.isAvailable !== false &&
+		(selectedVariant != null
 			? (selectedVariant.quantityAvailable ?? 0) > 0
-			: variants.some((v) => (v.quantityAvailable ?? 0) > 0);
+			: variants.some((v) => (v.quantityAvailable ?? 0) > 0));
 
 	// Price display
 	let displayPrice: string | null = null;
@@ -127,6 +129,7 @@ export function ProductInfo({ product, locale, channel }: Props) {
 		setAddStatus("pending");
 		const result = await addLineWithQuantity({ variantId: selectedVariantId, channel, quantity, locale });
 		if (!result.ok) {
+			setAddErrorIsStock(result.errorCode === "INSUFFICIENT_STOCK");
 			setAddStatus("error");
 			setTimeout(() => setAddStatus("idle"), 2000);
 			return;
@@ -185,7 +188,7 @@ export function ProductInfo({ product, locale, channel }: Props) {
 					<button
 						type="button"
 						aria-label={tCart("decrease")}
-						disabled={quantity <= 1 || !selectedVariantId}
+						disabled={quantity <= 1 || !selectedVariantId || !isAvailable}
 						onClick={() => setQuantity((q) => Math.max(1, q - 1))}
 						className="flex h-9 w-9 items-center justify-center rounded-lg border border-line-subtle bg-surface-base text-content-primary transition-colors hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-40"
 					>
@@ -201,7 +204,7 @@ export function ProductInfo({ product, locale, channel }: Props) {
 					<button
 						type="button"
 						aria-label={tCart("increase")}
-						disabled={quantity >= maxQty || !selectedVariantId}
+						disabled={quantity >= maxQty || !selectedVariantId || !isAvailable}
 						onClick={() => setQuantity((q) => Math.min(maxQty, q + 1))}
 						className="flex h-9 w-9 items-center justify-center rounded-lg border border-line-subtle bg-surface-base text-content-primary transition-colors hover:bg-surface-sunken disabled:cursor-not-allowed disabled:opacity-40"
 					>
@@ -292,7 +295,7 @@ export function ProductInfo({ product, locale, channel }: Props) {
 								exit={{ opacity: 0, y: -4 }}
 								transition={{ duration: 0.15 }}
 							>
-								{t("addError")}
+								{addErrorIsStock ? t("outOfStock") : t("addError")}
 							</m.span>
 						) : !isAvailable ? (
 							<m.span
