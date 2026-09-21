@@ -47,6 +47,9 @@ query OrderTracking($id: ID!) {
 				currency
 			}
 		}
+		# Fulfillment.trackingNumber is deliberately NOT queried here — it's for
+		# third-party courier tracking (Aramex/DHL); this store delivers
+		# in-house, so it's always empty and would have nothing to show.
 		fulfillments {
 			status
 		}
