@@ -40,6 +40,7 @@ export function ProductAddButton({
 	const channel = (params.channel as string) ?? "";
 	const locale = (params.locale as string) ?? "en";
 	const [state, setState] = useState<"idle" | "pending" | "added" | "error">("idle");
+	const [errorIsStock, setErrorIsStock] = useState(false);
 
 	if (!isAvailable) {
 		return (
@@ -72,6 +73,7 @@ export function ProductAddButton({
 		setState("pending");
 		const result = await addLineToCheckout({ variantId: selectedVariantId, channel, locale });
 		if (!result.ok) {
+			setErrorIsStock(result.errorCode === "INSUFFICIENT_STOCK");
 			setState("error");
 			setTimeout(() => setState("idle"), 2000);
 			return;
@@ -146,6 +148,16 @@ export function ProductAddButton({
 						transition={{ duration: 0.15 }}
 					>
 						{t("added")}
+					</m.span>
+				) : state === "error" ? (
+					<m.span
+						key="error-text"
+						initial={{ opacity: 0, y: 4 }}
+						animate={{ opacity: 1, y: 0 }}
+						exit={{ opacity: 0, y: -4 }}
+						transition={{ duration: 0.15 }}
+					>
+						{errorIsStock ? t("outOfStock") : t("addError")}
 					</m.span>
 				) : (
 					<m.span
