@@ -15,6 +15,7 @@ mutation CheckoutAddLine($id: ID!, $productVariantId: ID!) {
 		}
 		errors {
 			message
+			code
 		}
 	}
 }

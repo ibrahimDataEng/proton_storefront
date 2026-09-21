@@ -37,7 +37,7 @@ export async function addLineToCheckout({
 	variantId: string;
 	channel: string;
 	locale: string;
-}): Promise<{ ok: boolean; redirect: boolean }> {
+}): Promise<{ ok: boolean; redirect: boolean; errorCode?: string; errorMessage?: string }> {
 	let checkoutId = await Checkout.getIdFromCookies(channel);
 	if (!checkoutId) {
 		const checkout = await Checkout.findOrCreate({ channel, locale });
@@ -51,7 +51,12 @@ export async function addLineToCheckout({
 	});
 	const errors = result.checkoutLinesAdd?.errors ?? [];
 	if (errors.length > 0) {
-		return { ok: false, redirect: false };
+		return {
+			ok: false,
+			redirect: false,
+			errorCode: errors[0]?.code ?? undefined,
+			errorMessage: errors[0]?.message ?? undefined,
+		};
 	}
 	revalidatePath("/", "layout");
 	return { ok: true, redirect: false };
@@ -67,7 +72,7 @@ export async function addLineWithQuantity({
 	channel: string;
 	quantity: number;
 	locale: string;
-}): Promise<{ ok: boolean; redirect: boolean }> {
+}): Promise<{ ok: boolean; redirect: boolean; errorCode?: string; errorMessage?: string }> {
 	let checkoutId = await Checkout.getIdFromCookies(channel);
 	if (!checkoutId) {
 		const checkout = await Checkout.findOrCreate({ channel, locale });
@@ -81,7 +86,12 @@ export async function addLineWithQuantity({
 	});
 	const errors = result.checkoutLinesAdd?.errors ?? [];
 	if (errors.length > 0) {
-		return { ok: false, redirect: false };
+		return {
+			ok: false,
+			redirect: false,
+			errorCode: errors[0]?.code ?? undefined,
+			errorMessage: errors[0]?.message ?? undefined,
+		};
 	}
 	revalidatePath("/", "layout");
 	return { ok: true, redirect: false };
