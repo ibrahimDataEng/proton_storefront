@@ -9,7 +9,7 @@ export function HeroSection({ locale }: { locale: string }) {
 	const isAr = locale === "ar";
 
 	return (
-		<section className="relative flex min-h-[70dvh] flex-col items-center justify-center bg-brand-primary px-4 py-16 text-center md:min-h-[85dvh]">
+		<section className="relative isolate flex min-h-[70dvh] flex-col items-center justify-center bg-brand-primary px-4 py-16 text-center md:min-h-[85dvh]">
 			<Image
 				src="/hero.png"
 				alt={isAr ? "صورة البطل" : "Hero image"}
