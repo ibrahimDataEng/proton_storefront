@@ -2,8 +2,9 @@
 
 import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { Phone, MapPin, Package } from "lucide-react";
+import { Package } from "lucide-react";
 import { CourierConfirmDeliveryModal } from "./CourierConfirmDeliveryModal";
+import { CourierCustomerContact } from "./CourierCustomerContact";
 import { type CourierWorklistOrderFragment } from "@/gql/graphql";
 import { Button } from "@/ui/components/Button";
 import { formatMoney } from "@/lib/utils";
@@ -16,29 +17,6 @@ type Props = {
 	channel: string;
 };
 
-function toWhatsAppLink(phone: string): string {
-	const digits = phone.replace(/[^\d]/g, "");
-	return `https://wa.me/${digits}`;
-}
-
-function formatAddressLines(address: CourierWorklistOrderFragment["shippingAddress"]): string[] {
-	if (!address) return [];
-	return [
-		[address.streetAddress1, address.streetAddress2].filter(Boolean).join(", "),
-		[address.city, address.countryArea].filter(Boolean).join(", "),
-		address.country?.country,
-	].filter((line): line is string => Boolean(line));
-}
-
-function mapsLink(address: CourierWorklistOrderFragment["shippingAddress"]): string | null {
-	if (!address) return null;
-	const query = [address.streetAddress1, address.city, address.countryArea, address.country?.country]
-		.filter(Boolean)
-		.join(", ");
-	if (!query) return null;
-	return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`;
-}
-
 export function CourierOrderCard({ order, locale, channel }: Props) {
 	const t = useTranslations("courier");
 	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -49,9 +27,6 @@ export function CourierOrderCard({ order, locale, channel }: Props) {
 	const address = order.shippingAddress;
 	const customerName =
 		[address?.firstName, address?.lastName].filter(Boolean).join(" ") || order.userEmail || "";
-	const phone = address?.phone;
-	const addressLines = formatAddressLines(address);
-	const maps = mapsLink(address);
 	const itemCount = order.lines.reduce((sum, line) => sum + line.quantity, 0);
 	const paymentMethod = detectPaymentMethod(order.metadata);
 	const codAmount = outstandingAmount({
@@ -89,47 +64,7 @@ export function CourierOrderCard({ order, locale, channel }: Props) {
 				</div>
 			</div>
 
-			{phone && (
-				<div className="flex flex-wrap items-center gap-3 text-sm">
-					<a
-						href={`tel:${phone}`}
-						dir="ltr"
-						className="inline-flex items-center gap-1.5 font-medium text-content-primary hover:text-brand-primary"
-					>
-						<Phone className="h-4 w-4" aria-hidden="true" />
-						{phone}
-					</a>
-					<a
-						href={toWhatsAppLink(phone)}
-						target="_blank"
-						rel="noopener noreferrer"
-						className="text-status-success underline-offset-2 hover:underline"
-					>
-						{t("whatsapp")}
-					</a>
-				</div>
-			)}
-
-			{addressLines.length > 0 && (
-				<div className="flex items-start gap-1.5 text-sm text-content-secondary">
-					<MapPin className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
-					<div className="flex flex-col">
-						{addressLines.map((line, i) => (
-							<span key={i}>{line}</span>
-						))}
-						{maps && (
-							<a
-								href={maps}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="mt-1 text-brand-primary underline-offset-2 hover:underline"
-							>
-								{t("openInMaps")}
-							</a>
-						)}
-					</div>
-				</div>
-			)}
+			<CourierCustomerContact address={address} />
 
 			<div className="rounded-lg bg-surface-sunken px-3 py-2 text-sm">
 				{paymentMethod === "cod" && (

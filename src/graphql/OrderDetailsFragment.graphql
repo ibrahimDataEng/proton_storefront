@@ -39,4 +39,11 @@ fragment OrderDetails on Order {
 	}
 	status
 	paymentStatus
+	# Public metadata — the account order list reads deliveryStage/deliveredAt and
+	# returnStatus to decide whether to offer "Request a return" (the server action
+	# re-verifies everything against a fresh read).
+	metadata {
+		key
+		value
+	}
 }

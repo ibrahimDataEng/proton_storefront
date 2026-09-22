@@ -10,6 +10,8 @@ import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 import { OrderTrackingTimeline } from "@/ui/components/orderTracking/OrderTrackingTimeline";
 import { OrderTrackingSummary } from "@/ui/components/orderTracking/OrderTrackingSummary";
 import { resolveStage } from "@/lib/orderTracking/resolveStage";
+import { OrderReturnTracker } from "@/ui/components/orderTracking/OrderReturnTracker";
+import { formatUaeDateTime } from "@/lib/returns/returnMetadata";
 
 export const dynamic = "force-dynamic";
 
@@ -166,6 +168,19 @@ export default async function TrackOrderPage(props: {
 					</p>
 				)}
 			</div>
+
+			{resolved.returnInfo && (
+				<div className="mt-8 rounded-2xl bg-surface-base p-6 ring-1 ring-line-subtle sm:p-8">
+					<OrderReturnTracker
+						status={resolved.returnInfo.status}
+						pickupLabel={
+							resolved.returnInfo.pickupExpectedAt
+								? formatUaeDateTime(new Date(resolved.returnInfo.pickupExpectedAt), locale)
+								: null
+						}
+					/>
+				</div>
+			)}
 
 			<div className="mt-8 rounded-2xl bg-surface-base p-6 ring-1 ring-line-subtle sm:p-8">
 				<OrderTrackingSummary order={order} />

@@ -1,0 +1,66 @@
+# Everything the return flow needs about one order — read server-side only with
+# SALEOR_RETURNS_APP_TOKEN (MANAGE_ORDERS). `user { id }` is the ownership check
+# for customer return requests (Order.user is readable with MANAGE_ORDERS, see
+# saleor/graphql/order/types.py resolve_user in 3.23.35).
+fragment ReturnOrder on Order {
+	id
+	number
+	created
+	status
+	userEmail
+	user {
+		id
+		email
+		firstName
+		lastName
+	}
+	channel {
+		slug
+	}
+	total {
+		gross {
+			amount
+			currency
+		}
+	}
+	totalCharged {
+		amount
+		currency
+	}
+	totalRefunded {
+		amount
+		currency
+	}
+	lines {
+		id
+		productName
+		variantName
+		quantity
+		thumbnail {
+			url
+			alt
+		}
+		totalPrice {
+			gross {
+				amount
+				currency
+			}
+		}
+	}
+	shippingAddress {
+		firstName
+		lastName
+		streetAddress1
+		streetAddress2
+		city
+		countryArea
+		country {
+			country
+		}
+		phone
+	}
+	metadata {
+		key
+		value
+	}
+}

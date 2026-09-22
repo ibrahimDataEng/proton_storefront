@@ -1,8 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { transporter } from "@/lib/mailer";
 import { verifyWebhookSignature } from "@/lib/verifyWebhookSignature";
+import { OPS_NOTIFICATION_EMAIL } from "@/lib/email/opsAddress";
 
-const CONTACT_TO = process.env.CONTACT_TO_EMAIL ?? "tawasiplus2026@gmail.com";
+const CONTACT_TO = OPS_NOTIFICATION_EMAIL;
 
 interface OrderCreatedAddress {
 	firstName?: string;
