@@ -1,0 +1,25 @@
+# Server-side only, fetched with SALEOR_COURIER_APP_TOKEN (MANAGE_ORDERS) — never
+# reachable with a courier's own session, since couriers are plain customer
+# accounts with no Saleor permissions at all. Filters to FULFILLED/PARTIALLY_FULFILLED
+# server-side (excludes cancelled/returned/not-yet-fulfilled by construction); the
+# deliveryStage="delivered" exclusion happens in application code afterwards since
+# Saleor's metadata where-filter has no "not equal" operator.
+query CourierWorklist($channel: String!, $after: String) {
+	orders(
+		first: 50
+		after: $after
+		channel: $channel
+		sortBy: { field: CREATED_AT, direction: ASC }
+		where: { status: { oneOf: [FULFILLED, PARTIALLY_FULFILLED] } }
+	) {
+		edges {
+			node {
+				...CourierWorklistOrder
+			}
+		}
+		pageInfo {
+			hasNextPage
+			endCursor
+		}
+	}
+}

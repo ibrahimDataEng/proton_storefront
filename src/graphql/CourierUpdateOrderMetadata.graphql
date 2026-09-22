@@ -1,0 +1,9 @@
+mutation CourierUpdateOrderMetadata($id: ID!, $input: [MetadataInput!]!) {
+	updateMetadata(id: $id, input: $input) {
+		metadataErrors {
+			field
+			message
+			code
+		}
+	}
+}

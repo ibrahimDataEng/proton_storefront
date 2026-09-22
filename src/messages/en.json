@@ -249,6 +249,33 @@
 		"contactUs": "Contact Us",
 		"backHome": "Go Home"
 	},
+	"courier": {
+		"pageTitle": "Delivery Worklist",
+		"pageSubtitle": "{count, plural, =0 {No orders waiting} =1 {1 order waiting} other {# orders waiting}}",
+		"emptyTitle": "All caught up",
+		"emptySubtitle": "There are no orders waiting for delivery right now.",
+		"configErrorTitle": "Worklist unavailable",
+		"configErrorBody": "The delivery worklist isn't configured yet. Please contact the office.",
+		"orderNumber": "Order #{number}",
+		"itemCount": "{count, plural, =1 {1 item} other {# items}}",
+		"whatsapp": "WhatsApp",
+		"openInMaps": "Open in Maps",
+		"collectCash": "Collect {amount} cash",
+		"alreadyPaid": "Already paid — no cash to collect",
+		"paymentUnknown": "Payment method unknown — check with the office",
+		"markDelivered": "Mark Delivered",
+		"confirmTitle": "Confirm delivery",
+		"confirmDeliveryButton": "Confirm Delivery",
+		"cancel": "Cancel",
+		"emailFailedNotice": "Marked delivered, but the confirmation email couldn't be sent.",
+		"errors": {
+			"unauthorized": "You're not signed in as a courier.",
+			"not_found": "This order could not be found.",
+			"not_eligible": "This order can no longer be marked delivered.",
+			"already_delivered": "This order was already marked delivered.",
+			"config_error": "The delivery worklist isn't configured yet."
+		}
+	},
 	"contact": {
 		"title": "Contact Us",
 		"subtitle": "We'd love to hear from you. Send us a message and we'll get back to you as soon as possible.",
