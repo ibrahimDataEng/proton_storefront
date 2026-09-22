@@ -2,11 +2,17 @@ import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { getRecentlyViewed } from "./actions";
 import { executeGraphQL } from "@/lib/graphql";
-import { CurrentUserOrderListDocument, ProductsBySlugsDocument, type ProductListItemFragment } from "@/gql/graphql";
+import {
+	CurrentUserOrderListDocument,
+	ProductsBySlugsDocument,
+	type ProductListItemFragment,
+} from "@/gql/graphql";
 import { Container } from "@/ui/components/Container";
 import { AccountDashboard } from "@/ui/components/account/AccountDashboard";
 import { COOKIE_ACCESS_TOKEN } from "@/lib/auth/cookies";
 import { getSaleorLanguage } from "@/lib/saleor-language";
+import { formatUaeDateTime, getReturnEligibility, getReturnStatus } from "@/lib/returns/returnMetadata";
+import { type OrderReturnState } from "@/ui/components/account/sections/OrdersSection";
 
 export default async function AccountPage(props: { params: Promise<{ locale: string; channel: string }> }) {
 	const { locale, channel } = await props.params;
@@ -48,10 +54,31 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
 			.filter((product): product is ProductListItemFragment => product != null);
 	}
 
+	// Return state per order, computed here on the server (one clock, one
+	// formatter — no hydration mismatch at the 24h boundary). This only decides
+	// what to SHOW; requestOrderReturn() re-verifies everything against a fresh
+	// read before writing.
+	const now = new Date();
+	const returnStates: Record<string, OrderReturnState> = {};
+	for (const edge of user.orders?.edges ?? []) {
+		const order = edge.node;
+		const eligibility = getReturnEligibility(order, now);
+		returnStates[order.id] = {
+			status: getReturnStatus(order.metadata),
+			deadlineLabel: eligibility.eligible ? formatUaeDateTime(eligibility.deadline, locale) : null,
+		};
+	}
+
 	return (
 		<main className="min-h-[calc(100vh-4rem)] py-10">
 			<Container>
-				<AccountDashboard user={user} locale={locale} recentlyViewedProducts={recentlyViewedProducts} />
+				<AccountDashboard
+					user={user}
+					locale={locale}
+					channel={channel}
+					recentlyViewedProducts={recentlyViewedProducts}
+					returnStates={returnStates}
+				/>
 			</Container>
 		</main>
 	);
