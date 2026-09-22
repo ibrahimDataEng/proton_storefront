@@ -1,0 +1,17 @@
+# Courier returns section — server-side only, SALEOR_COURIER_APP_TOKEN. Orders
+# whose return the owner approved and scheduled for pickup. Newest first, same
+# as the delivery worklist; the page re-sorts by returnRequestedAt.
+query CourierReturnPickups($channel: String!) {
+	orders(
+		first: 50
+		channel: $channel
+		sortBy: { field: CREATED_AT, direction: DESC }
+		where: { metadata: { key: "returnStatus", value: { eq: "pickup_scheduled" } } }
+	) {
+		edges {
+			node {
+				...CourierWorklistOrder
+			}
+		}
+	}
+}
