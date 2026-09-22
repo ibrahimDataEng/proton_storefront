@@ -1,0 +1,7 @@
+# Fresh, uncached re-read right before any return-flow write — never trust the
+# client's snapshot of an order's state.
+query ReturnOrderById($id: ID!) {
+	order(id: $id) {
+		...ReturnOrder
+	}
+}
