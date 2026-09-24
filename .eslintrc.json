@@ -112,5 +112,5 @@
 			"extends": ["plugin:playwright/recommended"]
 		}
 	],
-	"ignorePatterns": ["*.js", "*.jsx", "*.cjs", "src/checkout/src/graphql"]
+	"ignorePatterns": ["*.js", "*.jsx", "*.cjs", "*.mjs", "src/checkout/src/graphql"]
 }

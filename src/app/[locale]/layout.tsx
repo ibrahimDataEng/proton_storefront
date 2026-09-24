@@ -1,11 +1,12 @@
 import "./globals.css";
 import { IBM_Plex_Sans, IBM_Plex_Sans_Arabic } from "next/font/google";
-import { NextIntlClientProvider, hasLocale } from "next-intl";
+import { hasLocale } from "next-intl";
 import { notFound } from "next/navigation";
-import { setRequestLocale } from "next-intl/server";
+import { getTimeZone, setRequestLocale } from "next-intl/server";
 import Script from "next/script";
 import { MotionProvider } from "@/ui/components/MotionProvider";
 import { ThemeInitializer } from "@/ui/components/ThemeInitializer";
+import { IntlClientProvider } from "@/ui/components/IntlClientProvider";
 import { routing } from "@/i18n/routing";
 
 const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
@@ -43,6 +44,8 @@ export default async function RootLayout({
 	setRequestLocale(locale);
 	const isRTL = locale === "ar";
 
+	const timeZone = await getTimeZone();
+
 	let messages;
 	try {
 		messages = (await import(`@/messages/${locale}.json`)).default;
@@ -67,9 +70,9 @@ export default async function RootLayout({
 			</head>
 			<body className="bg-surface-base font-sans text-content-primary">
 				<ThemeInitializer />
-				<NextIntlClientProvider locale={locale} messages={messages}>
+				<IntlClientProvider locale={locale} messages={messages} timeZone={timeZone}>
 					<MotionProvider>{children}</MotionProvider>
-				</NextIntlClientProvider>
+				</IntlClientProvider>
 				{gaMeasurementId && (
 					<>
 						<Script
