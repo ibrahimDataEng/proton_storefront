@@ -555,6 +555,14 @@
 		"myAccount": "حسابي",
 		"splitWelcomeTitle": "أهلاً بك في تواصي بلس",
 		"splitWelcomeSubtitle": "مكسرات وبهارات ومنتجات مجففة فاخرة — بعناية فائقة وتوصيل سريع.",
+		"validation": {
+			"emailRequired": "يرجى إدخال البريد الإلكتروني.",
+			"emailInvalid": "يرجى إدخال بريد إلكتروني صحيح.",
+			"passwordRequired": "يرجى إدخال كلمة المرور.",
+			"confirmPasswordRequired": "يرجى تأكيد كلمة المرور.",
+			"identifierRequired": "يرجى إدخال البريد الإلكتروني أو رقم الهاتف.",
+			"identifierInvalid": "يرجى إدخال بريد إلكتروني أو رقم هاتف صحيح."
+		},
 		"errors": {
 			"INVALID_CREDENTIALS": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
 			"ACCOUNT_NOT_CONFIRMED": "يرجى تأكيد بريدك الإلكتروني قبل تسجيل الدخول.",

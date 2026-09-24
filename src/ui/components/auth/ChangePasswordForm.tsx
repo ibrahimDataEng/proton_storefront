@@ -73,6 +73,12 @@ export function ChangePasswordForm() {
 
 	const isLoading = formState === "loading";
 
+	// Any edit makes the last server response stale.
+	function clearServerError() {
+		setErrorMsg(null);
+		if (formState === "error") setFormState("idle");
+	}
+
 	if (formState === "success") {
 		return (
 			<p
@@ -99,7 +105,10 @@ export function ChangePasswordForm() {
 				autoComplete="current-password"
 				required
 				value={currentPassword}
-				onChange={(e) => setCurrentPassword(e.target.value)}
+				onChange={(e) => {
+					setCurrentPassword(e.target.value);
+					clearServerError();
+				}}
 				disabled={isLoading}
 				error={fieldErrors.currentPassword}
 			/>
@@ -110,7 +119,10 @@ export function ChangePasswordForm() {
 				autoComplete="new-password"
 				required
 				value={newPassword}
-				onChange={(e) => setNewPassword(e.target.value)}
+				onChange={(e) => {
+					setNewPassword(e.target.value);
+					clearServerError();
+				}}
 				disabled={isLoading}
 				error={fieldErrors.newPassword}
 			/>
@@ -121,7 +133,10 @@ export function ChangePasswordForm() {
 				autoComplete="new-password"
 				required
 				value={confirmNewPassword}
-				onChange={(e) => setConfirmNewPassword(e.target.value)}
+				onChange={(e) => {
+					setConfirmNewPassword(e.target.value);
+					clearServerError();
+				}}
 				disabled={isLoading}
 				error={fieldErrors.confirmNewPassword}
 			/>

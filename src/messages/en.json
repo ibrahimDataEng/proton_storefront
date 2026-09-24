@@ -555,6 +555,14 @@
 		"myAccount": "My Account",
 		"splitWelcomeTitle": "Welcome to Tawasi Plus",
 		"splitWelcomeSubtitle": "Premium nuts, spices & dried goods — sourced with care, delivered fast.",
+		"validation": {
+			"emailRequired": "Please enter your email address.",
+			"emailInvalid": "Please enter a valid email address.",
+			"passwordRequired": "Please enter your password.",
+			"confirmPasswordRequired": "Please confirm your password.",
+			"identifierRequired": "Please enter your email address or phone number.",
+			"identifierInvalid": "Please enter a valid email address or phone number."
+		},
 		"errors": {
 			"INVALID_CREDENTIALS": "Incorrect email or password.",
 			"ACCOUNT_NOT_CONFIRMED": "Please confirm your email before signing in.",

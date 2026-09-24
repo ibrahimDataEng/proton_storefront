@@ -11,6 +11,7 @@ import { useAuth } from "@/ui/context/AuthContext";
 import { type AuthUser } from "@/lib/auth/types";
 import { getPendingPhone, clearPendingPhone } from "@/lib/auth/pendingPhone";
 import { PHONE_LOGIN_ENABLED } from "@/lib/featureFlags";
+import { hasErrors, validateLogin, VALIDATION_MESSAGE_KEYS, type FieldErrors } from "@/lib/validation/auth";
 import { resolveErrorMessage } from "@/lib/i18n/resolveErrorMessage";
 
 type Props = {
@@ -64,6 +65,10 @@ export function LoginForm({ onForgotPassword }: Props) {
 	const [error, setError] = useState<string | null>(null);
 	const [errorCode, setErrorCode] = useState<string | null>(null);
 	const [loading, setLoading] = useState(false);
+	// Inline field errors: set on submit, then re-checked on blur once the user has
+	// tried to submit (see validateField below).
+	const [fieldErrors, setFieldErrors] = useState<FieldErrors<"identifier" | "password">>({});
+	const [submitted, setSubmitted] = useState(false);
 
 	// Phone/OTP state — unreachable in the UI whenever PHONE_LOGIN_ENABLED is false,
 	// since `mode` can then never be "phone". Left in place (not stripped) so the
@@ -116,8 +121,7 @@ export function LoginForm({ onForgotPassword }: Props) {
 		[setUser, closeAuthModal, router, locale, channel],
 	);
 
-	async function handleEmailSubmit(e: React.FormEvent) {
-		e.preventDefault();
+	async function submitEmailLogin() {
 		setError(null);
 		setErrorCode(null);
 		setLoading(true);
@@ -189,11 +193,6 @@ export function LoginForm({ onForgotPassword }: Props) {
 		}
 	}
 
-	async function handleSendCodeSubmit(e: React.FormEvent) {
-		e.preventDefault();
-		await sendCode(identifier.trim());
-	}
-
 	function handleResend() {
 		if (cooldown > 0 || sendingCode) return;
 		void sendCode(sentPhoneRef.current);
@@ -254,16 +253,44 @@ export function LoginForm({ onForgotPassword }: Props) {
 		}
 	}
 
+	function handlePasswordChange(value: string) {
+		setPassword(value);
+		// Any edit makes the last server response stale — same as the identifier field.
+		setError(null);
+		setErrorCode(null);
+	}
+
 	function handleUseEmailInstead() {
 		setIdentifier("");
 		setPhoneError(null);
 		setShowEmailFallback(false);
 	}
 
+	function currentFieldErrors() {
+		return validateLogin({ identifier, password, mode, phoneLoginEnabled: PHONE_LOGIN_ENABLED });
+	}
+
+	function validateField(field: "identifier" | "password") {
+		if (!submitted) return;
+		const next = currentFieldErrors();
+		setFieldErrors((prev) => ({ ...prev, [field]: next[field] }));
+	}
+
 	function handleSubmit(e: React.FormEvent) {
-		if (mode === "phone") return void handleSendCodeSubmit(e);
-		if (mode === "email") return void handleEmailSubmit(e);
 		e.preventDefault();
+		setSubmitted(true);
+		const errors = currentFieldErrors();
+		setFieldErrors(errors);
+		// Invalid input never reaches the API — including an identifier that is
+		// neither email- nor phone-like (mode === null), which used to be a silent no-op.
+		if (hasErrors(errors)) return;
+		if (mode === "phone") return void sendCode(identifier.trim());
+		if (mode === "email") return void submitEmailLogin();
+	}
+
+	function fieldErrorText(field: "identifier" | "password") {
+		const reason = fieldErrors[field];
+		return reason ? t(VALIDATION_MESSAGE_KEYS[reason]) : undefined;
 	}
 
 	const identifierType = PHONE_LOGIN_ENABLED ? "text" : "email";
@@ -315,6 +342,8 @@ export function LoginForm({ onForgotPassword }: Props) {
 						required
 						value={identifier}
 						onChange={(e) => handleIdentifierChange(e.target.value)}
+						onBlur={() => validateField("identifier")}
+						error={fieldErrorText("identifier")}
 					/>
 
 					<AnimatePresence initial={false}>
@@ -328,7 +357,9 @@ export function LoginForm({ onForgotPassword }: Props) {
 										autoComplete="current-password"
 										required
 										value={password}
-										onChange={(e) => setPassword(e.target.value)}
+										onChange={(e) => handlePasswordChange(e.target.value)}
+										onBlur={() => validateField("password")}
+										error={fieldErrorText("password")}
 									/>
 									<button
 										type="button"
@@ -342,18 +373,19 @@ export function LoginForm({ onForgotPassword }: Props) {
 						)}
 					</AnimatePresence>
 
-					{mode !== null && (
-						<Button
-							type="submit"
-							variant="primary"
-							size="md"
-							loading={mode === "email" ? loading : sendingCode}
-							disabled={mode === "phone" && cooldown > 0}
-							className="w-full"
-						>
-							{mode === "phone" ? tPhoneLogin("sendCode") : t("login")}
-						</Button>
-					)}
+					{/* Always rendered: with phone login on, an empty or unrecognised
+					    identifier (mode === null) must still be submittable so the
+					    inline validation message can explain what's expected. */}
+					<Button
+						type="submit"
+						variant="primary"
+						size="md"
+						loading={mode === "phone" ? sendingCode : loading}
+						disabled={mode === "phone" && cooldown > 0}
+						className="w-full"
+					>
+						{mode === "phone" ? tPhoneLogin("sendCode") : t("login")}
+					</Button>
 				</form>
 			)}
 
@@ -376,7 +408,10 @@ export function LoginForm({ onForgotPassword }: Props) {
 						maxLength={6}
 						required
 						value={code}
-						onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+						onChange={(e) => {
+							setCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+							setPhoneError(null);
+						}}
 					/>
 					<Button
 						type="submit"

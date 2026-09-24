@@ -120,7 +120,10 @@ export function SetPasswordForm() {
 				autoComplete="new-password"
 				required
 				value={password}
-				onChange={(e) => setPassword(e.target.value)}
+				onChange={(e) => {
+					setPassword(e.target.value);
+					setFormError(null);
+				}}
 				error={fieldErrors.password}
 			/>
 			<AuthFormField
@@ -130,7 +133,10 @@ export function SetPasswordForm() {
 				autoComplete="new-password"
 				required
 				value={confirmPassword}
-				onChange={(e) => setConfirmPassword(e.target.value)}
+				onChange={(e) => {
+					setConfirmPassword(e.target.value);
+					setFormError(null);
+				}}
 				error={fieldErrors.confirmPassword}
 			/>
 			<Button type="submit" variant="primary" size="md" loading={loading} className="w-full">
