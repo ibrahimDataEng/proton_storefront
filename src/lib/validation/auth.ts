@@ -64,21 +64,23 @@ export function validateConfirmPassword(password: string, confirm: string): Auth
 type LoginIdentifierMode = "email" | "phone" | null;
 
 /**
- * LoginForm's identifier. With phone login off the field is always an email.
- * With it on, `mode` is LoginForm's own detection result: null means the value
- * is neither email-like nor phone-like, which must produce a visible message
- * instead of a silent no-op.
+ * LoginForm's identifier. Sign-in only checks presence, not email syntax: any
+ * non-empty email goes to the server, so a malformed address gets the same
+ * "incorrect email or password" answer as a wrong password (sign-in never
+ * polices or distinguishes identifiers). Register/forgot-password do check syntax.
+ *
+ * With phone login on, `mode` is LoginForm's own detection result: null means
+ * the value is neither email-like nor phone-like — there is nothing to send, so
+ * that must produce a visible message instead of a silent no-op.
  */
 export function validateLoginIdentifier(
 	value: string,
 	mode: LoginIdentifierMode,
 	phoneLoginEnabled: boolean,
 ): AuthValidationReason | undefined {
-	if (!phoneLoginEnabled) return validateEmail(value);
+	if (!phoneLoginEnabled) return value.trim() ? undefined : "emailRequired";
 	if (!value.trim()) return "identifierRequired";
-	if (mode === "phone") return undefined;
-	if (mode === "email") return validateEmail(value);
-	return "identifierInvalid";
+	return mode === null ? "identifierInvalid" : undefined;
 }
 
 export function validateLogin(input: {
