@@ -9,6 +9,26 @@ interface AuthFormFieldProps extends InputHTMLAttributes<HTMLInputElement> {
 	error?: string;
 }
 
+/**
+ * Shared look for every auth input (text fields here, and PhoneField's select +
+ * inputs) so they can't drift apart again. Layout (width, flex, padding overrides)
+ * stays with the caller.
+ */
+export function authInputClassName(hasError: boolean): string {
+	return clsx(
+		"rounded-lg border bg-surface-raised py-2.5 text-sm text-content-primary",
+		"placeholder:text-content-secondary",
+		"transition-colors focus:outline-none focus:ring-2",
+		"disabled:cursor-not-allowed disabled:opacity-50",
+		hasError
+			? "border-status-danger focus:border-status-danger focus:ring-status-danger/30"
+			: "border-line-default focus:border-brand-primary focus:ring-brand-primary/20",
+	);
+}
+
+export const authRequiredMarkClassName = "ms-1 text-status-danger";
+export const authFieldErrorClassName = "text-xs text-status-danger";
+
 export const AuthFormField = forwardRef<HTMLInputElement, AuthFormFieldProps>(function AuthFormField(
 	{ id, label, error, className, ...inputProps },
 	ref,
@@ -18,7 +38,7 @@ export const AuthFormField = forwardRef<HTMLInputElement, AuthFormFieldProps>(fu
 			<label htmlFor={id} className="text-sm font-medium text-content-primary">
 				{label}
 				{inputProps.required && (
-					<span className="ms-1 text-red-500" aria-hidden="true">
+					<span className={authRequiredMarkClassName} aria-hidden="true">
 						*
 					</span>
 				)}
@@ -27,20 +47,13 @@ export const AuthFormField = forwardRef<HTMLInputElement, AuthFormFieldProps>(fu
 				ref={ref}
 				id={id}
 				dir="auto"
-				className={clsx(
-					"w-full rounded-lg border border-line-default bg-surface-raised px-3.5 py-2.5 text-sm text-content-primary",
-					"placeholder:text-content-secondary",
-					"transition-colors focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/20",
-					"disabled:cursor-not-allowed disabled:opacity-50",
-					error && "border-red-500 focus:border-red-500 focus:ring-red-500/30",
-					className,
-				)}
+				className={clsx("w-full px-3.5", authInputClassName(Boolean(error)), className)}
 				aria-describedby={error ? `${id}-error` : undefined}
 				aria-invalid={error ? "true" : undefined}
 				{...inputProps}
 			/>
 			{error && (
-				<p id={`${id}-error`} role="alert" className="text-xs text-red-600">
+				<p id={`${id}-error`} role="alert" className={authFieldErrorClassName}>
 					{error}
 				</p>
 			)}
