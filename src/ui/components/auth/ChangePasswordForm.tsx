@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { AuthFormField } from "./AuthFormField";
 import { Button } from "@/ui/components/Button";
+import { resolveErrorMessage } from "@/lib/i18n/resolveErrorMessage";
 
 type FormState = "idle" | "loading" | "success" | "error";
 
@@ -53,7 +54,7 @@ export function ChangePasswordForm() {
 
 			if (!res.ok || !data.ok) {
 				const code = data.error ?? "unknown";
-				setErrorMsg(t(`errors.${code}`, { defaultValue: t("errors.unknown") }));
+				setErrorMsg(resolveErrorMessage(t, code));
 				setFormState("error");
 				return;
 			}

@@ -8,6 +8,7 @@ import { Button } from "@/ui/components/Button";
 import { useAuth } from "@/ui/context/AuthContext";
 import { type AuthUser } from "@/lib/auth/types";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
+import { resolveErrorMessage } from "@/lib/i18n/resolveErrorMessage";
 
 export function SetPasswordForm() {
 	const t = useTranslations("auth");
@@ -88,7 +89,7 @@ export function SetPasswordForm() {
 					setTokenInvalid(true);
 					return;
 				}
-				setFormError(t(`errors.${code}`, { defaultValue: t("errors.unknown") }));
+				setFormError(resolveErrorMessage(t, code));
 				return;
 			}
 

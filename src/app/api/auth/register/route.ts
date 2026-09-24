@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { type AuthErrorCode } from "@/lib/auth/errorCodes";
+import { authErrorResponse } from "@/lib/auth/errorResponse";
 import { setAuthCookies } from "@/lib/auth/cookies";
 
 const SALEOR_API_URL = process.env.NEXT_PUBLIC_SALEOR_API_URL!;
@@ -24,6 +26,30 @@ const TOKEN_CREATE = `
   }
 `;
 
+// Saleor AccountErrorCode → our code. Field-aware: accountRegister reuses the
+// generic INVALID/REQUIRED codes for several fields, and only the email/password
+// ones are something the customer can act on. Anything else maps to "unknown" —
+// raw Saleor codes are never passed through (they have no message to render).
+const PASSWORD_ERROR_MAP: Record<string, AuthErrorCode> = {
+	PASSWORD_TOO_SHORT: "PASSWORD_TOO_SHORT",
+	PASSWORD_TOO_SIMILAR: "PASSWORD_TOO_SIMILAR",
+	PASSWORD_TOO_COMMON: "PASSWORD_TOO_COMMON",
+	PASSWORD_ENTIRELY_NUMERIC: "PASSWORD_ENTIRELY_NUMERIC",
+};
+
+function mapRegisterError(code: string, field: string | null): AuthErrorCode {
+	if (field === "email") {
+		if (code === "UNIQUE") return "UNIQUE";
+		if (code === "INVALID") return "INVALID";
+		if (code === "REQUIRED") return "EMAIL_PASSWORD_REQUIRED";
+	}
+	if (field === "password") {
+		if (code === "REQUIRED") return "EMAIL_PASSWORD_REQUIRED";
+		if (PASSWORD_ERROR_MAP[code]) return PASSWORD_ERROR_MAP[code];
+	}
+	return "unknown";
+}
+
 type RegisterInput = {
 	email: string;
 	password: string;
@@ -38,7 +64,7 @@ export async function POST(request: NextRequest) {
 	const { email, password } = body;
 
 	if (!email || !password) {
-		return NextResponse.json({ error: "EMAIL_PASSWORD_REQUIRED" }, { status: 400 });
+		return authErrorResponse("EMAIL_PASSWORD_REQUIRED", 400);
 	}
 
 	const input: RegisterInput = { email, password };
@@ -66,12 +92,18 @@ export async function POST(request: NextRequest) {
 
 	const result = json.data?.accountRegister;
 	if (!result) {
-		return NextResponse.json({ error: "unknown" }, { status: 500 });
+		return authErrorResponse("unknown", 500);
 	}
 
 	if (result.errors.length > 0) {
-		const code = result.errors[0].code;
-		return NextResponse.json({ error: code ?? "unknown" }, { status: 400 });
+		const { code, field, message } = result.errors[0];
+		const mapped = mapRegisterError(code, field);
+		if (mapped === "unknown") {
+			// Unmapped upstream error (e.g. a redirectUrl rejected by ALLOWED_CLIENT_HOSTS,
+			// an inactive channel) — never shown to the customer, so keep it in the logs.
+			console.error(`[register] unmapped accountRegister error: ${code} on ${field ?? "-"}: ${message}`);
+		}
+		return authErrorResponse(mapped, 400);
 	}
 
 	const requiresConfirmation = result.requiresConfirmation ?? false;

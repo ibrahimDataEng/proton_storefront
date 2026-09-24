@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { authErrorResponse } from "@/lib/auth/errorResponse";
 import { getRefreshTokenFromRequest, COOKIE_ACCESS_TOKEN } from "@/lib/auth/cookies";
 
 const SALEOR_API_URL = process.env.NEXT_PUBLIC_SALEOR_API_URL!;
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
 	const refreshToken = getRefreshTokenFromRequest(request);
 
 	if (!refreshToken) {
-		return NextResponse.json({ error: "NO_REFRESH_TOKEN" }, { status: 401 });
+		return authErrorResponse("NO_REFRESH_TOKEN", 401);
 	}
 
 	const saleorRes = await fetch(SALEOR_API_URL, {
@@ -39,7 +40,7 @@ export async function POST(request: NextRequest) {
 
 	const result = json.data?.tokenRefresh;
 	if (!result || result.errors.length > 0 || !result.token) {
-		return NextResponse.json({ error: "REFRESH_FAILED" }, { status: 401 });
+		return authErrorResponse("REFRESH_FAILED", 401);
 	}
 
 	const response = NextResponse.json({ ok: true });

@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { type AuthErrorCode } from "@/lib/auth/errorCodes";
+import { authErrorResponse } from "@/lib/auth/errorResponse";
 
 const SALEOR_API_URL = process.env.NEXT_PUBLIC_SALEOR_API_URL!;
 
@@ -11,17 +13,19 @@ const CONFIRM_ACCOUNT = `
   }
 `;
 
-const ERROR_MAP: Record<string, string> = {
+const ERROR_MAP: Record<string, AuthErrorCode> = {
 	NOT_FOUND: "TOKEN_INVALID",
 	INVALID_PASSWORD: "INVALID_PASSWORD",
 	PASSWORD_TOO_SHORT: "PASSWORD_TOO_SHORT",
 	PASSWORD_TOO_SIMILAR: "PASSWORD_TOO_SIMILAR",
+	PASSWORD_TOO_COMMON: "PASSWORD_TOO_COMMON",
+	PASSWORD_ENTIRELY_NUMERIC: "PASSWORD_ENTIRELY_NUMERIC",
 };
 
 // Saleor's confirmAccount resolver returns the identical code: "INVALID" for both
 // an invalid/expired token and (under accountConfirmMergeMode: REQUIRE_PASSWORD) a
 // wrong password — the only way to tell them apart is which field the error is on.
-function mapConfirmAccountError(code: string, field: string | null): string {
+function mapConfirmAccountError(code: string, field: string | null): AuthErrorCode {
 	if (code === "INVALID") {
 		return field === "password" ? "INVALID_PASSWORD" : "TOKEN_INVALID";
 	}
@@ -36,7 +40,7 @@ export async function POST(request: NextRequest) {
 	};
 
 	if (!email || !token || !password) {
-		return NextResponse.json({ error: "MISSING_FIELDS" }, { status: 400 });
+		return authErrorResponse("MISSING_FIELDS", 400);
 	}
 
 	const saleorRes = await fetch(SALEOR_API_URL, {
@@ -57,16 +61,16 @@ export async function POST(request: NextRequest) {
 
 	const result = json.data?.confirmAccount;
 	if (!result) {
-		return NextResponse.json({ error: "unknown" }, { status: 500 });
+		return authErrorResponse("unknown", 500);
 	}
 
 	if (result.errors.length > 0) {
 		const { code, field } = result.errors[0];
-		return NextResponse.json({ error: mapConfirmAccountError(code, field) }, { status: 400 });
+		return authErrorResponse(mapConfirmAccountError(code, field), 400);
 	}
 
 	if (!result.user) {
-		return NextResponse.json({ error: "unknown" }, { status: 500 });
+		return authErrorResponse("unknown", 500);
 	}
 
 	return NextResponse.json({ success: true });

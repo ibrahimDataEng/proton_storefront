@@ -16,6 +16,7 @@ import { useAuth } from "@/ui/context/AuthContext";
 import { type AuthUser } from "@/lib/auth/types";
 import { savePendingPhone, clearPendingPhone } from "@/lib/auth/pendingPhone";
 import { notifyPhoneSaveFailed } from "@/lib/auth/phoneSaveNotice";
+import { resolveErrorMessage } from "@/lib/i18n/resolveErrorMessage";
 
 type Props = {
 	onConfirmationRequired: () => void;
@@ -130,7 +131,7 @@ export function RegisterForm({ onConfirmationRequired }: Props) {
 			if (!res.ok || data.error) {
 				const code = data.error ?? "unknown";
 				setErrors({
-					form: t(`errors.${code}`, { defaultValue: t("errors.unknown") }),
+					form: resolveErrorMessage(t, code),
 				});
 				return;
 			}

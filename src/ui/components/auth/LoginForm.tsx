@@ -11,6 +11,7 @@ import { useAuth } from "@/ui/context/AuthContext";
 import { type AuthUser } from "@/lib/auth/types";
 import { getPendingPhone, clearPendingPhone } from "@/lib/auth/pendingPhone";
 import { PHONE_LOGIN_ENABLED } from "@/lib/featureFlags";
+import { resolveErrorMessage } from "@/lib/i18n/resolveErrorMessage";
 
 type Props = {
 	onForgotPassword: () => void;
@@ -133,7 +134,7 @@ export function LoginForm({ onForgotPassword }: Props) {
 			if (!res.ok || data.error) {
 				const code = data.error ?? "unknown";
 				setErrorCode(code);
-				setError(t(`errors.${code}`, { defaultValue: t("errors.unknown") }));
+				setError(resolveErrorMessage(t, code));
 				return;
 			}
 

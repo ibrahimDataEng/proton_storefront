@@ -566,6 +566,17 @@
 			"PASSWORD_SAME": "New password must differ from the current one.",
 			"TOKEN_INVALID": "This reset link has expired. Please request a new one.",
 			"INVALID_PASSWORD": "Current password is incorrect.",
+			"EMAIL_PASSWORD_REQUIRED": "Please enter your email and password.",
+			"INVALID": "Please enter a valid email address.",
+			"MISSING_FIELDS": "Please fill in all required fields.",
+			"PASSWORD_TOO_SIMILAR": "Password is too similar to your personal information.",
+			"PASSWORD_TOO_COMMON": "This password is too common. Please choose a stronger one.",
+			"PASSWORD_ENTIRELY_NUMERIC": "Password can't consist of numbers only.",
+			"PHONE_CODE_REQUIRED": "Please enter your phone number and verification code.",
+			"INVALID_OR_EXPIRED_CODE": "Invalid or expired code. Please try again.",
+			"unauthorized": "Your session has expired. Please sign in again.",
+			"NO_REFRESH_TOKEN": "Your session has expired. Please sign in again.",
+			"REFRESH_FAILED": "Your session has expired. Please sign in again.",
 			"unknown": "Something went wrong. Please try again."
 		}
 	},
