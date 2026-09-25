@@ -1,9 +1,17 @@
 "use client";
 
 import { useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { m } from "framer-motion";
 
-export default function Error({ error, reset }: { error: Error; reset: () => void }) {
+// Catches errors from the [locale] subtree outside (main)'s own boundary — the
+// [channel] and (main) layouts and /checkout. It renders inside [locale]/layout,
+// so next-intl is available. Never render error.message: in production it's
+// Next's generic English sentence, in dev the raw server error. The digest is a
+// safe reference code for support.
+export default function Error({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+	const t = useTranslations("error");
+
 	useEffect(() => {
 		console.error(error);
 	}, [error]);
@@ -72,11 +80,11 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
 				transition={{ delay: 0.35, duration: 0.4 }}
 				className="flex max-w-md flex-col items-center gap-3"
 			>
-				<h1 className="text-2xl font-semibold text-content-primary">Something went wrong</h1>
-				<p className="text-content-secondary">An unexpected error occurred. Please try again.</p>
-				{error.message && (
+				<h1 className="text-2xl font-semibold text-content-primary">{t("title")}</h1>
+				<p className="text-content-secondary">{t("description")}</p>
+				{error.digest && (
 					<code className="mt-2 rounded-md bg-surface-sunken px-3 py-2 text-xs text-content-secondary">
-						{error.message}
+						{t("code")}: {error.digest}
 					</code>
 				)}
 			</m.div>
@@ -90,7 +98,7 @@ export default function Error({ error, reset }: { error: Error; reset: () => voi
 				onClick={reset}
 				className="mt-8 inline-flex h-11 items-center justify-center rounded-lg bg-brand-primary px-6 text-sm font-medium text-content-inverse transition-colors hover:bg-brand-primary/90"
 			>
-				Try again
+				{t("tryAgain")}
 			</m.button>
 		</div>
 	);
