@@ -102,7 +102,7 @@ function AddressForm({
 			<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 				<AuthFormField
 					id="addr-firstName"
-					label={t("firstName") || "First name"}
+					label={t("firstName")}
 					value={form.firstName}
 					onChange={(e) => set("firstName", e.target.value)}
 					required
@@ -110,7 +110,7 @@ function AddressForm({
 				/>
 				<AuthFormField
 					id="addr-lastName"
-					label={t("lastName") || "Last name"}
+					label={t("lastName")}
 					value={form.lastName}
 					onChange={(e) => set("lastName", e.target.value)}
 					required
@@ -119,7 +119,7 @@ function AddressForm({
 			</div>
 			<AuthFormField
 				id="addr-street1"
-				label={t("streetAddress1") || "Street address"}
+				label={t("streetAddress1")}
 				value={form.streetAddress1}
 				onChange={(e) => set("streetAddress1", e.target.value)}
 				required
@@ -127,7 +127,7 @@ function AddressForm({
 			/>
 			<AuthFormField
 				id="addr-street2"
-				label={t("streetAddress2") || "Apt, suite, etc. (optional)"}
+				label={t("streetAddress2")}
 				value={form.streetAddress2}
 				onChange={(e) => set("streetAddress2", e.target.value)}
 				disabled={saving}
@@ -135,7 +135,7 @@ function AddressForm({
 			<div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
 				<AuthFormField
 					id="addr-city"
-					label={t("city") || "City"}
+					label={t("city")}
 					value={form.city}
 					onChange={(e) => set("city", e.target.value)}
 					required
@@ -143,7 +143,7 @@ function AddressForm({
 				/>
 				<AuthFormField
 					id="addr-postal"
-					label={t("postalCode") || "Postal code"}
+					label={t("postalCode")}
 					value={form.postalCode}
 					onChange={(e) => set("postalCode", e.target.value)}
 					disabled={saving}
@@ -151,7 +151,7 @@ function AddressForm({
 			</div>
 			<AuthFormField
 				id="addr-phone"
-				label={t("phone") || "Phone"}
+				label={t("phone")}
 				type="tel"
 				value={form.phone}
 				onChange={(e) => set("phone", e.target.value)}

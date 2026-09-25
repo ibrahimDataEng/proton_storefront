@@ -163,7 +163,10 @@ export function PhoneGate() {
 					<PhoneField
 						id="phone-gate-number"
 						values={values}
-						onChange={setValues}
+						onChange={(next) => {
+							setValues(next);
+							setOutcome(null);
+						}}
 						error={fieldError}
 						required
 					/>

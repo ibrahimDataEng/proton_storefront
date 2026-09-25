@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { clsx } from "clsx";
+import { authFieldErrorClassName, authInputClassName, authRequiredMarkClassName } from "./AuthFormField";
 
 // Kept in sync with SupplierApplicationForm's own PHONE_CODES list by design — same
 // primary markets, same "other" escape hatch — but this is now the shared source of
@@ -69,14 +70,12 @@ type Props = {
 export function PhoneField({ id, values, onChange, onBlur, error, required, label }: Props) {
 	const t = useTranslations("phoneField");
 
-	const inputBaseClass = clsx(
-		"rounded-lg border py-3 text-content-primary placeholder:text-content-secondary/50",
-		"bg-surface-base outline-none transition-colors",
-		"focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20",
-		error ? "border-red-400" : "border-line-default",
-	);
+	// Same recipe as AuthFormField so every auth input matches (surface, padding,
+	// text size, error border) in both themes.
+	const inputBaseClass = authInputClassName(Boolean(error));
 
-	// Same @tailwindcss/forms RTL chevron fix as SupplierApplicationForm's compactSelectClass.
+	// Same @tailwindcss/forms RTL chevron fix as SupplierApplicationForm's compactSelectClass
+	// (background-position has no logical-property equivalent, hence the rtl: variant).
 	const selectClass = clsx(
 		inputBaseClass,
 		"w-28 shrink-0 bg-no-repeat ps-3 pe-8",
@@ -84,11 +83,11 @@ export function PhoneField({ id, values, onChange, onBlur, error, required, labe
 	);
 
 	return (
-		<div>
-			<label htmlFor={id} className="mb-1.5 block text-sm font-medium text-content-primary">
+		<div className="flex flex-col gap-1.5">
+			<label htmlFor={id} className="text-sm font-medium text-content-primary">
 				{label ?? t("label")}
 				{required && (
-					<span className="ms-1 text-red-500" aria-hidden="true">
+					<span className={authRequiredMarkClassName} aria-hidden="true">
 						*
 					</span>
 				)}
@@ -115,7 +114,7 @@ export function PhoneField({ id, values, onChange, onBlur, error, required, labe
 						onChange={(e) => onChange({ ...values, phoneCodeOther: e.target.value })}
 						onBlur={onBlur}
 						placeholder={t("codeOtherPlaceholder")}
-						className={clsx(inputBaseClass, "w-24 shrink-0 px-3")}
+						className={clsx(inputBaseClass, "w-24 shrink-0 px-3.5")}
 					/>
 				)}
 				<input
@@ -128,11 +127,11 @@ export function PhoneField({ id, values, onChange, onBlur, error, required, labe
 					placeholder={t("numberPlaceholder")}
 					aria-describedby={error ? `${id}-error` : undefined}
 					aria-invalid={error ? "true" : undefined}
-					className={clsx(inputBaseClass, "min-w-0 flex-1 px-4")}
+					className={clsx(inputBaseClass, "min-w-0 flex-1 px-3.5")}
 				/>
 			</div>
 			{error && (
-				<p id={`${id}-error`} role="alert" className="mt-1 text-xs text-red-600">
+				<p id={`${id}-error`} role="alert" className={authFieldErrorClassName}>
 					{error}
 				</p>
 			)}

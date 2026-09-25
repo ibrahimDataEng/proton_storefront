@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { authErrorResponse } from "@/lib/auth/errorResponse";
 
 const SALEOR_API_URL = process.env.NEXT_PUBLIC_SALEOR_API_URL!;
 
@@ -18,7 +19,7 @@ export async function POST(request: NextRequest) {
 	};
 
 	if (!email || !redirectUrl || !channel) {
-		return NextResponse.json({ error: "MISSING_FIELDS" }, { status: 400 });
+		return authErrorResponse("MISSING_FIELDS", 400);
 	}
 
 	const saleorRes = await fetch(SALEOR_API_URL, {
@@ -41,7 +42,7 @@ export async function POST(request: NextRequest) {
 
 	const result = json.data?.requestPasswordReset;
 	if (!result) {
-		return NextResponse.json({ error: "unknown" }, { status: 500 });
+		return authErrorResponse("unknown", 500);
 	}
 
 	// Always return ok: true — don't leak whether email exists

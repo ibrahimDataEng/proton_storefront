@@ -6,6 +6,7 @@ import { setRequestLocale } from "next-intl/server";
 import Script from "next/script";
 import { MotionProvider } from "@/ui/components/MotionProvider";
 import { ThemeInitializer } from "@/ui/components/ThemeInitializer";
+import { IntlErrorHandlingProvider } from "@/ui/components/IntlErrorHandlingProvider";
 import { routing } from "@/i18n/routing";
 
 const gaMeasurementId = process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID;
@@ -43,12 +44,6 @@ export default async function RootLayout({
 	setRequestLocale(locale);
 	const isRTL = locale === "ar";
 
-	let messages;
-	try {
-		messages = (await import(`@/messages/${locale}.json`)).default;
-	} catch (error) {
-		messages = {};
-	}
 	return (
 		<html
 			lang={locale}
@@ -67,8 +62,13 @@ export default async function RootLayout({
 			</head>
 			<body className="bg-surface-base font-sans text-content-primary">
 				<ThemeInitializer />
-				<NextIntlClientProvider locale={locale} messages={messages}>
-					<MotionProvider>{children}</MotionProvider>
+				{/* No props on purpose: the server provider inherits locale, messages, now,
+				    timeZone and formats from i18n/request.ts. The nested client provider adds
+				    only the (non-serializable) missing-message handlers. */}
+				<NextIntlClientProvider>
+					<IntlErrorHandlingProvider>
+						<MotionProvider>{children}</MotionProvider>
+					</IntlErrorHandlingProvider>
 				</NextIntlClientProvider>
 				{gaMeasurementId && (
 					<>

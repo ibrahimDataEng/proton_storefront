@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { AuthFormField } from "./AuthFormField";
 import { Button } from "@/ui/components/Button";
+import { resolveErrorMessage } from "@/lib/i18n/resolveErrorMessage";
 
 type FormState = "idle" | "loading" | "success" | "error";
 
@@ -53,7 +54,7 @@ export function ChangePasswordForm() {
 
 			if (!res.ok || !data.ok) {
 				const code = data.error ?? "unknown";
-				setErrorMsg(t(`errors.${code}`, { defaultValue: t("errors.unknown") }));
+				setErrorMsg(resolveErrorMessage(t, code));
 				setFormState("error");
 				return;
 			}
@@ -71,6 +72,12 @@ export function ChangePasswordForm() {
 	}
 
 	const isLoading = formState === "loading";
+
+	// Any edit makes the last server response stale.
+	function clearServerError() {
+		setErrorMsg(null);
+		if (formState === "error") setFormState("idle");
+	}
 
 	if (formState === "success") {
 		return (
@@ -98,7 +105,10 @@ export function ChangePasswordForm() {
 				autoComplete="current-password"
 				required
 				value={currentPassword}
-				onChange={(e) => setCurrentPassword(e.target.value)}
+				onChange={(e) => {
+					setCurrentPassword(e.target.value);
+					clearServerError();
+				}}
 				disabled={isLoading}
 				error={fieldErrors.currentPassword}
 			/>
@@ -109,7 +119,10 @@ export function ChangePasswordForm() {
 				autoComplete="new-password"
 				required
 				value={newPassword}
-				onChange={(e) => setNewPassword(e.target.value)}
+				onChange={(e) => {
+					setNewPassword(e.target.value);
+					clearServerError();
+				}}
 				disabled={isLoading}
 				error={fieldErrors.newPassword}
 			/>
@@ -120,7 +133,10 @@ export function ChangePasswordForm() {
 				autoComplete="new-password"
 				required
 				value={confirmNewPassword}
-				onChange={(e) => setConfirmNewPassword(e.target.value)}
+				onChange={(e) => {
+					setConfirmNewPassword(e.target.value);
+					clearServerError();
+				}}
 				disabled={isLoading}
 				error={fieldErrors.confirmNewPassword}
 			/>

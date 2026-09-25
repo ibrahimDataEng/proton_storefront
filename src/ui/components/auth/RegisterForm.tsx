@@ -16,6 +16,15 @@ import { useAuth } from "@/ui/context/AuthContext";
 import { type AuthUser } from "@/lib/auth/types";
 import { savePendingPhone, clearPendingPhone } from "@/lib/auth/pendingPhone";
 import { notifyPhoneSaveFailed } from "@/lib/auth/phoneSaveNotice";
+import {
+	hasErrors,
+	validateRegister,
+	VALIDATION_MESSAGE_KEYS,
+	type FieldErrors,
+} from "@/lib/validation/auth";
+import { resolveErrorMessage } from "@/lib/i18n/resolveErrorMessage";
+
+type RegisterField = "email" | "password" | "confirmPassword";
 
 type Props = {
 	onConfirmationRequired: () => void;
@@ -37,15 +46,35 @@ export function RegisterForm({ onConfirmationRequired }: Props) {
 	const [confirmPassword, setConfirmPassword] = useState("");
 	const [phone, setPhone] = useState<PhoneFieldValues>(EMPTY_PHONE_VALUES);
 	const [phoneError, setPhoneError] = useState<string | undefined>();
-	const [errors, setErrors] = useState<Record<string, string>>({});
+	const [fieldErrors, setFieldErrors] = useState<FieldErrors<RegisterField>>({});
+	const [formError, setFormError] = useState<string | null>(null);
+	const [submitted, setSubmitted] = useState(false);
 	const [loading, setLoading] = useState(false);
 
-	function validate(): boolean {
-		const next: Record<string, string> = {};
-		if (password.length < 8) next.password = t("errors.PASSWORD_TOO_SHORT");
-		if (password !== confirmPassword) next.confirmPassword = t("errors.PASSWORD_MISMATCH");
-		setErrors(next);
-		return Object.keys(next).length === 0;
+	// Runs on submit, then per-field on blur once the user has tried to submit.
+	// Email and confirm-password are required too (an empty confirm used to pass
+	// because "" === ""), so invalid input never reaches /api/auth/register.
+	function currentFieldErrors() {
+		return validateRegister({ email, password, confirmPassword });
+	}
+
+	function validateField(field: RegisterField) {
+		if (!submitted) return;
+		const next = currentFieldErrors();
+		setFieldErrors((prev) => ({ ...prev, [field]: next[field] }));
+	}
+
+	function fieldErrorText(field: RegisterField) {
+		const reason = fieldErrors[field];
+		return reason ? t(VALIDATION_MESSAGE_KEYS[reason]) : undefined;
+	}
+
+	/** Every field edit makes the last server response stale. */
+	function withBannerClear<T>(setter: (value: T) => void) {
+		return (value: T) => {
+			setter(value);
+			setFormError(null);
+		};
 	}
 
 	// Phone is required (see below), but — unlike password — never blocks
@@ -97,10 +126,13 @@ export function RegisterForm({ onConfirmationRequired }: Props) {
 
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
+		setSubmitted(true);
 		setPhoneError(validatePhoneForDisplay());
-		if (!validate()) return;
+		const errors = currentFieldErrors();
+		setFieldErrors(errors);
+		if (hasErrors(errors)) return;
 
-		setErrors({});
+		setFormError(null);
 		setLoading(true);
 
 		try {
@@ -128,10 +160,7 @@ export function RegisterForm({ onConfirmationRequired }: Props) {
 			};
 
 			if (!res.ok || data.error) {
-				const code = data.error ?? "unknown";
-				setErrors({
-					form: t(`errors.${code}`, { defaultValue: t("errors.unknown") }),
-				});
+				setFormError(resolveErrorMessage(t, data.error ?? "unknown"));
 				return;
 			}
 
@@ -163,7 +192,7 @@ export function RegisterForm({ onConfirmationRequired }: Props) {
 			router.push(`/${locale}/${channel}`);
 			router.refresh();
 		} catch {
-			setErrors({ form: t("errors.unknown") });
+			setFormError(t("errors.unknown"));
 		} finally {
 			setLoading(false);
 		}
@@ -171,9 +200,9 @@ export function RegisterForm({ onConfirmationRequired }: Props) {
 
 	return (
 		<form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-			{errors.form && (
+			{formError && (
 				<p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-					{errors.form}
+					{formError}
 				</p>
 			)}
 			<div className="grid grid-cols-2 gap-3">
@@ -183,7 +212,7 @@ export function RegisterForm({ onConfirmationRequired }: Props) {
 					type="text"
 					autoComplete="given-name"
 					value={firstName}
-					onChange={(e) => setFirstName(e.target.value)}
+					onChange={(e) => withBannerClear(setFirstName)(e.target.value)}
 				/>
 				<AuthFormField
 					id="reg-last-name"
@@ -191,13 +220,13 @@ export function RegisterForm({ onConfirmationRequired }: Props) {
 					type="text"
 					autoComplete="family-name"
 					value={lastName}
-					onChange={(e) => setLastName(e.target.value)}
+					onChange={(e) => withBannerClear(setLastName)(e.target.value)}
 				/>
 			</div>
 			<PhoneField
 				id="reg-phone"
 				values={phone}
-				onChange={setPhone}
+				onChange={withBannerClear(setPhone)}
 				onBlur={() => setPhoneError(validatePhoneForDisplay())}
 				error={phoneError}
 				required
@@ -209,7 +238,9 @@ export function RegisterForm({ onConfirmationRequired }: Props) {
 				autoComplete="email"
 				required
 				value={email}
-				onChange={(e) => setEmail(e.target.value)}
+				onChange={(e) => withBannerClear(setEmail)(e.target.value)}
+				onBlur={() => validateField("email")}
+				error={fieldErrorText("email")}
 			/>
 			<AuthFormField
 				id="reg-password"
@@ -218,8 +249,9 @@ export function RegisterForm({ onConfirmationRequired }: Props) {
 				autoComplete="new-password"
 				required
 				value={password}
-				onChange={(e) => setPassword(e.target.value)}
-				error={errors.password}
+				onChange={(e) => withBannerClear(setPassword)(e.target.value)}
+				onBlur={() => validateField("password")}
+				error={fieldErrorText("password")}
 			/>
 			<AuthFormField
 				id="reg-confirm-password"
@@ -228,8 +260,9 @@ export function RegisterForm({ onConfirmationRequired }: Props) {
 				autoComplete="new-password"
 				required
 				value={confirmPassword}
-				onChange={(e) => setConfirmPassword(e.target.value)}
-				error={errors.confirmPassword}
+				onChange={(e) => withBannerClear(setConfirmPassword)(e.target.value)}
+				onBlur={() => validateField("confirmPassword")}
+				error={fieldErrorText("confirmPassword")}
 			/>
 			<Button type="submit" variant="primary" size="md" loading={loading} className="w-full">
 				{t("register")}

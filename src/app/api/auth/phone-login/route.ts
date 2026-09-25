@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { authErrorResponse } from "@/lib/auth/errorResponse";
 import { setAuthCookies } from "@/lib/auth/cookies";
 
 const SALEOR_API_URL = process.env.NEXT_PUBLIC_SALEOR_API_URL!;
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
 	const code = typeof body.code === "string" ? body.code.trim() : "";
 
 	if (!phone || !code) {
-		return NextResponse.json({ error: "PHONE_CODE_REQUIRED" }, { status: 400 });
+		return authErrorResponse("PHONE_CODE_REQUIRED", 400);
 	}
 
 	// externalObtainAccessTokens is a public mutation, same trust level as
@@ -65,7 +66,7 @@ export async function POST(request: NextRequest) {
 	// which phone numbers exist or are mid-verification — this route must preserve
 	// that ambiguity, not undo it by being more specific about which case occurred.
 	if (!result || result.errors.length > 0 || !result.token || !result.refreshToken || !result.user) {
-		return NextResponse.json({ error: "INVALID_OR_EXPIRED_CODE" }, { status: 401 });
+		return authErrorResponse("INVALID_OR_EXPIRED_CODE", 401);
 	}
 
 	const response = NextResponse.json({ user: result.user });
