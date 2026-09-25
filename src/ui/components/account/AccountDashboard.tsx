@@ -9,6 +9,7 @@ import { RecentlyViewedSection } from "./sections/RecentlyViewedSection";
 import { AddressSection } from "./sections/AddressSection";
 import { SettingsSection } from "./sections/SettingsSection";
 import type { CurrentUserOrderListQuery, ProductListItemFragment } from "@/gql/graphql";
+import type { CountryAreaOption } from "@/lib/address/countryAreaChoices";
 
 type UserWithOrders = NonNullable<CurrentUserOrderListQuery["me"]>;
 
@@ -18,9 +19,17 @@ interface Props {
 	channel: string;
 	recentlyViewedProducts: ProductListItemFragment[];
 	returnStates: Record<string, OrderReturnState>;
+	emirateOptions: CountryAreaOption[];
 }
 
-export function AccountDashboard({ user, locale, channel, recentlyViewedProducts, returnStates }: Props) {
+export function AccountDashboard({
+	user,
+	locale,
+	channel,
+	recentlyViewedProducts,
+	returnStates,
+	emirateOptions,
+}: Props) {
 	const t = useTranslations("account");
 	const tAuth = useTranslations("auth");
 	const tRecentlyViewed = useTranslations("recentlyViewed");
@@ -62,7 +71,9 @@ export function AccountDashboard({ user, locale, channel, recentlyViewedProducts
 					<OrdersSection orders={orders} locale={locale} channel={channel} returnStates={returnStates} />
 				)}
 				{activeSection === "recentlyViewed" && <RecentlyViewedSection products={recentlyViewedProducts} />}
-				{activeSection === "addresses" && <AddressSection addresses={addresses} />}
+				{activeSection === "addresses" && (
+					<AddressSection addresses={addresses} emirateOptions={emirateOptions} />
+				)}
 				{activeSection === "settings" && <SettingsSection user={user} />}
 			</main>
 		</div>

@@ -5,7 +5,12 @@ import { m, AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Plus, Pencil, Trash2, Check } from "lucide-react";
-import { AuthFormField } from "@/ui/components/auth/AuthFormField";
+import clsx from "clsx";
+import {
+	AuthFormField,
+	authInputClassName,
+	authRequiredMarkClassName,
+} from "@/ui/components/auth/AuthFormField";
 import {
 	createAddress,
 	updateAddress,
@@ -13,6 +18,7 @@ import {
 	setDefaultAddress,
 } from "@/app/[locale]/[channel]/(main)/account/actions";
 import type { CurrentUserOrderListQuery, AddressTypeEnum } from "@/gql/graphql";
+import type { CountryAreaOption } from "@/lib/address/countryAreaChoices";
 
 type Address = NonNullable<NonNullable<CurrentUserOrderListQuery["me"]>["addresses"]>[number];
 
@@ -62,6 +68,7 @@ function addressToForm(addr: Address): AddressFormState {
 
 interface Props {
 	addresses: Address[];
+	emirateOptions: CountryAreaOption[];
 }
 
 function AddressForm({
@@ -70,8 +77,10 @@ function AddressForm({
 	onCancel,
 	saving,
 	error,
+	emirateOptions,
 }: {
 	initial: AddressFormState;
+	emirateOptions: CountryAreaOption[];
 	onSave: (form: AddressFormState) => Promise<void>;
 	onCancel: () => void;
 	saving: boolean;
@@ -149,6 +158,43 @@ function AddressForm({
 					disabled={saving}
 				/>
 			</div>
+			{form.country === "AE" && (
+				<div className="flex flex-col gap-1.5">
+					<label htmlFor="addr-emirate" className="text-sm font-medium text-content-primary">
+						{t("emirate")}
+						<span className={authRequiredMarkClassName} aria-hidden="true">
+							*
+						</span>
+					</label>
+					{/* Value is Saleor's `raw` country area — the same value the checkout saves
+					    (see toCountryAreaOptions). A stored value Saleor no longer lists is kept
+					    as its own option so editing an old address never silently drops it. */}
+					<select
+						id="addr-emirate"
+						value={form.countryArea}
+						onChange={(e) => set("countryArea", e.target.value)}
+						required
+						disabled={saving}
+						className={clsx(
+							authInputClassName(false),
+							"w-full bg-no-repeat pe-9 ps-3.5",
+							"bg-[length:1.1em_1.1em] bg-[right_0.75rem_center] rtl:bg-[left_0.75rem_center]",
+						)}
+					>
+						<option value="" disabled>
+							{t("selectEmirate")}
+						</option>
+						{form.countryArea && !emirateOptions.some((o) => o.value === form.countryArea) && (
+							<option value={form.countryArea}>{form.countryArea}</option>
+						)}
+						{emirateOptions.map((option) => (
+							<option key={option.value} value={option.value}>
+								{option.label}
+							</option>
+						))}
+					</select>
+				</div>
+			)}
 			<AuthFormField
 				id="addr-phone"
 				label={t("phone")}
@@ -310,7 +356,7 @@ function AddressCard({
 	);
 }
 
-export function AddressSection({ addresses }: Props) {
+export function AddressSection({ addresses, emirateOptions }: Props) {
 	const t = useTranslations("account");
 	const router = useRouter();
 	const [editingId, setEditingId] = useState<string | null>(null);
@@ -402,6 +448,7 @@ export function AddressSection({ addresses }: Props) {
 										}}
 										saving={saving}
 										error={formError}
+										emirateOptions={emirateOptions}
 									/>
 								</m.div>
 							</AnimatePresence>
@@ -457,6 +504,7 @@ export function AddressSection({ addresses }: Props) {
 							}}
 							saving={saving}
 							error={formError}
+							emirateOptions={emirateOptions}
 						/>
 					</m.div>
 				)}

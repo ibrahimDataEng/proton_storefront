@@ -181,6 +181,8 @@
 		"streetAddress2": "شقة، جناح، إلخ (اختياري)",
 		"city": "المدينة",
 		"postalCode": "الرمز البريدي",
+		"emirate": "الإمارة",
+		"selectEmirate": "اختر الإمارة",
 		"phone": "الهاتف",
 		"qty": "الكمية",
 		"downloadDataTitle": "تنزيل بياناتك",

@@ -181,6 +181,8 @@
 		"streetAddress2": "Apt, suite, etc. (optional)",
 		"city": "City",
 		"postalCode": "Postal code",
+		"emirate": "Emirate",
+		"selectEmirate": "Select an emirate",
 		"phone": "Phone",
 		"qty": "Qty",
 		"downloadDataTitle": "Download Your Data",

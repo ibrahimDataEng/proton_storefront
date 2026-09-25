@@ -3,6 +3,8 @@ import { cookies } from "next/headers";
 import { getRecentlyViewed } from "./actions";
 import { executeGraphQL } from "@/lib/graphql";
 import {
+	AccountAddressValidationRulesDocument,
+	CountryCode,
 	CurrentUserOrderListDocument,
 	ProductsBySlugsDocument,
 	type ProductListItemFragment,
@@ -11,6 +13,7 @@ import { Container } from "@/ui/components/Container";
 import { AccountDashboard } from "@/ui/components/account/AccountDashboard";
 import { COOKIE_ACCESS_TOKEN } from "@/lib/auth/cookies";
 import { getSaleorLanguage } from "@/lib/saleor-language";
+import { toCountryAreaOptions, type CountryAreaOption } from "@/lib/address/countryAreaChoices";
 import { formatUaeDateTime, getReturnEligibility, getReturnStatus } from "@/lib/returns/returnMetadata";
 import { type OrderReturnState } from "@/ui/components/account/sections/OrdersSection";
 
@@ -69,6 +72,21 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
 		};
 	}
 
+	// Emirate options for the address form (Saleor requires countryArea for AE).
+	// Public, rarely-changing data — cached for a day. A failure only leaves the
+	// select empty; it must never take the account page down.
+	let emirateOptions: CountryAreaOption[] = [];
+	try {
+		const { addressValidationRules } = await executeGraphQL(AccountAddressValidationRulesDocument, {
+			variables: { countryCode: CountryCode.Ae },
+			withAuth: false,
+			revalidate: 86400,
+		});
+		emirateOptions = toCountryAreaOptions(addressValidationRules?.countryAreaChoices, locale);
+	} catch (error) {
+		console.error("[account] addressValidationRules(AE) failed:", error);
+	}
+
 	return (
 		<main className="min-h-[calc(100vh-4rem)] py-10">
 			<Container>
@@ -78,6 +96,7 @@ export default async function AccountPage(props: { params: Promise<{ locale: str
 					channel={channel}
 					recentlyViewedProducts={recentlyViewedProducts}
 					returnStates={returnStates}
+					emirateOptions={emirateOptions}
 				/>
 			</Container>
 		</main>
