@@ -22,6 +22,7 @@ export function PromoCodeField({ checkoutId, appliedVoucherCode, discount }: Pro
 	const [applyStatus, setApplyStatus] = useState<ApplyStatus>("idle");
 	const [isApplied, setIsApplied] = useState(Boolean(appliedVoucherCode));
 	const [isRemoving, setIsRemoving] = useState(false);
+	const [removeFailed, setRemoveFailed] = useState(false);
 	const [activeCode, setActiveCode] = useState<string | null>(appliedVoucherCode ?? null);
 	const [activeDiscount, setActiveDiscount] = useState<{ amount: number; currency: string } | null>(
 		discount ?? null,
@@ -41,32 +42,51 @@ export function PromoCodeField({ checkoutId, appliedVoucherCode, discount }: Pro
 		setApplyStatus("loading");
 		setErrorKey(null);
 
-		const result = await applyPromoCode(checkoutId, trimmed);
-		if (!result.ok) {
+		const showError = (key: string) => {
 			setApplyStatus("error");
-			setErrorKey(result.error ?? "unknown");
+			setErrorKey(key);
 			errorTimerRef.current = setTimeout(() => {
 				setApplyStatus("idle");
 				setErrorKey(null);
 			}, 4000);
-			return;
+		};
+
+		try {
+			const result = await applyPromoCode(checkoutId, trimmed);
+			if (!result.ok) {
+				showError(result.error ?? "unknown");
+				return;
+			}
+			setActiveCode(result.voucherCode ?? trimmed);
+			setActiveDiscount(result.discount ?? null);
+			setCode("");
+			setApplyStatus("idle");
+			setIsApplied(true);
+		} catch {
+			// The action threw (network / Saleor down) — not an invalid code, and the
+			// button must not stay stuck on its spinner.
+			showError("requestFailed");
 		}
-		setActiveCode(result.voucherCode ?? trimmed);
-		setActiveDiscount(result.discount ?? null);
-		setCode("");
-		setApplyStatus("idle");
-		setIsApplied(true);
 	}
 
 	async function handleRemove() {
 		if (!activeCode) return;
 		setIsRemoving(true);
-		const result = await removePromoCode(checkoutId, activeCode);
-		setIsRemoving(false);
-		if (!result.ok) return;
-		setActiveCode(null);
-		setActiveDiscount(null);
-		setIsApplied(false);
+		setRemoveFailed(false);
+		try {
+			const result = await removePromoCode(checkoutId, activeCode);
+			if (!result.ok) {
+				setRemoveFailed(true);
+				return;
+			}
+			setActiveCode(null);
+			setActiveDiscount(null);
+			setIsApplied(false);
+		} catch {
+			setRemoveFailed(true);
+		} finally {
+			setIsRemoving(false);
+		}
 	}
 
 	function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -78,7 +98,9 @@ export function PromoCodeField({ checkoutId, appliedVoucherCode, discount }: Pro
 			? t("promoInvalid")
 			: errorKey === "promoNotApplicable"
 				? t("promoNotApplicable")
-				: null;
+				: errorKey === "requestFailed"
+					? t("promoError")
+					: null;
 
 	return (
 		<AnimatePresence mode="wait" initial={false}>
@@ -89,35 +111,42 @@ export function PromoCodeField({ checkoutId, appliedVoucherCode, discount }: Pro
 					animate={{ opacity: 1, scale: 1 }}
 					exit={{ opacity: 0, scale: 0.97 }}
 					transition={{ duration: 0.2 }}
-					className="flex items-center justify-between gap-3 rounded-xl border border-brand-primary/30 bg-surface-raised p-3"
+					className="flex flex-col gap-1.5"
 				>
-					<div className="flex min-w-0 items-center gap-2">
-						<CheckCircle className="h-4 w-4 shrink-0 text-brand-primary" aria-hidden="true" />
-						<div className="min-w-0">
-							<p className="text-sm font-medium text-content-primary">
-								{activeCode}
-								{activeDiscount && activeDiscount.amount > 0 && (
-									<span className="ml-2 text-brand-primary">
-										−{formatMoney(activeDiscount.amount, activeDiscount.currency)}
-									</span>
-								)}
-							</p>
-							<p className="text-xs text-content-secondary">{t("promoApplied")}</p>
+					<div className="flex items-center justify-between gap-3 rounded-xl border border-brand-primary/30 bg-surface-raised p-3">
+						<div className="flex min-w-0 items-center gap-2">
+							<CheckCircle className="h-4 w-4 shrink-0 text-brand-primary" aria-hidden="true" />
+							<div className="min-w-0">
+								<p className="text-sm font-medium text-content-primary">
+									{activeCode}
+									{activeDiscount && activeDiscount.amount > 0 && (
+										<span className="ml-2 text-brand-primary">
+											−{formatMoney(activeDiscount.amount, activeDiscount.currency)}
+										</span>
+									)}
+								</p>
+								<p className="text-xs text-content-secondary">{t("promoApplied")}</p>
+							</div>
 						</div>
+						<button
+							type="button"
+							onClick={() => void handleRemove()}
+							disabled={isRemoving}
+							aria-label={t("promoRemove")}
+							className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-content-secondary transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
+						>
+							{isRemoving ? (
+								<span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+							) : (
+								<X className="h-4 w-4" aria-hidden="true" />
+							)}
+						</button>
 					</div>
-					<button
-						type="button"
-						onClick={() => void handleRemove()}
-						disabled={isRemoving}
-						aria-label={t("promoRemove")}
-						className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-content-secondary transition-colors hover:bg-red-50 hover:text-red-600 disabled:opacity-40"
-					>
-						{isRemoving ? (
-							<span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-						) : (
-							<X className="h-4 w-4" aria-hidden="true" />
-						)}
-					</button>
+					{removeFailed && (
+						<p className="text-xs text-status-danger" role="alert">
+							{t("promoError")}
+						</p>
+					)}
 				</m.div>
 			) : (
 				<m.div

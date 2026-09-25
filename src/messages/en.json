@@ -89,7 +89,8 @@
 		"promoInvalid": "Invalid or expired promo code.",
 		"promoNotApplicable": "This code cannot be applied to your cart.",
 		"promoRemove": "Remove",
-		"discount": "Discount"
+		"discount": "Discount",
+		"promoError": "We couldn't update the promo code. Please try again."
 	},
 	"products": {
 		"title": "All Products",
@@ -229,7 +230,18 @@
 				"config_error": "Returns are temporarily unavailable. Please contact us.",
 				"unknown": "Something went wrong. Please try again."
 			}
-		}
+		},
+		"errors": {
+			"SESSION_EXPIRED": "Your session has expired. Please sign in again.",
+			"EMIRATE_REQUIRED": "Please select an emirate.",
+			"REQUIRED_FIELD_MISSING": "Please fill in all required fields.",
+			"PHONE_INVALID": "Please enter a valid phone number.",
+			"POSTAL_CODE_INVALID": "Please enter a valid postal code.",
+			"INVALID_FIELD": "Some details are invalid. Please check the form and try again.",
+			"NOT_FOUND": "This address no longer exists. Please refresh the page.",
+			"unknown": "Something went wrong. Please try again."
+		},
+		"saving": "Saving…"
 	},
 	"accountDeletion": {
 		"sectionTitle": "Delete Account",
@@ -659,7 +671,9 @@
 			"passwordRequired": "Please enter your password.",
 			"confirmPasswordRequired": "Please confirm your password.",
 			"identifierRequired": "Please enter your email address or phone number.",
-			"identifierInvalid": "Please enter a valid email address or phone number."
+			"identifierInvalid": "Please enter a valid email address or phone number.",
+			"fieldRequired": "This field is required.",
+			"emirateRequired": "Please select an emirate."
 		},
 		"errors": {
 			"INVALID_CREDENTIALS": "Incorrect email or password.",
@@ -684,7 +698,8 @@
 			"NO_REFRESH_TOKEN": "Your session has expired. Please sign in again.",
 			"REFRESH_FAILED": "Your session has expired. Please sign in again.",
 			"unknown": "Something went wrong. Please try again."
-		}
+		},
+		"signOutFailed": "We couldn't sign you out. Please check your connection and try again."
 	},
 	"phoneField": {
 		"label": "Phone / WhatsApp Number",

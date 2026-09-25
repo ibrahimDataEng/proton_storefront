@@ -8,6 +8,7 @@ import { Plus, Pencil, Trash2, Check } from "lucide-react";
 import clsx from "clsx";
 import {
 	AuthFormField,
+	authFieldErrorClassName,
 	authInputClassName,
 	authRequiredMarkClassName,
 } from "@/ui/components/auth/AuthFormField";
@@ -19,6 +20,14 @@ import {
 } from "@/app/[locale]/[channel]/(main)/account/actions";
 import type { CurrentUserOrderListQuery, AddressTypeEnum } from "@/gql/graphql";
 import type { CountryAreaOption } from "@/lib/address/countryAreaChoices";
+import { resolveErrorMessage } from "@/lib/i18n/resolveErrorMessage";
+import {
+	hasErrors,
+	validateAddress,
+	VALIDATION_MESSAGE_KEYS,
+	type AddressField,
+	type FieldErrors,
+} from "@/lib/validation/auth";
 
 type Address = NonNullable<NonNullable<CurrentUserOrderListQuery["me"]>["addresses"]>[number];
 
@@ -78,6 +87,7 @@ function AddressForm({
 	saving,
 	error,
 	emirateOptions,
+	onEdit,
 }: {
 	initial: AddressFormState;
 	emirateOptions: CountryAreaOption[];
@@ -85,26 +95,52 @@ function AddressForm({
 	onCancel: () => void;
 	saving: boolean;
 	error: string | null;
+	/** Any field edit — the parent clears its (now stale) server-error banner. */
+	onEdit: () => void;
 }) {
 	const t = useTranslations("account");
+	const tAuth = useTranslations("auth");
 	const [form, setForm] = useState<AddressFormState>(initial);
+	// Inline validation (shared validator, translated messages). The form keeps
+	// noValidate so the browser's own locale-dependent bubbles never appear;
+	// errors are set on submit, then re-checked per field on blur.
+	const [fieldErrors, setFieldErrors] = useState<FieldErrors<AddressField>>({});
+	const [submitted, setSubmitted] = useState(false);
 
 	function set(key: keyof AddressFormState, value: string | boolean) {
 		setForm((f) => ({ ...f, [key]: value }));
+		onEdit();
+	}
+
+	function validateField(field: AddressField) {
+		if (!submitted) return;
+		setFieldErrors((prev) => ({ ...prev, [field]: validateAddress(form)[field] }));
+	}
+
+	function fieldError(field: AddressField) {
+		const reason = fieldErrors[field];
+		return reason ? tAuth(VALIDATION_MESSAGE_KEYS[reason]) : undefined;
 	}
 
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
+		setSubmitted(true);
+		const errors = validateAddress(form);
+		setFieldErrors(errors);
+		if (hasErrors(errors)) return;
 		await onSave(form);
 	}
+
+	const emirateError = fieldError("countryArea");
 
 	return (
 		<form
 			onSubmit={handleSubmit}
+			noValidate
 			className="flex flex-col gap-4 rounded-2xl bg-surface-base p-5 ring-1 ring-line-subtle"
 		>
 			{error && (
-				<p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+				<p role="alert" className="rounded-md bg-status-danger/10 px-3 py-2 text-sm text-status-danger">
 					{error}
 				</p>
 			)}
@@ -114,6 +150,8 @@ function AddressForm({
 					label={t("firstName")}
 					value={form.firstName}
 					onChange={(e) => set("firstName", e.target.value)}
+					onBlur={() => validateField("firstName")}
+					error={fieldError("firstName")}
 					required
 					disabled={saving}
 				/>
@@ -122,6 +160,8 @@ function AddressForm({
 					label={t("lastName")}
 					value={form.lastName}
 					onChange={(e) => set("lastName", e.target.value)}
+					onBlur={() => validateField("lastName")}
+					error={fieldError("lastName")}
 					required
 					disabled={saving}
 				/>
@@ -131,6 +171,8 @@ function AddressForm({
 				label={t("streetAddress1")}
 				value={form.streetAddress1}
 				onChange={(e) => set("streetAddress1", e.target.value)}
+				onBlur={() => validateField("streetAddress1")}
+				error={fieldError("streetAddress1")}
 				required
 				disabled={saving}
 			/>
@@ -147,6 +189,8 @@ function AddressForm({
 					label={t("city")}
 					value={form.city}
 					onChange={(e) => set("city", e.target.value)}
+					onBlur={() => validateField("city")}
+					error={fieldError("city")}
 					required
 					disabled={saving}
 				/>
@@ -173,10 +217,13 @@ function AddressForm({
 						id="addr-emirate"
 						value={form.countryArea}
 						onChange={(e) => set("countryArea", e.target.value)}
+						onBlur={() => validateField("countryArea")}
 						required
 						disabled={saving}
+						aria-invalid={emirateError ? "true" : undefined}
+						aria-describedby={emirateError ? "addr-emirate-error" : undefined}
 						className={clsx(
-							authInputClassName(false),
+							authInputClassName(Boolean(emirateError)),
 							"w-full bg-no-repeat pe-9 ps-3.5",
 							"bg-[length:1.1em_1.1em] bg-[right_0.75rem_center] rtl:bg-[left_0.75rem_center]",
 						)}
@@ -193,6 +240,11 @@ function AddressForm({
 							</option>
 						))}
 					</select>
+					{emirateError && (
+						<p id="addr-emirate-error" role="alert" className={authFieldErrorClassName}>
+							{emirateError}
+						</p>
+					)}
 				</div>
 			)}
 			<AuthFormField
@@ -231,7 +283,7 @@ function AddressForm({
 					disabled={saving}
 					className="rounded-xl bg-brand-primary px-5 py-2.5 text-sm font-semibold text-content-inverse transition-colors hover:bg-brand-primary/90 disabled:opacity-60"
 				>
-					{saving ? "…" : t("saveChanges")}
+					{saving ? t("saving") : t("saveChanges")}
 				</button>
 				<button
 					type="button"
@@ -363,69 +415,87 @@ export function AddressSection({ addresses, emirateOptions }: Props) {
 	const [showAddForm, setShowAddForm] = useState(false);
 	const [saving, setSaving] = useState(false);
 	const [formError, setFormError] = useState<string | null>(null);
+	// Failures of the card actions (delete / set default), which used to be ignored.
+	const [listError, setListError] = useState<string | null>(null);
 
 	async function handleSaveNew(form: AddressFormState) {
 		setSaving(true);
 		setFormError(null);
-		const result = await createAddress({
-			firstName: form.firstName,
-			lastName: form.lastName,
-			streetAddress1: form.streetAddress1,
-			streetAddress2: form.streetAddress2,
-			city: form.city,
-			postalCode: form.postalCode,
-			country: form.country as Parameters<typeof createAddress>[0]["country"],
-			countryArea: form.countryArea,
-			phone: form.phone,
-		});
-		setSaving(false);
-		if (!result.ok) {
-			setFormError(result.error ?? "Error saving address");
-			return;
+		try {
+			const result = await createAddress({
+				firstName: form.firstName,
+				lastName: form.lastName,
+				streetAddress1: form.streetAddress1,
+				streetAddress2: form.streetAddress2,
+				city: form.city,
+				postalCode: form.postalCode,
+				country: form.country as Parameters<typeof createAddress>[0]["country"],
+				countryArea: form.countryArea,
+				phone: form.phone,
+			});
+			if (!result.ok) {
+				setFormError(resolveErrorMessage(t, result.error));
+				return;
+			}
+			if (form.setShipping || form.setBilling) {
+				// Set default after creation — handled by backend if we pass type to accountAddressCreate
+				// For simplicity, setDefault after creation requires the new id which we don't have here
+			}
+			setShowAddForm(false);
+			router.refresh();
+		} catch {
+			setFormError(t("errors.unknown"));
+		} finally {
+			setSaving(false);
 		}
-		if (form.setShipping || form.setBilling) {
-			// Set default after creation — handled by backend if we pass type to accountAddressCreate
-			// For simplicity, setDefault after creation requires the new id which we don't have here
-		}
-		setShowAddForm(false);
-		router.refresh();
 	}
 
 	async function handleSaveEdit(id: string, form: AddressFormState) {
 		setSaving(true);
 		setFormError(null);
-		const result = await updateAddress(id, {
-			firstName: form.firstName,
-			lastName: form.lastName,
-			streetAddress1: form.streetAddress1,
-			streetAddress2: form.streetAddress2,
-			city: form.city,
-			postalCode: form.postalCode,
-			country: form.country as Parameters<typeof createAddress>[0]["country"],
-			countryArea: form.countryArea,
-			phone: form.phone,
-		});
-		setSaving(false);
-		if (!result.ok) {
-			setFormError(result.error ?? "Error saving address");
-			return;
+		try {
+			const result = await updateAddress(id, {
+				firstName: form.firstName,
+				lastName: form.lastName,
+				streetAddress1: form.streetAddress1,
+				streetAddress2: form.streetAddress2,
+				city: form.city,
+				postalCode: form.postalCode,
+				country: form.country as Parameters<typeof createAddress>[0]["country"],
+				countryArea: form.countryArea,
+				phone: form.phone,
+			});
+			if (!result.ok) {
+				setFormError(resolveErrorMessage(t, result.error));
+				return;
+			}
+			setEditingId(null);
+			router.refresh();
+		} catch {
+			setFormError(t("errors.unknown"));
+		} finally {
+			setSaving(false);
 		}
-		setEditingId(null);
-		router.refresh();
 	}
 
-	async function handleDelete(id: string) {
-		const result = await deleteAddress(id);
-		if (result.ok) router.refresh();
-	}
-
-	async function handleSetDefault(id: string, type: AddressTypeEnum) {
-		const result = await setDefaultAddress(id, type);
-		if (result.ok) router.refresh();
+	async function runCardAction(action: () => ReturnType<typeof deleteAddress>) {
+		setListError(null);
+		try {
+			const result = await action();
+			if (result.ok) router.refresh();
+			else setListError(resolveErrorMessage(t, result.error));
+		} catch {
+			setListError(t("errors.unknown"));
+		}
 	}
 
 	return (
 		<div className="flex flex-col gap-4">
+			{listError && (
+				<p role="alert" className="rounded-md bg-status-danger/10 px-3 py-2 text-sm text-status-danger">
+					{listError}
+				</p>
+			)}
 			{/* Address cards grid */}
 			<div className="grid grid-cols-1 gap-4 md:grid-cols-2">
 				{addresses.map((addr) => (
@@ -449,6 +519,7 @@ export function AddressSection({ addresses, emirateOptions }: Props) {
 										saving={saving}
 										error={formError}
 										emirateOptions={emirateOptions}
+										onEdit={() => setFormError(null)}
 									/>
 								</m.div>
 							</AnimatePresence>
@@ -460,8 +531,8 @@ export function AddressSection({ addresses, emirateOptions }: Props) {
 									setShowAddForm(false);
 									setFormError(null);
 								}}
-								onDelete={() => void handleDelete(addr.id)}
-								onSetDefault={(type) => void handleSetDefault(addr.id, type)}
+								onDelete={() => void runCardAction(() => deleteAddress(addr.id))}
+								onSetDefault={(type) => void runCardAction(() => setDefaultAddress(addr.id, type))}
 							/>
 						)}
 					</div>
@@ -505,6 +576,7 @@ export function AddressSection({ addresses, emirateOptions }: Props) {
 							saving={saving}
 							error={formError}
 							emirateOptions={emirateOptions}
+							onEdit={() => setFormError(null)}
 						/>
 					</m.div>
 				)}

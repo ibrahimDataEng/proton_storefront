@@ -33,6 +33,7 @@ export function DeleteAccountModal({ isOpen, onClose, email }: Props) {
 	const [confirmText, setConfirmText] = useState("");
 	const [reason, setReason] = useState("");
 	const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+	const [sessionExpired, setSessionExpired] = useState(false);
 
 	const canConfirm = confirmText.trim() === CONFIRM_WORD && status !== "sending";
 
@@ -119,8 +120,15 @@ export function DeleteAccountModal({ isOpen, onClose, email }: Props) {
 				: "";
 		const channel = params.channel ?? "";
 
-		const result = await requestAccountDeletion({ redirectUrl, channel });
-		setStatus(result.ok ? "sent" : "error");
+		try {
+			const result = await requestAccountDeletion({ redirectUrl, channel });
+			setSessionExpired(!result.ok && result.error === "SESSION_EXPIRED");
+			setStatus(result.ok ? "sent" : "error");
+		} catch {
+			// Network failure / Saleor down — never leave the modal stuck on "sending".
+			setSessionExpired(false);
+			setStatus("error");
+		}
 	}
 
 	if (!isOpen) return null;
@@ -196,7 +204,7 @@ export function DeleteAccountModal({ isOpen, onClose, email }: Props) {
 
 						{status === "error" && (
 							<p role="alert" className="rounded-md bg-status-danger/10 px-3 py-2 text-sm text-status-danger">
-								{tAuth("errors.unknown")}
+								{sessionExpired ? tAuth("errors.unauthorized") : tAuth("errors.unknown")}
 							</p>
 						)}
 

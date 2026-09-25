@@ -52,14 +52,19 @@ export function CartLineItem({ line, checkoutId }: CartLineItemProps) {
 		if (debounceRef.current) clearTimeout(debounceRef.current);
 		setIsPendingQty(true);
 		debounceRef.current = setTimeout(() => {
-			void updateLineQuantity({ lineId: line.id, checkoutId, quantity: next }).then((result) => {
-				if (result.ok) {
-					committedQtyRef.current = next;
-				} else {
+			void updateLineQuantity({ lineId: line.id, checkoutId, quantity: next })
+				.then((result) => {
+					if (result.ok) {
+						committedQtyRef.current = next;
+					} else {
+						setQuantity(committedQtyRef.current);
+					}
+				})
+				.catch(() => {
+					// Network failure / Saleor down — revert to the last confirmed quantity.
 					setQuantity(committedQtyRef.current);
-				}
-				setIsPendingQty(false);
-			});
+				})
+				.finally(() => setIsPendingQty(false));
 		}, 500);
 	};
 
@@ -150,6 +155,7 @@ export function CartLineItem({ line, checkoutId }: CartLineItemProps) {
 								label={t("saveForLater")}
 								alreadySavedLabel={t("alreadySaved")}
 								onLeave={() => setIsLeaving(true)}
+								onLeaveCancelled={() => setIsLeaving(false)}
 							/>
 							<DeleteLineButton checkoutId={checkoutId} lineId={line.id} />
 						</div>

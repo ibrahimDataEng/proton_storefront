@@ -16,6 +16,7 @@ import {
 import { DeleteAccountModal } from "@/ui/components/account/DeleteAccountModal";
 import { updateAccount } from "@/app/[locale]/[channel]/(main)/account/actions";
 import type { CurrentUserOrderListQuery } from "@/gql/graphql";
+import { resolveErrorMessage } from "@/lib/i18n/resolveErrorMessage";
 
 type PhoneLoadState = "loading" | "loaded" | "error";
 type PhoneSubmitOutcome = "invalid" | "conflict" | "service_error" | null;
@@ -129,16 +130,22 @@ export function SettingsSection({ user }: Props) {
 		setSaving(true);
 		setSaveStatus("idle");
 		setSaveError(null);
-		const result = await updateAccount({ firstName, lastName });
-		setSaving(false);
-		if (!result.ok) {
-			setSaveError(result.error ?? "Error saving");
+		try {
+			const result = await updateAccount({ firstName, lastName });
+			if (!result.ok) {
+				setSaveError(resolveErrorMessage(t, result.error));
+				setSaveStatus("error");
+				return;
+			}
+			setSaveStatus("success");
+			router.refresh();
+			setTimeout(() => setSaveStatus("idle"), 2500);
+		} catch {
+			setSaveError(t("errors.unknown"));
 			setSaveStatus("error");
-			return;
+		} finally {
+			setSaving(false);
 		}
-		setSaveStatus("success");
-		router.refresh();
-		setTimeout(() => setSaveStatus("idle"), 2500);
 	}
 
 	function handleDownloadData() {
@@ -185,7 +192,7 @@ export function SettingsSection({ user }: Props) {
 				<h2 className="mb-5 text-base font-semibold text-content-primary">{t("personalInfo")}</h2>
 				<form onSubmit={handleSave} className="flex flex-col gap-4">
 					{saveError && (
-						<p role="alert" className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-700">
+						<p role="alert" className="rounded-md bg-status-danger/10 px-3 py-2 text-sm text-status-danger">
 							{saveError}
 						</p>
 					)}
