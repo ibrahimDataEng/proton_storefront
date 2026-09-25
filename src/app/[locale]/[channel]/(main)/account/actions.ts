@@ -18,6 +18,7 @@ import {
 } from "@/gql/graphql";
 import { COOKIE_ACCESS_TOKEN, COOKIE_REFRESH_TOKEN } from "@/lib/auth/cookies";
 import { decodeJwtPayload } from "@/lib/auth/jwt";
+import { isSessionError, mapAccountError, type AccountErrorCode } from "@/lib/account/errorCodes";
 
 async function getAuthHeaders(): Promise<Record<string, string>> {
 	const cookieStore = await cookies();
@@ -25,6 +26,40 @@ async function getAuthHeaders(): Promise<Record<string, string>> {
 	if (!token) return {};
 	return { Authorization: `Bearer ${token}` };
 }
+
+// Every mutating action returns an error CODE from ACCOUNT_ERROR_CODES, never a
+// Saleor message string — callers render it via resolveErrorMessage(t, code).
+export type AccountActionResult = { ok: true } | { ok: false; error: AccountErrorCode };
+
+type SaleorMutationError = { field?: string | null; code?: string | null; message?: string | null };
+
+function toFailure(action: string, errors: readonly SaleorMutationError[]): AccountActionResult {
+	const first = errors[0];
+	const error = mapAccountError(first?.code, first?.field);
+	if (error === "unknown") {
+		console.error(
+			`[account] ${action}: unmapped error ${first?.code} on ${first?.field ?? "-"}: ${first?.message}`,
+		);
+	}
+	return { ok: false, error };
+}
+
+/**
+ * Runs a Saleor call; an expired/invalid session (which executeGraphQL throws
+ * as a GraphQLError) comes back as SESSION_EXPIRED instead of a throw. Any other
+ * failure (network, Saleor down) still throws — every caller wraps these actions
+ * in try/catch and shows a translated generic message.
+ */
+async function withSession<T>(run: () => Promise<T>): Promise<T | "SESSION_EXPIRED"> {
+	try {
+		return await run();
+	} catch (error) {
+		if (isSessionError(error)) return "SESSION_EXPIRED";
+		throw error;
+	}
+}
+
+const SESSION_EXPIRED: AccountActionResult = { ok: false, error: "SESSION_EXPIRED" };
 
 const RECENTLY_VIEWED_METADATA_KEY = "recentlyViewed";
 const MAX_RECENTLY_VIEWED = 20;
@@ -53,83 +88,82 @@ function parseRecentlyViewed(raw: string | null | undefined): RecentlyViewedItem
 export async function updateAccount(input: {
 	firstName: string;
 	lastName: string;
-}): Promise<{ ok: boolean; error?: string }> {
+}): Promise<AccountActionResult> {
 	const headers = await getAuthHeaders();
-	const result = await executeGraphQL(AccountUpdateDocument, {
-		variables: { firstName: input.firstName, lastName: input.lastName },
-		cache: "no-cache",
-		headers,
-	});
+	const result = await withSession(() =>
+		executeGraphQL(AccountUpdateDocument, {
+			variables: { firstName: input.firstName, lastName: input.lastName },
+			cache: "no-cache",
+			headers,
+		}),
+	);
+	if (result === "SESSION_EXPIRED") return SESSION_EXPIRED;
 	const errors = result.accountUpdate?.errors ?? [];
-	if (errors.length > 0) {
-		return { ok: false, error: errors[0]?.message ?? "unknown" };
-	}
+	if (errors.length > 0) return toFailure("updateAccount", errors);
 	revalidatePath("/", "layout");
 	return { ok: true };
 }
 
-export async function createAddress(input: AddressInput): Promise<{ ok: boolean; error?: string }> {
+export async function createAddress(input: AddressInput): Promise<AccountActionResult> {
 	const headers = await getAuthHeaders();
-	const result = await executeGraphQL(AccountAddressCreateDocument, {
-		variables: { input },
-		cache: "no-cache",
-		headers,
-	});
+	const result = await withSession(() =>
+		executeGraphQL(AccountAddressCreateDocument, {
+			variables: { input },
+			cache: "no-cache",
+			headers,
+		}),
+	);
+	if (result === "SESSION_EXPIRED") return SESSION_EXPIRED;
 	const errors = result.accountAddressCreate?.errors ?? [];
-	if (errors.length > 0) {
-		return { ok: false, error: errors[0]?.message ?? "unknown" };
-	}
+	if (errors.length > 0) return toFailure("createAddress", errors);
 	revalidatePath("/", "layout");
 	return { ok: true };
 }
 
-export async function updateAddress(
-	id: string,
-	input: AddressInput,
-): Promise<{ ok: boolean; error?: string }> {
+export async function updateAddress(id: string, input: AddressInput): Promise<AccountActionResult> {
 	const headers = await getAuthHeaders();
-	const result = await executeGraphQL(AccountAddressUpdateDocument, {
-		variables: { id, input },
-		cache: "no-cache",
-		headers,
-	});
+	const result = await withSession(() =>
+		executeGraphQL(AccountAddressUpdateDocument, {
+			variables: { id, input },
+			cache: "no-cache",
+			headers,
+		}),
+	);
+	if (result === "SESSION_EXPIRED") return SESSION_EXPIRED;
 	const errors = result.accountAddressUpdate?.errors ?? [];
-	if (errors.length > 0) {
-		return { ok: false, error: errors[0]?.message ?? "unknown" };
-	}
+	if (errors.length > 0) return toFailure("updateAddress", errors);
 	revalidatePath("/", "layout");
 	return { ok: true };
 }
 
-export async function deleteAddress(id: string): Promise<{ ok: boolean; error?: string }> {
+export async function deleteAddress(id: string): Promise<AccountActionResult> {
 	const headers = await getAuthHeaders();
-	const result = await executeGraphQL(AccountAddressDeleteDocument, {
-		variables: { id },
-		cache: "no-cache",
-		headers,
-	});
+	const result = await withSession(() =>
+		executeGraphQL(AccountAddressDeleteDocument, {
+			variables: { id },
+			cache: "no-cache",
+			headers,
+		}),
+	);
+	if (result === "SESSION_EXPIRED") return SESSION_EXPIRED;
 	const errors = result.accountAddressDelete?.errors ?? [];
-	if (errors.length > 0) {
-		return { ok: false, error: errors[0]?.message ?? "unknown" };
-	}
+	if (errors.length > 0) return toFailure("deleteAddress", errors);
 	revalidatePath("/", "layout");
 	return { ok: true };
 }
 
-export async function setDefaultAddress(
-	id: string,
-	type: AddressTypeEnum,
-): Promise<{ ok: boolean; error?: string }> {
+export async function setDefaultAddress(id: string, type: AddressTypeEnum): Promise<AccountActionResult> {
 	const headers = await getAuthHeaders();
-	const result = await executeGraphQL(AccountSetDefaultAddressDocument, {
-		variables: { id, type },
-		cache: "no-cache",
-		headers,
-	});
+	const result = await withSession(() =>
+		executeGraphQL(AccountSetDefaultAddressDocument, {
+			variables: { id, type },
+			cache: "no-cache",
+			headers,
+		}),
+	);
+	if (result === "SESSION_EXPIRED") return SESSION_EXPIRED;
 	const errors = result.accountSetDefaultAddress?.errors ?? [];
-	if (errors.length > 0) {
-		return { ok: false, error: errors[0]?.message ?? "unknown" };
-	}
+	if (errors.length > 0) return toFailure("setDefaultAddress", errors);
 	revalidatePath("/", "layout");
 	return { ok: true };
 }
@@ -182,36 +216,38 @@ export async function getRecentlyViewed(): Promise<RecentlyViewedItem[]> {
 export async function requestAccountDeletion(input: {
 	redirectUrl: string;
 	channel: string;
-}): Promise<{ ok: boolean; error?: string }> {
+}): Promise<AccountActionResult> {
 	const headers = await getAuthHeaders();
-	const result = await executeGraphQL(AccountRequestDeletionDocument, {
-		variables: { redirectUrl: input.redirectUrl, channel: input.channel },
-		cache: "no-cache",
-		headers,
-	});
+	const result = await withSession(() =>
+		executeGraphQL(AccountRequestDeletionDocument, {
+			variables: { redirectUrl: input.redirectUrl, channel: input.channel },
+			cache: "no-cache",
+			headers,
+		}),
+	);
+	if (result === "SESSION_EXPIRED") return SESSION_EXPIRED;
 	const errors = result.accountRequestDeletion?.errors ?? [];
-	if (errors.length > 0) {
-		return { ok: false, error: errors[0]?.code ?? "unknown" };
-	}
+	if (errors.length > 0) return toFailure("requestAccountDeletion", errors);
 	return { ok: true };
 }
 
-export async function confirmAccountDeletion(token: string): Promise<{ ok: boolean; error?: string }> {
+export async function confirmAccountDeletion(token: string): Promise<AccountActionResult> {
 	const cookieStore = await cookies();
 	const accessToken = cookieStore.get(COOKIE_ACCESS_TOKEN)?.value;
-	if (!accessToken) {
-		return { ok: false, error: "NOT_AUTHENTICATED" };
-	}
+	// No session at all, or one Saleor rejects (expired/invalid): both mean the
+	// customer has to sign in again before the deletion link can be used.
+	if (!accessToken) return SESSION_EXPIRED;
 
-	const result = await executeGraphQL(AccountDeleteDocument, {
-		variables: { token },
-		cache: "no-cache",
-		headers: { Authorization: `Bearer ${accessToken}` },
-	});
+	const result = await withSession(() =>
+		executeGraphQL(AccountDeleteDocument, {
+			variables: { token },
+			cache: "no-cache",
+			headers: { Authorization: `Bearer ${accessToken}` },
+		}),
+	);
+	if (result === "SESSION_EXPIRED") return SESSION_EXPIRED;
 	const errors = result.accountDelete?.errors ?? [];
-	if (errors.length > 0) {
-		return { ok: false, error: errors[0]?.code ?? "unknown" };
-	}
+	if (errors.length > 0) return toFailure("confirmAccountDeletion", errors);
 
 	// Deleted user's tokens are no longer valid for anything — clear them now
 	// rather than waiting for the client-side logout() round trip.

@@ -127,7 +127,13 @@ export function ProductInfo({ product, locale, channel }: Props) {
 	const handleAddToCart = async () => {
 		if (!selectedVariantId || addStatus === "pending" || addStatus === "success") return;
 		setAddStatus("pending");
-		const result = await addLineWithQuantity({ variantId: selectedVariantId, channel, quantity, locale });
+		let result: Awaited<ReturnType<typeof addLineWithQuantity>>;
+		try {
+			result = await addLineWithQuantity({ variantId: selectedVariantId, channel, quantity, locale });
+		} catch {
+			// Network failure / Saleor down — same translated error state as a failed add.
+			result = { ok: false, redirect: false };
+		}
 		if (!result.ok) {
 			setAddErrorIsStock(result.errorCode === "INSUFFICIENT_STOCK");
 			setAddStatus("error");

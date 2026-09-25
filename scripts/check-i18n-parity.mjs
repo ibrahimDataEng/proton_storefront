@@ -7,8 +7,9 @@
  *   1. key-tree differences between src/messages/en.json and ar.json
  *   2. empty (or non-string) leaf values
  *   3. ICU argument mismatches ({name} / {count, plural, ...}) between locales
- *   4. any code in AUTH_ERROR_CODES (src/lib/auth/errorCodes.ts) without an
- *      `auth.errors.<CODE>` message in both locales
+ *   4. any code in AUTH_ERROR_CODES (src/lib/auth/errorCodes.ts) or
+ *      ACCOUNT_ERROR_CODES (src/lib/account/errorCodes.ts) without an
+ *      `auth.errors.<CODE>` / `account.errors.<CODE>` message in both locales
  */
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -16,7 +17,11 @@ import { fileURLToPath } from "node:url";
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const LOCALES = ["en", "ar"];
-const ERROR_CODES_FILE = "src/lib/auth/errorCodes.ts";
+/** Code lists whose every entry must have `<namespace>.<CODE>` in both locales. */
+const ERROR_CODE_LISTS = [
+	{ file: "src/lib/auth/errorCodes.ts", constName: "AUTH_ERROR_CODES", namespace: "auth.errors" },
+	{ file: "src/lib/account/errorCodes.ts", constName: "ACCOUNT_ERROR_CODES", namespace: "account.errors" },
+];
 
 const problems = [];
 
@@ -147,20 +152,22 @@ for (const other of others) {
 	}
 }
 
-// 4. auth error-code coverage
-const codesSource = readFileSync(join(ROOT, ERROR_CODES_FILE), "utf8");
-const listMatch = codesSource.match(/AUTH_ERROR_CODES\s*=\s*\[([\s\S]*?)\]\s*as const/);
-const codes = listMatch ? [...listMatch[1].matchAll(/["']([^"']+)["']/g)].map((m) => m[1]) : [];
-if (codes.length === 0) {
-	problems.push(
-		`could not read AUTH_ERROR_CODES from ${ERROR_CODES_FILE} (keep it a plain string-literal array)`,
-	);
-}
-for (const locale of LOCALES) {
-	for (const code of codes) {
-		const value = flat[locale][`auth.errors.${code}`];
-		if (typeof value !== "string" || !value.trim()) {
-			problems.push(`auth error code without a message in ${locale}.json: auth.errors.${code}`);
+// 4. error-code coverage — every code a route/action can emit has a message
+let codeCount = 0;
+for (const { file, constName, namespace } of ERROR_CODE_LISTS) {
+	const codesSource = readFileSync(join(ROOT, file), "utf8");
+	const listMatch = codesSource.match(new RegExp(`${constName}\\s*=\\s*\\[([\\s\\S]*?)\\]\\s*as const`));
+	const codes = listMatch ? [...listMatch[1].matchAll(/["']([^"']+)["']/g)].map((m) => m[1]) : [];
+	if (codes.length === 0) {
+		problems.push(`could not read ${constName} from ${file} (keep it a plain string-literal array)`);
+	}
+	codeCount += codes.length;
+	for (const locale of LOCALES) {
+		for (const code of codes) {
+			const value = flat[locale][`${namespace}.${code}`];
+			if (typeof value !== "string" || !value.trim()) {
+				problems.push(`${constName} code without a message in ${locale}.json: ${namespace}.${code}`);
+			}
 		}
 	}
 }
@@ -172,7 +179,7 @@ if (problems.length > 0) {
 }
 
 console.log(
-	`i18n check passed: ${Object.keys(flat[base]).length} keys × ${LOCALES.length} locales, ${
-		codes.length
-	} auth error codes covered.`,
+	`i18n check passed: ${Object.keys(flat[base]).length} keys × ${
+		LOCALES.length
+	} locales, ${codeCount} error codes covered (${ERROR_CODE_LISTS.map((l) => l.constName).join(", ")}).`,
 );

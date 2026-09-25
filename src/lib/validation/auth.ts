@@ -1,6 +1,7 @@
 /**
  * Client-side validation shared by the auth forms (LoginForm, RegisterForm,
- * ForgotPasswordForm). Returns reason codes, never strings — each form renders
+ * ForgotPasswordForm) and the account address form (AddressSection).
+ * Returns reason codes, never strings — each form renders
  * them through `t(VALIDATION_MESSAGE_KEYS[reason])` in the `auth` namespace, so
  * the text is always locale-controlled (the forms keep `noValidate`, which
  * suppresses the browser's own locale-dependent validation bubbles).
@@ -19,7 +20,9 @@ export type AuthValidationReason =
 	| "confirmPasswordRequired"
 	| "passwordMismatch"
 	| "identifierRequired"
-	| "identifierInvalid";
+	| "identifierInvalid"
+	| "fieldRequired"
+	| "emirateRequired";
 
 /** Message key (relative to the `auth` namespace) for each reason. */
 export const VALIDATION_MESSAGE_KEYS: Record<AuthValidationReason, string> = {
@@ -31,6 +34,8 @@ export const VALIDATION_MESSAGE_KEYS: Record<AuthValidationReason, string> = {
 	passwordMismatch: "errors.PASSWORD_MISMATCH",
 	identifierRequired: "validation.identifierRequired",
 	identifierInvalid: "validation.identifierInvalid",
+	fieldRequired: "validation.fieldRequired",
+	emirateRequired: "validation.emirateRequired",
 };
 
 export type FieldErrors<F extends string> = Partial<Record<F, AuthValidationReason>>;
@@ -111,4 +116,28 @@ export function validateRegister(input: {
 
 export function validateForgotPassword(input: { email: string }): FieldErrors<"email"> {
 	return { email: validateEmail(input.email) };
+}
+
+export function validateRequired(value: string): AuthValidationReason | undefined {
+	return value.trim() ? undefined : "fieldRequired";
+}
+
+export type AddressField = "firstName" | "lastName" | "streetAddress1" | "city" | "countryArea";
+
+/** Account address form (AddressSection). The emirate is only required for AE addresses. */
+export function validateAddress(input: {
+	firstName: string;
+	lastName: string;
+	streetAddress1: string;
+	city: string;
+	country: string;
+	countryArea: string;
+}): FieldErrors<AddressField> {
+	return {
+		firstName: validateRequired(input.firstName),
+		lastName: validateRequired(input.lastName),
+		streetAddress1: validateRequired(input.streetAddress1),
+		city: validateRequired(input.city),
+		countryArea: input.country === "AE" && !input.countryArea ? "emirateRequired" : undefined,
+	};
 }

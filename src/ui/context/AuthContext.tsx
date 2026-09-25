@@ -1,7 +1,8 @@
 "use client";
 
-import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { type AuthUser } from "@/lib/auth/types";
 
 type AuthModalMode = "login" | "register";
@@ -33,6 +34,9 @@ export function AuthProvider({ children, initialUser = null }: AuthProviderProps
 	const [user, setUser] = useState<AuthUser | null>(initialUser);
 	const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 	const [authModalMode, setAuthModalMode] = useState<AuthModalMode>("login");
+	const [logoutFailed, setLogoutFailed] = useState(false);
+	const tAuth = useTranslations("auth");
+	const tPhoneGate = useTranslations("phoneGate");
 
 	const openAuthModal = useCallback((mode: AuthModalMode) => {
 		setAuthModalMode(mode);
@@ -43,8 +47,25 @@ export function AuthProvider({ children, initialUser = null }: AuthProviderProps
 		setIsAuthModalOpen(false);
 	}, []);
 
+	useEffect(() => {
+		if (!logoutFailed) return;
+		const timer = setTimeout(() => setLogoutFailed(false), 8000);
+		return () => clearTimeout(timer);
+	}, [logoutFailed]);
+
+	// The auth cookies are httpOnly — only /api/auth/logout can clear them. If that
+	// request fails (offline, proxy 502), the customer is still signed in, so say
+	// so (one notice here covers every sign-out button) instead of silently doing
+	// nothing or pretending they're signed out.
 	const logout = useCallback(async () => {
-		await fetch("/api/auth/logout", { method: "POST" });
+		setLogoutFailed(false);
+		try {
+			const res = await fetch("/api/auth/logout", { method: "POST" });
+			if (!res.ok) throw new Error(`logout responded ${res.status}`);
+		} catch {
+			setLogoutFailed(true);
+			return;
+		}
 		setUser(null);
 		router.push(`/${locale}/${channel}`);
 		router.refresh();
@@ -65,6 +86,21 @@ export function AuthProvider({ children, initialUser = null }: AuthProviderProps
 			}}
 		>
 			{children}
+			{logoutFailed && (
+				<div
+					role="alert"
+					className="fixed inset-x-4 bottom-20 z-[60] mx-auto flex max-w-md items-start justify-between gap-3 rounded-lg border border-status-danger/30 bg-surface-raised px-4 py-3 text-sm text-status-danger shadow-lg md:bottom-6"
+				>
+					<p>{tAuth("signOutFailed")}</p>
+					<button
+						type="button"
+						onClick={() => setLogoutFailed(false)}
+						className="shrink-0 text-xs font-medium text-content-secondary underline-offset-2 hover:underline"
+					>
+						{tPhoneGate("dismiss")}
+					</button>
+				</div>
+			)}
 		</AuthContext.Provider>
 	);
 }

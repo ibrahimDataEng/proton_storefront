@@ -9,14 +9,47 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
-export default function GlobalError({ error, reset }: { error: Error; reset: () => void }) {
+// No providers exist here (this replaces the root layout), so the copy is a small
+// static table mirroring the `error` namespace in src/messages/{en,ar}.json. The
+// locale comes from the URL's first segment. Never render error.message — in
+// production it is Next's generic English sentence; the digest is the only
+// detail shown (a safe reference code for support).
+const COPY = {
+	en: {
+		title: "Something went wrong",
+		description: "An unexpected error occurred. Please try again.",
+		tryAgain: "Try Again",
+		goHome: "Go Home",
+		code: "Error code",
+	},
+	ar: {
+		title: "حدث خطأ ما",
+		description: "حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.",
+		tryAgain: "المحاولة مرة أخرى",
+		goHome: "الرئيسية",
+		code: "كود الخطأ",
+	},
+} as const;
+
+export default function GlobalError({
+	error,
+	reset,
+}: {
+	error: Error & { digest?: string };
+	reset: () => void;
+}) {
+	const pathname = usePathname();
+	const locale = pathname?.split("/")[1] === "ar" ? "ar" : "en";
+	const copy = COPY[locale];
+
 	useEffect(() => {
 		console.error(error);
 	}, [error]);
 
 	return (
-		<html lang="ar" dir="rtl">
+		<html lang={locale} dir={locale === "ar" ? "rtl" : "ltr"}>
 			<body
 				style={{
 					margin: 0,
@@ -97,13 +130,13 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
 						style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem" }}
 					>
 						<h1 style={{ fontSize: "1.375rem", fontWeight: 600, color: "#1A1F1A", margin: 0 }}>
-							حدث خطأ غير متوقع | Unexpected Error
+							{copy.title}
 						</h1>
 						<p style={{ color: "#5C6158", maxWidth: "28rem", lineHeight: 1.65, margin: 0 }}>
-							يرجى المحاولة مرة أخرى | Please try again
+							{copy.description}
 						</p>
 
-						{error.message && (
+						{error.digest && (
 							<code
 								style={{
 									display: "block",
@@ -117,7 +150,7 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
 									wordBreak: "break-all",
 								}}
 							>
-								{error.message}
+								{copy.code}: {error.digest}
 							</code>
 						)}
 					</div>
@@ -147,10 +180,10 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
 								transition: "opacity 0.15s",
 							}}
 						>
-							المحاولة مرة أخرى | Try Again
+							{copy.tryAgain}
 						</button>
 						<Link
-							href="/"
+							href={`/${locale}`}
 							className="ge-link"
 							style={{
 								display: "inline-flex",
@@ -165,7 +198,7 @@ export default function GlobalError({ error, reset }: { error: Error; reset: () 
 								transition: "border-color 0.15s, color 0.15s",
 							}}
 						>
-							العودة للرئيسية | Go Home
+							{copy.goHome}
 						</Link>
 					</div>
 				</div>
