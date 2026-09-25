@@ -3,19 +3,30 @@
 import { useState } from "react";
 import { m, AnimatePresence } from "framer-motion";
 import { useTranslations } from "next-intl";
-import { ChevronDown, ShoppingBag } from "lucide-react";
+import { ChevronDown, RotateCcw, ShoppingBag } from "lucide-react";
 import { clsx } from "clsx";
 import { EmptyState } from "@/ui/components/EmptyState";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 import type { OrderDetailsFragment } from "@/gql/graphql";
 import { formatMoney } from "@/lib/utils";
+import { type ReturnStatus } from "@/lib/returns/returnCodes";
+import { ReturnRequestForm } from "@/ui/components/account/ReturnRequestForm";
+import { ReturnStatusBadge } from "@/ui/components/returns/ReturnStatusBadge";
 
 const INITIAL_COUNT = 5;
 const PAGE_SIZE = 5;
 
+/** Computed server-side in account/page.tsx; deadlineLabel is set only while a return may be requested. */
+export type OrderReturnState = {
+	status: ReturnStatus | null;
+	deadlineLabel: string | null;
+};
+
 interface Props {
 	orders: OrderDetailsFragment[];
 	locale: string;
+	channel: string;
+	returnStates: Record<string, OrderReturnState>;
 }
 
 function formatDate(dateStr: string, locale: string) {
@@ -39,9 +50,27 @@ function statusStyles(status: string | null | undefined) {
 	}
 }
 
-function OrderCard({ order, locale }: { order: OrderDetailsFragment; locale: string }) {
+function OrderCard({
+	order,
+	locale,
+	channel,
+	returnState,
+}: {
+	order: OrderDetailsFragment;
+	locale: string;
+	channel: string;
+	returnState: OrderReturnState | undefined;
+}) {
 	const t = useTranslations("account");
+	const tReturn = useTranslations("account.returnRequest");
 	const [expanded, setExpanded] = useState(false);
+	const [isReturnFormOpen, setIsReturnFormOpen] = useState(false);
+	// Set after a successful submit so the button is replaced immediately, before
+	// the revalidated server data arrives.
+	const [submitted, setSubmitted] = useState(false);
+
+	const returnStatus: ReturnStatus | null = submitted ? "requested" : returnState?.status ?? null;
+	const canRequestReturn = !submitted && !returnStatus && Boolean(returnState?.deadlineLabel);
 
 	const thumbnails = order.lines
 		.map((l) => l.variant?.product?.thumbnail)
@@ -68,6 +97,7 @@ function OrderCard({ order, locale }: { order: OrderDetailsFragment; locale: str
 								{order.status.replace(/_/g, " ")}
 							</span>
 						)}
+						{returnStatus && <ReturnStatusBadge status={returnStatus} />}
 						{total && (
 							<span className="text-sm font-semibold text-content-primary">
 								{formatMoney(total.amount, total.currency)}
@@ -98,19 +128,57 @@ function OrderCard({ order, locale }: { order: OrderDetailsFragment; locale: str
 					</div>
 				)}
 
-				{/* Toggle */}
-				<button
-					type="button"
-					onClick={() => setExpanded((v) => !v)}
-					className="flex items-center gap-1 self-start text-xs font-medium text-brand-primary hover:underline"
-				>
-					{t("viewDetails")}
-					<ChevronDown
-						className={clsx("h-3.5 w-3.5 transition-transform", expanded && "rotate-180")}
-						aria-hidden="true"
-					/>
-				</button>
+				{submitted && (
+					<p role="status" className="rounded-lg bg-status-success/10 px-3 py-2 text-sm text-status-success">
+						{tReturn("successNotice")}
+					</p>
+				)}
+
+				{canRequestReturn && returnState?.deadlineLabel && (
+					<p className="text-xs text-content-secondary">
+						{tReturn("windowNotice", { deadline: returnState.deadlineLabel })}
+					</p>
+				)}
+
+				<div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+					{/* Toggle */}
+					<button
+						type="button"
+						onClick={() => setExpanded((v) => !v)}
+						className="flex items-center gap-1 text-xs font-medium text-brand-primary hover:underline"
+					>
+						{t("viewDetails")}
+						<ChevronDown
+							className={clsx("h-3.5 w-3.5 transition-transform", expanded && "rotate-180")}
+							aria-hidden="true"
+						/>
+					</button>
+
+					{canRequestReturn && !isReturnFormOpen && (
+						<button
+							type="button"
+							onClick={() => setIsReturnFormOpen(true)}
+							className="inline-flex items-center gap-1 rounded-lg border border-line-default px-3 py-1.5 text-xs font-medium text-content-primary transition-colors hover:border-brand-primary hover:text-brand-primary"
+						>
+							<RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
+							{tReturn("requestButton")}
+						</button>
+					)}
+				</div>
 			</div>
+
+			{canRequestReturn && isReturnFormOpen && (
+				<ReturnRequestForm
+					orderId={order.id}
+					orderNumber={order.number}
+					channel={channel}
+					onCancel={() => setIsReturnFormOpen(false)}
+					onSubmitted={() => {
+						setIsReturnFormOpen(false);
+						setSubmitted(true);
+					}}
+				/>
+			)}
 
 			{/* Accordion */}
 			<AnimatePresence initial={false}>
@@ -162,7 +230,7 @@ function OrderCard({ order, locale }: { order: OrderDetailsFragment; locale: str
 	);
 }
 
-export function OrdersSection({ orders, locale }: Props) {
+export function OrdersSection({ orders, locale, channel, returnStates }: Props) {
 	const t = useTranslations("account");
 	const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
 
@@ -190,7 +258,13 @@ export function OrdersSection({ orders, locale }: Props) {
 	return (
 		<div className="flex flex-col gap-4">
 			{visible.map((order) => (
-				<OrderCard key={order.id} order={order} locale={locale} />
+				<OrderCard
+					key={order.id}
+					order={order}
+					locale={locale}
+					channel={channel}
+					returnState={returnStates[order.id]}
+				/>
 			))}
 			{hasMore && (
 				<button

@@ -1,0 +1,37 @@
+fragment CourierWorklistOrder on Order {
+	id
+	number
+	status
+	chargeStatus
+	userEmail
+	total {
+		gross {
+			amount
+			currency
+		}
+	}
+	totalCharged {
+		amount
+		currency
+	}
+	lines {
+		id
+		quantity
+	}
+	shippingAddress {
+		firstName
+		lastName
+		streetAddress1
+		streetAddress2
+		city
+		countryArea
+		country {
+			country
+		}
+		phone
+	}
+	metadata {
+		key
+		value
+	}
+}

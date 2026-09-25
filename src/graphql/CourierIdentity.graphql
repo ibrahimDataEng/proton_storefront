@@ -1,0 +1,10 @@
+query CourierIdentity {
+	me {
+		id
+		email
+		firstName
+		lastName
+		isActive
+		isStaff
+	}
+}
