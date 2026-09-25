@@ -2,7 +2,7 @@ import { IntlErrorCode, type IntlError } from "next-intl";
 
 /**
  * Missing-message policy, shared by the server config (src/i18n/request.ts) and
- * the client provider (IntlClientProvider.tsx). No "use client"/"server-only":
+ * the client provider (IntlErrorHandlingProvider.tsx). No "use client"/"server-only":
  * both sides import it, and functions can't cross the RSC boundary, so each side
  * builds its own instances from the same messages object.
  *

@@ -11,7 +11,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
 	return {
 		locale,
 		messages,
-		// Same policy as the client provider (IntlClientProvider) — see messageFallback.ts.
+		// Same policy as the client provider (IntlErrorHandlingProvider) — see messageFallback.ts.
 		getMessageFallback: createGetMessageFallback(messages),
 		onError: createOnError(locale),
 	};
