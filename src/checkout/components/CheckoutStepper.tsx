@@ -22,7 +22,7 @@ export const CheckoutStepper: FC<CheckoutStepperProps> = ({ currentStep }) => {
 
 	return (
 		<nav aria-label="Checkout progress" className="mb-8 w-full border-b border-line-subtle py-6">
-			<ol className="flex w-full items-center">
+			<ol className="flex w-full items-start">
 				{steps.map((step, index) => {
 					const isCompleted = index < stepIndex;
 					const isActive = index === stepIndex;
@@ -93,7 +93,16 @@ export const CheckoutStepper: FC<CheckoutStepperProps> = ({ currentStep }) => {
 							</span>
 							{/* Mobile: show only active step label */}
 							{isActive && (
-								<span className="mt-2 text-xs font-medium text-brand-primary md:hidden">{step.label}</span>
+								<span
+									className={[
+										"mt-2 text-xs font-medium text-brand-primary md:hidden",
+										// The end steps have no connector on their outer side, so their circle sits at
+										// the li edge; anchor the label to it (logical, mirrors in RTL).
+										index === 0 ? "self-start" : index === steps.length - 1 ? "self-end" : "",
+									].join(" ")}
+								>
+									{step.label}
+								</span>
 							)}
 						</li>
 					);
