@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useAlerts } from "@/checkout/hooks/useAlerts";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { useCheckoutComplete } from "@/checkout/hooks/useCheckoutComplete";
+import { type ApiErrors } from "@/checkout/hooks/useGetParsedErrors";
 import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 import { usePaymentProcessingScreen } from "@/checkout/sections/PaymentSection/PaymentProcessingScreen";
 import { type PaymentStatus } from "@/checkout/sections/PaymentSection/types";
@@ -9,6 +10,26 @@ import { usePaymentGatewaysInitialize } from "@/checkout/sections/PaymentSection
 import { usePaymentStatus } from "@/checkout/sections/PaymentSection/utils";
 
 const paidStatuses: PaymentStatus[] = ["overpaid", "paidInFull", "authorized"];
+
+// Shows checkoutComplete's errors through useAlerts' code -> message mapping
+// (apiErrors.checkoutPay*Error in checkoutMessages.ts; unmapped codes show
+// payment.unexpectedError). Saleor's own `message` is untranslated English and
+// can name internals (variant names, tax-app errors), so it only goes to the
+// console.
+export const useCheckoutCompleteErrorAlerts = () => {
+	const { showErrors } = useAlerts();
+	const { payment } = useCheckoutMessages();
+
+	return useCallback(
+		(apiErrors: ApiErrors<any>) => {
+			apiErrors.forEach(({ code, field, message }) =>
+				console.warn(`[checkout-complete] rejected: ${code} (field: ${String(field)}) — ${message}`),
+			);
+			showErrors(apiErrors, "checkoutPay", { fallbackMessage: payment.unexpectedError });
+		},
+		[payment.unexpectedError, showErrors],
+	);
+};
 
 export const usePayments = () => {
 	const { checkout } = useCheckout();
@@ -18,6 +39,7 @@ export const usePayments = () => {
 
 	const { onCheckoutComplete, completingCheckout } = useCheckoutComplete();
 	const { showCustomErrors } = useAlerts();
+	const showCheckoutCompleteErrors = useCheckoutCompleteErrorAlerts();
 	const { payment } = useCheckoutMessages();
 	// This effect can be the ONLY thing that ever runs onCheckoutComplete
 	// after a redirect-return lands mid-processing (see stripeElementsForm.tsx
@@ -55,7 +77,7 @@ export const usePayments = () => {
 			setIsProcessingPayment(false);
 
 			if (result.apiErrors?.length) {
-				result.apiErrors.forEach((error) => showCustomErrors([{ message: error.message }]));
+				showCheckoutCompleteErrors(result.apiErrors);
 			} else {
 				showCustomErrors([{ message: payment.unexpectedError }]);
 			}
@@ -66,6 +88,7 @@ export const usePayments = () => {
 		onCheckoutComplete,
 		paymentStatus,
 		setIsProcessingPayment,
+		showCheckoutCompleteErrors,
 		showCustomErrors,
 		payment,
 	]);

@@ -3,15 +3,15 @@
 import { codGatewayId } from "./types";
 import { Button } from "@/checkout/components";
 import { useTransactionInitializeMutation } from "@/checkout/graphql";
-import { useAlerts } from "@/checkout/hooks/useAlerts";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
 import { useCheckoutComplete } from "@/checkout/hooks/useCheckoutComplete";
 import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 import { markPaymentGatewayUsed } from "@/checkout/lib/lastPaymentGateway";
+import { useCheckoutCompleteErrorAlerts } from "@/checkout/sections/PaymentSection/usePayments";
 
 export const CODComponent = () => {
 	const { payment } = useCheckoutMessages();
-	const { showCustomErrors } = useAlerts();
+	const showCheckoutCompleteErrors = useCheckoutCompleteErrorAlerts();
 	const { checkout } = useCheckout();
 	const [transactionInitializeState, transactionInitialize] = useTransactionInitializeMutation();
 	const { onCheckoutComplete, completingCheckout } = useCheckoutComplete();
@@ -33,10 +33,8 @@ export const CODComponent = () => {
 				return onCheckoutComplete();
 			})
 			.then((res) => {
-				if (res?.apiErrors) {
-					res.apiErrors.forEach((error) => {
-						showCustomErrors([{ message: error.message }]);
-					});
+				if (res?.apiErrors?.length) {
+					showCheckoutCompleteErrors(res.apiErrors);
 				}
 			});
 	};

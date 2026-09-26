@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 
 interface CheckoutErrorBannerProps {
 	message: string | null;
@@ -7,6 +8,7 @@ interface CheckoutErrorBannerProps {
 }
 
 export const CheckoutErrorBanner = ({ message, onDismiss }: CheckoutErrorBannerProps) => {
+	const { errorBanner } = useCheckoutMessages();
 	const [visible, setVisible] = useState(false);
 
 	useEffect(() => {
@@ -49,14 +51,14 @@ export const CheckoutErrorBanner = ({ message, onDismiss }: CheckoutErrorBannerP
 							rel="noopener noreferrer"
 							className="mt-1 inline-block text-xs font-medium text-status-danger/80 underline hover:text-status-danger"
 						>
-							Need help? Contact us on WhatsApp
+							{errorBanner.needHelp}
 						</a>
 					</div>
 				</div>
 				<button
 					onClick={onDismiss}
 					className="flex-shrink-0 text-status-danger/60 hover:text-status-danger"
-					aria-label="Dismiss error"
+					aria-label={errorBanner.dismiss}
 				>
 					<svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
 						<path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />

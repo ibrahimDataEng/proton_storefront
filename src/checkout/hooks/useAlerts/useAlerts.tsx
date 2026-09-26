@@ -14,6 +14,11 @@ import { type ApiErrors } from "@/checkout/hooks/useGetParsedErrors/types";
 import { useGetParsedErrors } from "@/checkout/hooks/useGetParsedErrors";
 import { useApiErrorMessages } from "@/checkout/sections/PaymentSection/errorMessages";
 
+interface ShowErrorsOptions {
+	// Shown instead of apiErrors.somethingWentWrong when a code has no message.
+	fallbackMessage?: string;
+}
+
 function useAlerts(scope: CheckoutScope): {
 	showErrors: (errors: ApiErrors<any>) => void;
 	showCustomErrors: (errors: CustomError[]) => void;
@@ -21,7 +26,7 @@ function useAlerts(scope: CheckoutScope): {
 };
 
 function useAlerts(): {
-	showErrors: (errors: ApiErrors<any>, scope: CheckoutScope) => void;
+	showErrors: (errors: ApiErrors<any>, scope: CheckoutScope, options?: ShowErrorsOptions) => void;
 	showCustomErrors: (errors: CustomError[], scope?: CheckoutScope) => void;
 	showSuccess: (message: string) => void;
 };
@@ -30,35 +35,42 @@ function useAlerts(globalScope?: any): any {
 	const apiErrorMessages = useApiErrorMessages();
 	const { getParsedApiErrors } = useGetParsedErrors<any>();
 
-	const getMessageKey = ({ scope, field, code }: AlertErrorData, { error } = { error: false }) => {
-		const keyBase = `${scope}-${field}-${code}`;
-		return camelCase(error ? `${keyBase}-error` : keyBase);
-	};
+	// Saleor sends `field: null` for errors that aren't tied to an input, so
+	// the key is built from the parts that exist ("checkoutPay-emailNotSet",
+	// not "checkoutPay-null-emailNotSet").
+	const getMessageKey = (...parts: Array<string | null | undefined>) =>
+		camelCase([...parts.filter(Boolean), "error"].join("-"));
 
 	const getErrorMessage = useCallback(
-		({ code, field, scope }: AlertErrorData): string => {
-			const messageKey = getMessageKey(
-				{ code, field, scope },
-				{ error: true },
-			) as keyof typeof apiErrorMessages;
+		({ code, field, scope }: AlertErrorData, fallbackMessage?: string): string => {
+			// Most specific first (scope + field + code), then scope + code, so a
+			// message can be keyed by code alone when the field Saleor attaches is
+			// incidental (e.g. checkoutComplete's SHIPPING_METHOD_NOT_SET).
+			// `in` rather than a lookup in try/catch: a missing key returns
+			// undefined, it never throws — the old catch never ran, so every
+			// unmapped code produced an empty toast.
+			const messageKeys = [getMessageKey(scope, field, code), getMessageKey(scope, code)];
+			const messageKey = messageKeys.find((key) => key in apiErrorMessages) as
+				| keyof typeof apiErrorMessages
+				| undefined;
 
-			try {
+			if (messageKey) {
 				return apiErrorMessages[messageKey];
-			} catch {
-				console.warn(`Missing translation: ${messageKey}`);
-				return apiErrorMessages.somethingWentWrong;
 			}
+
+			console.warn(`Missing translation: ${messageKeys[0]}`);
+			return fallbackMessage || apiErrorMessages.somethingWentWrong;
 		},
 		[apiErrorMessages],
 	);
 
 	const getParsedAlert = useCallback(
-		(data: AlertErrorData, type: AlertType): Alert => {
+		(data: AlertErrorData, type: AlertType, fallbackMessage?: string): Alert => {
 			const { scope, field, code } = data;
 
 			return {
 				id: camelCase(`${scope}-${field}-${code}`),
-				message: getErrorMessage({ scope, code, field }),
+				message: getErrorMessage({ scope, code, field }, fallbackMessage),
 				type,
 			};
 		},
@@ -72,16 +84,21 @@ function useAlerts(globalScope?: any): any {
 	);
 
 	const showDefaultAlert = useCallback(
-		(alertErrorData: AlertErrorData, { type }: { type: AlertType } = { type: "error" }) => {
-			const parsedAlert = getParsedAlert(alertErrorData, type);
+		(
+			alertErrorData: AlertErrorData,
+			{ type = "error", fallbackMessage }: { type?: AlertType; fallbackMessage?: string } = {},
+		) => {
+			const parsedAlert = getParsedAlert(alertErrorData, type, fallbackMessage);
 			showAlert(parsedAlert);
 		},
 		[getParsedAlert, showAlert],
 	);
 
 	const showErrors = useCallback(
-		(errors: ApiErrors<any>, scope: CheckoutScope = globalScope) =>
-			getParsedApiErrors(errors).forEach((error) => showDefaultAlert({ ...error, scope } as AlertErrorData)),
+		(errors: ApiErrors<any>, scope: CheckoutScope = globalScope, options: ShowErrorsOptions = {}) =>
+			getParsedApiErrors(errors).forEach((error) =>
+				showDefaultAlert({ ...error, scope } as AlertErrorData, { fallbackMessage: options.fallbackMessage }),
+			),
 		[getParsedApiErrors, globalScope, showDefaultAlert],
 	);
 
