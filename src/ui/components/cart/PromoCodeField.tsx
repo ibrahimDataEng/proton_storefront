@@ -97,7 +97,7 @@ export function PromoCodeField({ checkoutId, appliedVoucherCode, discount }: Pro
 							<p className="text-sm font-medium text-content-primary">
 								{activeCode}
 								{activeDiscount && activeDiscount.amount > 0 && (
-									<span className="ml-2 text-brand-primary">
+									<span className="ms-2 text-brand-primary">
 										−{formatMoney(activeDiscount.amount, activeDiscount.currency)}
 									</span>
 								)}
@@ -138,7 +138,7 @@ export function PromoCodeField({ checkoutId, appliedVoucherCode, discount }: Pro
 							disabled={applyStatus === "loading"}
 							aria-label={t("promoCode")}
 							className={clsx(
-								"min-w-0 flex-1 rounded-l-xl border border-r-0 bg-surface-sunken px-3 py-2 text-sm text-content-primary placeholder:text-content-secondary",
+								"min-w-0 flex-1 rounded-s-xl border border-e-0 bg-surface-sunken px-3 py-2 text-sm text-content-primary placeholder:text-content-secondary",
 								"focus:border-brand-primary focus:outline-none focus:ring-2 focus:ring-brand-primary/30",
 								"disabled:cursor-not-allowed disabled:opacity-50",
 								applyStatus === "error" ? "border-red-400" : "border-line-default",
@@ -148,7 +148,7 @@ export function PromoCodeField({ checkoutId, appliedVoucherCode, discount }: Pro
 							type="button"
 							onClick={() => void handleApply()}
 							disabled={!code.trim() || applyStatus === "loading"}
-							className="rounded-r-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-content-inverse transition-colors hover:bg-brand-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+							className="rounded-e-xl bg-brand-primary px-4 py-2 text-sm font-semibold text-content-inverse transition-colors hover:bg-brand-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
 						>
 							{applyStatus === "loading" ? (
 								<span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
