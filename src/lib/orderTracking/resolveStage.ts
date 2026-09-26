@@ -1,4 +1,10 @@
 import { FulfillmentStatus, OrderChargeStatusEnum, OrderStatus } from "@/gql/graphql";
+import {
+	getReturnStatus,
+	readMetadataDate,
+	RETURN_METADATA_KEYS,
+	type ReturnStatus,
+} from "@/lib/returns/returnMetadata";
 
 /**
  * Pure stage-resolution function for the order-tracking page — deliberately
@@ -42,14 +48,32 @@ import { FulfillmentStatus, OrderChargeStatusEnum, OrderStatus } from "@/gql/gra
  * via the manual metadata value, same as Stripe.
  *
  * All signals combine via max() — stages are monotonic, never regress.
+ *
+ * Customer returns (order public metadata `returnStatus`, see CLAUDE.md's
+ * "Returns" contract) ride on top of a delivered order: a recognized
+ * returnStatus implies stage 4 and adds `returnInfo` for the page's return
+ * panel. Return states are also monotonic — Saleor's own evidence of a return
+ * (Order RETURNED/PARTIALLY_RETURNED, or a returned/refunded fulfillment, i.e.
+ * the owner's Dashboard "Return" step) lifts requested/pickup_scheduled/
+ * rejected to at least item_received. "refunded" is read from metadata ONLY —
+ * Saleor's refund fields need MANAGE_ORDERS and this page is deliberately
+ * token-free. Without a recognized returnStatus, Saleor-side return evidence
+ * keeps the pre-existing standalone "returned" view. Unknown/malformed values
+ * are ignored, never an error.
  */
 
 export type OrderTrackingStage = 1 | 2 | 3 | 4;
 
+export type TrackedReturn = {
+	status: ReturnStatus;
+	/** ISO instant; only set while status is pickup_scheduled and the stored value parses. */
+	pickupExpectedAt: string | null;
+};
+
 export type ResolvedStage =
 	| { kind: "cancelled" }
 	| { kind: "returned" }
-	| { kind: "progress"; stage: OrderTrackingStage };
+	| { kind: "progress"; stage: OrderTrackingStage; returnInfo: TrackedReturn | null };
 
 export interface StageResolutionInput {
 	status: OrderStatus;
@@ -86,10 +110,12 @@ export function resolveStage(order: StageResolutionInput): ResolvedStage {
 	if (CANCELLED_STATUSES.includes(order.status)) {
 		return { kind: "cancelled" };
 	}
-	if (
+	const hasSaleorReturn =
 		RETURNED_STATUSES.includes(order.status) ||
-		order.fulfillments.some((fulfillment) => RETURNED_FULFILLMENT_STATUSES.includes(fulfillment.status))
-	) {
+		order.fulfillments.some((fulfillment) => RETURNED_FULFILLMENT_STATUSES.includes(fulfillment.status));
+	const metadataReturnStatus = getReturnStatus(order.metadata);
+
+	if (hasSaleorReturn && !metadataReturnStatus) {
 		return { kind: "returned" };
 	}
 
@@ -117,5 +143,21 @@ export function resolveStage(order: StageResolutionInput): ResolvedStage {
 		stage = Math.max(stage, 4) as OrderTrackingStage;
 	}
 
-	return { kind: "progress", stage };
+	if (!metadataReturnStatus) {
+		return { kind: "progress", stage, returnInfo: null };
+	}
+
+	// A return request only exists on a delivered order.
+	stage = Math.max(stage, 4) as OrderTrackingStage;
+
+	let returnStatus = metadataReturnStatus;
+	if (hasSaleorReturn && returnStatus !== "item_received" && returnStatus !== "refunded") {
+		returnStatus = "item_received";
+	}
+	const pickupExpectedAt =
+		returnStatus === "pickup_scheduled"
+			? readMetadataDate(order.metadata, RETURN_METADATA_KEYS.pickupExpectedAt)?.toISOString() ?? null
+			: null;
+
+	return { kind: "progress", stage, returnInfo: { status: returnStatus, pickupExpectedAt } };
 }

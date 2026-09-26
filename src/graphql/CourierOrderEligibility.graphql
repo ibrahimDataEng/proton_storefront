@@ -1,0 +1,29 @@
+# Re-fetched server-side (SALEOR_COURIER_APP_TOKEN) right before writing the
+# delivered-metadata mutation — never trust the worklist snapshot the client
+# submitted, an order can change between page load and tap.
+query CourierOrderEligibility($id: ID!) {
+	order(id: $id) {
+		id
+		number
+		status
+		chargeStatus
+		userEmail
+		channel {
+			slug
+		}
+		total {
+			gross {
+				amount
+				currency
+			}
+		}
+		totalCharged {
+			amount
+			currency
+		}
+		metadata {
+			key
+			value
+		}
+	}
+}

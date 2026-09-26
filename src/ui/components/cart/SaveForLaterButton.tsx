@@ -15,6 +15,8 @@ interface SaveForLaterButtonProps {
 	label: string;
 	alreadySavedLabel?: string;
 	onLeave: () => void;
+	/** The removal failed — the parent card should come back. */
+	onLeaveCancelled: () => void;
 }
 
 export function SaveForLaterButton({
@@ -24,6 +26,7 @@ export function SaveForLaterButton({
 	label,
 	alreadySavedLabel,
 	onLeave,
+	onLeaveCancelled,
 }: SaveForLaterButtonProps) {
 	const [isPending, setIsPending] = useState(false);
 	const [alreadySaved, setAlreadySaved] = useState(false);
@@ -58,7 +61,21 @@ export function SaveForLaterButton({
 			// localStorage unavailable — skip silently
 		}
 
-		await deleteLineFromCheckout({ lineId, checkoutId });
+		try {
+			await deleteLineFromCheckout({ lineId, checkoutId });
+		} catch {
+			// Network failure / Saleor down: the line is still in the cart, so undo the
+			// optimistic save and bring the card back rather than hiding a live line.
+			try {
+				const current = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]") as SavedItem[];
+				localStorage.setItem(STORAGE_KEY, JSON.stringify(current.filter((i) => i.id !== item.id)));
+				window.dispatchEvent(new Event(CHANGE_EVENT));
+			} catch {
+				// localStorage unavailable — nothing was saved
+			}
+			setIsPending(false);
+			onLeaveCancelled();
+		}
 	};
 
 	return (

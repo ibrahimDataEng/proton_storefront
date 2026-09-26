@@ -9,6 +9,7 @@ import { useTransactionInitializeMutation } from "@/checkout/graphql";
 import { useAlerts } from "@/checkout/hooks/useAlerts";
 import { useErrorMessages } from "@/checkout/hooks/useErrorMessages";
 import { useCheckout } from "@/checkout/hooks/useCheckout";
+import { useCheckoutMessages } from "@/checkout/lib/checkoutMessages";
 import { useApiErrorMessages } from "@/checkout/sections/PaymentSection/errorMessages";
 import { replaceUrl } from "@/checkout/lib/utils/url";
 
@@ -24,6 +25,10 @@ interface StripeComponentProps {
 
 export const StripeComponent = ({ config }: StripeComponentProps) => {
 	const { checkout } = useCheckout();
+	// The page locale ("en" | "ar", both valid StripeElementLocale values), so
+	// the Payment Element and Stripe's own card errors follow /ar, not the
+	// browser language (Stripe's default "auto").
+	const { locale } = useCheckoutMessages();
 	const apiErrorMessages = useApiErrorMessages();
 	const [transactionInitializeResult, transactionInitialize] = useTransactionInitializeMutation();
 	const transactionData = transactionInitializeResult.data?.transactionInitialize;
@@ -79,7 +84,7 @@ export const StripeComponent = ({ config }: StripeComponentProps) => {
 
 	return (
 		<Elements
-			options={{ clientSecret: stripeClientSecret, appearance: { theme: "stripe" } }}
+			options={{ clientSecret: stripeClientSecret, appearance: { theme: "stripe" }, locale }}
 			stripe={stripePromise}
 		>
 			<CheckoutForm />

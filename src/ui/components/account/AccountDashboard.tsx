@@ -4,21 +4,32 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { AccountSidebar, type AccountSection } from "./AccountSidebar";
 import { OverviewSection } from "./sections/OverviewSection";
-import { OrdersSection } from "./sections/OrdersSection";
+import { OrdersSection, type OrderReturnState } from "./sections/OrdersSection";
 import { RecentlyViewedSection } from "./sections/RecentlyViewedSection";
 import { AddressSection } from "./sections/AddressSection";
 import { SettingsSection } from "./sections/SettingsSection";
 import type { CurrentUserOrderListQuery, ProductListItemFragment } from "@/gql/graphql";
+import type { CountryAreaOption } from "@/lib/address/countryAreaChoices";
 
 type UserWithOrders = NonNullable<CurrentUserOrderListQuery["me"]>;
 
 interface Props {
 	user: UserWithOrders;
 	locale: string;
+	channel: string;
 	recentlyViewedProducts: ProductListItemFragment[];
+	returnStates: Record<string, OrderReturnState>;
+	emirateOptions: CountryAreaOption[];
 }
 
-export function AccountDashboard({ user, locale, recentlyViewedProducts }: Props) {
+export function AccountDashboard({
+	user,
+	locale,
+	channel,
+	recentlyViewedProducts,
+	returnStates,
+	emirateOptions,
+}: Props) {
 	const t = useTranslations("account");
 	const tAuth = useTranslations("auth");
 	const tRecentlyViewed = useTranslations("recentlyViewed");
@@ -56,11 +67,13 @@ export function AccountDashboard({ user, locale, recentlyViewedProducts }: Props
 				{activeSection === "overview" && (
 					<OverviewSection user={user} orders={orders} onNavigate={setActiveSection} locale={locale} />
 				)}
-				{activeSection === "orders" && <OrdersSection orders={orders} locale={locale} />}
-				{activeSection === "recentlyViewed" && (
-					<RecentlyViewedSection products={recentlyViewedProducts} />
+				{activeSection === "orders" && (
+					<OrdersSection orders={orders} locale={locale} channel={channel} returnStates={returnStates} />
 				)}
-				{activeSection === "addresses" && <AddressSection addresses={addresses} />}
+				{activeSection === "recentlyViewed" && <RecentlyViewedSection products={recentlyViewedProducts} />}
+				{activeSection === "addresses" && (
+					<AddressSection addresses={addresses} emirateOptions={emirateOptions} />
+				)}
 				{activeSection === "settings" && <SettingsSection user={user} />}
 			</main>
 		</div>

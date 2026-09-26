@@ -8,7 +8,7 @@ import { confirmAccountDeletion } from "@/app/[locale]/[channel]/(main)/account/
 import { useAuth } from "@/ui/context/AuthContext";
 import { LinkWithChannel } from "@/ui/atoms/LinkWithChannel";
 
-type State = "processing" | "success" | "expired" | "notAuthenticated" | "missingToken";
+type State = "processing" | "success" | "expired" | "notAuthenticated" | "missingToken" | "error";
 
 export function DeleteAccountConfirm() {
 	const t = useTranslations("accountDeletion");
@@ -25,15 +25,21 @@ export function DeleteAccountConfirm() {
 		ranRef.current = true;
 
 		void (async () => {
-			const result = await confirmAccountDeletion(token);
-			if (result.ok) {
-				setState("success");
-				setTimeout(() => {
-					void logout();
-				}, 2000);
-				return;
+			try {
+				const result = await confirmAccountDeletion(token);
+				if (result.ok) {
+					setState("success");
+					setTimeout(() => {
+						void logout();
+					}, 2000);
+					return;
+				}
+				// No session, or an expired one Saleor rejected: sign in again, then reuse the link.
+				setState(result.error === "SESSION_EXPIRED" ? "notAuthenticated" : "expired");
+			} catch {
+				// Network failure / Saleor down — never leave the spinner up forever.
+				setState("error");
 			}
-			setState(result.error === "NOT_AUTHENTICATED" ? "notAuthenticated" : "expired");
 		})();
 	}, [token, logout]);
 
@@ -77,6 +83,20 @@ export function DeleteAccountConfirm() {
 					className="text-sm text-brand-primary underline-offset-2 hover:underline"
 				>
 					{tAuth("login")}
+				</LinkWithChannel>
+			</div>
+		);
+	}
+
+	if (state === "error") {
+		return (
+			<div className="flex flex-col items-center gap-4 text-center">
+				<XCircle className="h-10 w-10 text-status-danger" aria-hidden="true" />
+				<p role="alert" className="text-sm text-content-primary">
+					{tAuth("errors.unknown")}
+				</p>
+				<LinkWithChannel href="/" className="text-sm text-brand-primary underline-offset-2 hover:underline">
+					{t("backHome")}
 				</LinkWithChannel>
 			</div>
 		);

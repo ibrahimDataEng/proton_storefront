@@ -244,6 +244,38 @@ const checkoutMessages = {
 			checkoutDeliveryMethodUpdatePostalCodeInvalidError:
 				"Invalid postal code was provided for shipping address",
 			checkoutDeliveryMethodUpdatePromoCodeInvalidError: "Please provide a valid discount code.",
+			// checkoutComplete rejections, keyed by code only (scope "checkoutPay",
+			// see usePayments.ts). Codes with no key here — TAX_ERROR,
+			// PAYMENT_ERROR, anything new — show payment.unexpectedError.
+			checkoutPayShippingAddressNotSetError:
+				"Please complete your shipping address before placing the order.",
+			checkoutPayInvalidShippingMethodError:
+				"The selected delivery method is no longer available. Please go back to Shipping and choose another one.",
+			checkoutPayBillingAddressNotSetError: "Please complete your billing address before placing the order.",
+			checkoutPayCheckoutNotFullyPaidError:
+				"Your payment doesn't cover the order total yet. Please try again or choose another payment method.",
+			checkoutPayInsufficientStockError:
+				"Some items in your order are no longer available in the requested quantity. Please go back to Shipping, update your order and try again.",
+			checkoutPayUnavailableVariantInChannelError:
+				"Some items in your order are no longer available. Please go back to Shipping, update your order and try again.",
+			checkoutPayProductUnavailableForPurchaseError:
+				"Some items in your order are no longer available. Please go back to Shipping, update your order and try again.",
+			checkoutPayVoucherNotApplicableError:
+				"Your discount code can no longer be applied to this order. Please go back to Shipping, remove it and try again.",
+			checkoutPayGiftCardNotApplicableError:
+				"Your gift card can no longer be applied to this order. Please go back to Shipping, remove it and try again.",
+			checkoutPayNoLinesError: "Your cart is empty. Please add items before placing the order.",
+			checkoutPayChannelInactiveError: "The store isn't accepting orders right now. Please try again later.",
+			checkoutPayNotFoundError:
+				"This checkout is no longer available — it may already have been completed. Please return to your cart.",
+			checkoutPayInvalidError:
+				"Some of your details are missing or invalid. Please go back to Shipping and check them.",
+			checkoutPayRequiredError:
+				"Some of your details are missing or invalid. Please go back to Shipping and check them.",
+		},
+		errorBanner: {
+			needHelp: "Need help? Contact us on WhatsApp",
+			dismiss: "Dismiss error",
 		},
 		adyenErrors: {
 			refused: "The transaction was refused.",
@@ -519,6 +551,32 @@ const checkoutMessages = {
 			checkoutBillingUpdatePostalCodeInvalidError: "الرمز البريدي لعنوان الفاتورة غير صحيح",
 			checkoutDeliveryMethodUpdatePostalCodeInvalidError: "الرمز البريدي لعنوان الشحن غير صحيح",
 			checkoutDeliveryMethodUpdatePromoCodeInvalidError: "يرجى إدخال رمز خصم صالح.",
+			checkoutPayShippingAddressNotSetError: "يرجى استكمال عنوان الشحن قبل تأكيد الطلب.",
+			checkoutPayInvalidShippingMethodError:
+				"طريقة التوصيل المحددة لم تعد متاحة. يرجى العودة إلى خطوة الشحن واختيار طريقة أخرى.",
+			checkoutPayBillingAddressNotSetError: "يرجى استكمال عنوان الفواتير قبل تأكيد الطلب.",
+			checkoutPayCheckoutNotFullyPaidError:
+				"المبلغ المدفوع لا يغطي إجمالي الطلب بعد. يرجى المحاولة مرة أخرى أو اختيار طريقة دفع أخرى.",
+			checkoutPayInsufficientStockError:
+				"بعض المنتجات في طلبك لم تعد متوفرة بالكمية المطلوبة. يرجى العودة إلى خطوة الشحن وتعديل طلبك ثم المحاولة مرة أخرى.",
+			checkoutPayUnavailableVariantInChannelError:
+				"بعض المنتجات في طلبك لم تعد متاحة. يرجى العودة إلى خطوة الشحن وتعديل طلبك ثم المحاولة مرة أخرى.",
+			checkoutPayProductUnavailableForPurchaseError:
+				"بعض المنتجات في طلبك لم تعد متاحة. يرجى العودة إلى خطوة الشحن وتعديل طلبك ثم المحاولة مرة أخرى.",
+			checkoutPayVoucherNotApplicableError:
+				"لم يعد من الممكن تطبيق رمز الخصم على هذا الطلب. يرجى العودة إلى خطوة الشحن وإزالته ثم المحاولة مرة أخرى.",
+			checkoutPayGiftCardNotApplicableError:
+				"لم يعد من الممكن تطبيق بطاقة الهدية على هذا الطلب. يرجى العودة إلى خطوة الشحن وإزالتها ثم المحاولة مرة أخرى.",
+			checkoutPayNoLinesError: "سلة التسوق فارغة. يرجى إضافة منتجات قبل تأكيد الطلب.",
+			checkoutPayChannelInactiveError: "لا يستقبل المتجر الطلبات حاليًا. يرجى المحاولة لاحقًا.",
+			checkoutPayNotFoundError:
+				"عملية الدفع هذه لم تعد متاحة، وربما تم إتمامها بالفعل. يرجى العودة إلى سلة التسوق.",
+			checkoutPayInvalidError: "بعض بياناتك ناقصة أو غير صحيحة. يرجى العودة إلى خطوة الشحن ومراجعتها.",
+			checkoutPayRequiredError: "بعض بياناتك ناقصة أو غير صحيحة. يرجى العودة إلى خطوة الشحن ومراجعتها.",
+		},
+		errorBanner: {
+			needHelp: "هل تحتاج إلى مساعدة؟ تواصل معنا عبر واتساب",
+			dismiss: "إغلاق رسالة الخطأ",
 		},
 		adyenErrors: {
 			refused: "تم رفض العملية.",

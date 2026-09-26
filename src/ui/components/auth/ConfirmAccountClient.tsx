@@ -73,7 +73,10 @@ export function ConfirmAccountClient() {
 						autoComplete="current-password"
 						required
 						value={password}
-						onChange={(e) => setPassword(e.target.value)}
+						onChange={(e) => {
+							setPassword(e.target.value);
+							setFormError(null);
+						}}
 					/>
 					<Button type="submit" variant="primary" size="md" className="w-full">
 						{t("confirmButton")}

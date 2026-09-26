@@ -1,4 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { type AuthErrorCode } from "@/lib/auth/errorCodes";
+import { authErrorResponse } from "@/lib/auth/errorResponse";
 import { setAuthCookies } from "@/lib/auth/cookies";
 
 const SALEOR_API_URL = process.env.NEXT_PUBLIC_SALEOR_API_URL!;
@@ -14,12 +16,14 @@ const SET_PASSWORD = `
   }
 `;
 
-const ERROR_MAP: Record<string, string> = {
+const ERROR_MAP: Record<string, AuthErrorCode> = {
 	TOKEN_INVALID: "TOKEN_INVALID",
 	INVALID: "TOKEN_INVALID",
 	INVALID_PASSWORD: "INVALID_PASSWORD",
 	PASSWORD_TOO_SHORT: "PASSWORD_TOO_SHORT",
 	PASSWORD_TOO_SIMILAR: "PASSWORD_TOO_SIMILAR",
+	PASSWORD_TOO_COMMON: "PASSWORD_TOO_COMMON",
+	PASSWORD_ENTIRELY_NUMERIC: "PASSWORD_ENTIRELY_NUMERIC",
 };
 
 export async function POST(request: NextRequest) {
@@ -30,7 +34,7 @@ export async function POST(request: NextRequest) {
 	};
 
 	if (!email || !token || !password) {
-		return NextResponse.json({ error: "MISSING_FIELDS" }, { status: 400 });
+		return authErrorResponse("MISSING_FIELDS", 400);
 	}
 
 	const saleorRes = await fetch(SALEOR_API_URL, {
@@ -53,16 +57,16 @@ export async function POST(request: NextRequest) {
 
 	const result = json.data?.setPassword;
 	if (!result) {
-		return NextResponse.json({ error: "unknown" }, { status: 500 });
+		return authErrorResponse("unknown", 500);
 	}
 
 	if (result.errors.length > 0) {
 		const code = result.errors[0].code;
-		return NextResponse.json({ error: ERROR_MAP[code] ?? "unknown" }, { status: 400 });
+		return authErrorResponse(ERROR_MAP[code] ?? "unknown", 400);
 	}
 
 	if (!result.token || !result.refreshToken || !result.user) {
-		return NextResponse.json({ error: "unknown" }, { status: 500 });
+		return authErrorResponse("unknown", 500);
 	}
 
 	const response = NextResponse.json({ user: result.user });

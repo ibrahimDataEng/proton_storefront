@@ -5,6 +5,11 @@ import { useTranslations, useLocale } from "next-intl";
 import { useParams } from "next/navigation";
 import { AuthFormField } from "./AuthFormField";
 import { Button } from "@/ui/components/Button";
+import {
+	validateForgotPassword,
+	VALIDATION_MESSAGE_KEYS,
+	type AuthValidationReason,
+} from "@/lib/validation/auth";
 
 type Props = {
 	onBack: () => void;
@@ -20,9 +25,18 @@ export function ForgotPasswordForm({ onBack }: Props) {
 	const [loading, setLoading] = useState(false);
 	const [sent, setSent] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [emailError, setEmailError] = useState<AuthValidationReason | undefined>();
+	const [submitted, setSubmitted] = useState(false);
 
 	async function handleSubmit(e: React.FormEvent) {
 		e.preventDefault();
+		setSubmitted(true);
+		// Only the email's syntax is checked here. Any well-formed address still
+		// shows the success state below, whether or not it has an account.
+		const reason = validateForgotPassword({ email }).email;
+		setEmailError(reason);
+		if (reason) return;
+
 		setError(null);
 		setLoading(true);
 
@@ -75,7 +89,14 @@ export function ForgotPasswordForm({ onBack }: Props) {
 				autoComplete="email"
 				required
 				value={email}
-				onChange={(e) => setEmail(e.target.value)}
+				onChange={(e) => {
+					setEmail(e.target.value);
+					setError(null);
+				}}
+				onBlur={() => {
+					if (submitted) setEmailError(validateForgotPassword({ email }).email);
+				}}
+				error={emailError ? t(VALIDATION_MESSAGE_KEYS[emailError]) : undefined}
 			/>
 			<Button type="submit" variant="primary" size="md" loading={loading} className="w-full">
 				{t("sendResetLink")}

@@ -1,0 +1,18 @@
+# Admin review lists. Saleor's metadata where-filter supports exact `eq`/`oneOf`
+# matches (saleor/graphql/core/filters/where_filters.py filter_where_metadata),
+# so the returnStatus filter happens server-side. Newest first by order
+# creation; the page re-sorts by returnRequestedAt, which Saleor can't sort on.
+query ReturnOrdersByStatus($channel: String!, $statuses: [String!]!) {
+	orders(
+		first: 50
+		channel: $channel
+		sortBy: { field: CREATED_AT, direction: DESC }
+		where: { metadata: { key: "returnStatus", value: { oneOf: $statuses } } }
+	) {
+		edges {
+			node {
+				...ReturnOrder
+			}
+		}
+	}
+}

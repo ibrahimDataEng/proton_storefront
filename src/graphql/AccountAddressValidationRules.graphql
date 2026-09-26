@@ -1,0 +1,9 @@
+query AccountAddressValidationRules($countryCode: CountryCode!) {
+	addressValidationRules(countryCode: $countryCode) {
+		countryAreaType
+		countryAreaChoices {
+			raw
+			verbose
+		}
+	}
+}

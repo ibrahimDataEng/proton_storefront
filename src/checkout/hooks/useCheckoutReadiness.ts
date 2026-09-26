@@ -74,6 +74,28 @@ export const reportReadinessFailOpen = (
 
 class ReadinessTimeoutError extends Error {}
 
+// Fields of the checkout neither verify() nor its callers read. Saleor answers
+// a field the requester may not see with that field nulled plus a GraphQL
+// error on its path, while the rest of the checkout comes back intact — e.g.
+// Checkout.user for anyone but the checkout's owner, which is every signed-out
+// visitor on a checkout attached at an earlier sign-in (front_store-2rt). Such
+// a result is still a complete answer to the readiness question. Anything
+// else — an error without a path, on the checkout itself or on a field read
+// here, or a missing checkout — stays fatal.
+const TOLERATED_ERROR_PATHS: ReadonlyArray<ReadonlyArray<string>> = [["checkout", "user"]];
+
+const isToleratedErrorPath = (path: ReadonlyArray<string | number> | undefined) =>
+	!!path &&
+	TOLERATED_ERROR_PATHS.some(
+		(tolerated) =>
+			path.length >= tolerated.length && tolerated.every((segment, index) => path[index] === segment),
+	);
+
+const isToleratedPartialError = (error: CombinedError) =>
+	!error.networkError &&
+	error.graphQLErrors.length > 0 &&
+	error.graphQLErrors.every(({ path }) => isToleratedErrorPath(path));
+
 const classifyFailure = (error: unknown): Pick<ReadinessFailure, "reason" | "message"> => {
 	const message = error instanceof Error ? error.message : String(error);
 
@@ -267,11 +289,18 @@ export const useCheckoutReadiness = () => {
 						// result can arrive before `subscription` is assigned.
 						queueMicrotask(() => subscription.unsubscribe());
 
-						if (result.error) {
+						const checkout = (result.data?.checkout ?? null) as CheckoutFragment | null;
+
+						if (result.error && !(checkout && isToleratedPartialError(result.error))) {
 							reject(result.error);
-						} else {
-							resolve((result.data?.checkout ?? null) as CheckoutFragment | null);
+							return;
 						}
+						if (result.error) {
+							console.debug("[checkout-readiness] ignored errors on fields the check doesn't read:", {
+								paths: result.error.graphQLErrors.map(({ path }) => path?.join(".")),
+							});
+						}
+						resolve(checkout);
 					});
 
 				onTimeout = () => {

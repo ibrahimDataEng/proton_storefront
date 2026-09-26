@@ -71,7 +71,13 @@ export function ProductAddButton({
 	const handleClick = async () => {
 		if (!selectedVariantId || state === "pending" || state === "added") return;
 		setState("pending");
-		const result = await addLineToCheckout({ variantId: selectedVariantId, channel, locale });
+		let result: Awaited<ReturnType<typeof addLineToCheckout>>;
+		try {
+			result = await addLineToCheckout({ variantId: selectedVariantId, channel, locale });
+		} catch {
+			// Network failure / Saleor down — same translated error state as a failed add.
+			result = { ok: false, redirect: false };
+		}
 		if (!result.ok) {
 			setErrorIsStock(result.errorCode === "INSUFFICIENT_STOCK");
 			setState("error");
