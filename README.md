@@ -1,7 +1,7 @@
 # Proton Storefront
 
 <div align="center">
-  A production e-commerce storefront for the UAE market, built on top of the open-source
+  A production e-commerce storefront for the Global market, built on top of the open-source
   <a href="https://github.com/saleor/storefront">Saleor Storefront</a> and extended heavily with our own features.
 </div>
 <br/>
